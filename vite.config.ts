@@ -129,11 +129,12 @@ function authPopupPlugin(): Plugin {
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
 export default defineConfig(({ command }) => ({
-  server: {
-    host: "0.0.0.0",
-    port: 8080,
-    strictPort: true,
-  },
+server: {
+  host: "0.0.0.0",
+  port: 8080,
+  strictPort: true,
+  allowedHosts: ["tokimido.onrender.com", "localhost"],
+},
   resolve: { tsconfigPaths: true },
   plugins: [
     pgliteBootstrapPlugin(),
