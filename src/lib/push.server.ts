@@ -1,6 +1,20 @@
 import webpush from "web-push";
 import { getSql } from "@/lib/db";
 import { FIREBASE_CONFIG } from "@/lib/firebase-config";
+import { google } from "googleapis";
+
+async function getAccessToken() {
+  const email = process.env.FIREBASE_CLIENT_EMAIL;
+  const key = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  if (!email || !key) return null;
+  const auth = new google.auth.JWT({
+    email,
+    key,
+    scopes: ["https://www.googleapis.com/auth/firebase.messaging"],
+  });
+  const token = await auth.getAccessToken();
+  return token?.token ?? null;
+}
 
 export type PushPayload = {
   title: string;
@@ -16,16 +30,6 @@ type Device = {
   p256dh: string;
   auth: string;
 };
-
-const FCM_SERVER_KEY = (
-  typeof process !== "undefined"
-    ? process.env.FIREBASE_SERVER_KEY || process.env.FCM_SERVER_KEY
-    : undefined
-)?.trim();
-
-const FCM_ACCESS_TOKEN = (
-  typeof process !== "undefined" ? process.env.FIREBASE_ACCESS_TOKEN : undefined
-)?.trim();
 
 export async function ensurePushTables() {
   const sql = await getSql();
@@ -126,6 +130,8 @@ function fcmLink(url: string) {
 }
 
 async function sendFcmHttp(token: string, payload: PushPayload) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) return false;
   const body = {
     message: {
       token,
@@ -137,45 +143,21 @@ async function sendFcmHttp(token: string, payload: PushPayload) {
       data: { url: payload.url, title: payload.title, body: payload.body },
     },
   };
-
-  if (FCM_ACCESS_TOKEN) {
-    try {
-      const res = await fetch(
-        `https://fcm.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/messages:send`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${FCM_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        },
-      );
-      if (res.ok) return true;
-      console.error("[push] fcm v1", res.status, await res.text().catch(() => ""));
-    } catch (err) {
-      console.error("[push] fcm v1", err);
-    }
-  }
-
-  if (!FCM_SERVER_KEY) return false;
   try {
-    const res = await fetch("https://fcm.googleapis.com/fcm/send", {
-      method: "POST",
-      headers: {
-        Authorization: `key=${FCM_SERVER_KEY}`,
-        "Content-Type": "application/json",
+    const res = await fetch(
+      `https://fcm.googleapis.com/v1/projects/${FIREBASE_CONFIG.projectId}/messages:send`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify({
-        to: token,
-        notification: { title: payload.title, body: payload.body, icon: "/icon-192.png" },
-        data: { url: payload.url, title: payload.title, body: payload.body },
-        webpush: { fcm_options: { link: fcmLink(payload.url) } },
-      }),
-    });
+    );
     return res.ok;
   } catch (err) {
-    console.error("[push] fcm http", err);
+    console.error("[push] fcm", err);
     return false;
   }
 }
@@ -184,7 +166,6 @@ async function sendOne(device: Device, payload: PushPayload) {
   const body = JSON.stringify(payload);
   const endpoint = device.endpoint || device.token;
   const canWebPush = Boolean(device.p256dh && device.auth && endpoint.startsWith("http"));
-
   if (canWebPush) {
     const keys = await vapidKeys();
     webpush.setVapidDetails("mailto:support@rabotaem.md", keys.public_key, keys.private_key);
@@ -204,7 +185,6 @@ async function sendOne(device: Device, payload: PushPayload) {
       console.error("[push] send", status ?? err);
     }
   }
-
   if (isFcmToken(device.token)) {
     await sendFcmHttp(device.token, payload);
   }
