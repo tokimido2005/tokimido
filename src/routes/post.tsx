@@ -141,14 +141,21 @@ function PostJob() {
   if (!gate.complete) return <Navigate to="/complete" search={{ next: "/post" }} />;
   if (!gate.verified) return <Navigate to="/verify" search={{ next: "/post" }} />;
   if (access === undefined) {
-    return (
-      <Shell>
-        <main className="mx-auto max-w-2xl px-4 py-16">
-          <div className="h-80 animate-pulse rounded-[32px] bg-white/40 dark:bg-white/8" />
-        </main>
-      </Shell>
-    );
-  }
+  return (
+    <Shell>
+      <main className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <div className="h-80 animate-pulse rounded-[32px] bg-white/40 dark:bg-white/8" />
+        <p className="mt-4 text-sm text-muted">Se încarcă formularul...</p>
+        <button
+          className="mt-4 text-sm text-orange underline"
+          onClick={() => window.location.reload()}
+        >
+          Reîncarcă pagina
+        </button>
+      </main>
+    </Shell>
+  );
+}
 
   const posterName = user.displayName ?? user.primaryEmail ?? "Utilizator";
 
