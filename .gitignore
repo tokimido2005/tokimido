@@ -1,0 +1,9 @@
+node_modules
+.vercel
+.output
+.nitro
+dist
+.tanstack
+screenshots/**
+!screenshots/**/*.mjs
+*.log

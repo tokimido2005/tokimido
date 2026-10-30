@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B2548" />
+    <title>Offline · Rabotaem.md</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        font-family: Outfit, "Segoe UI", system-ui, sans-serif;
+        background: #071422;
+        color: #e8eef6;
+      }
+      main {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 2rem 1.25rem;
+        padding-bottom: max(2rem, env(safe-area-inset-bottom));
+        background: radial-gradient(ellipse at 50% 42%, #163a66 0%, #0b2548 48%, #071422 100%);
+      }
+      .card {
+        width: min(22rem, 100%);
+        text-align: center;
+        padding: 1.75rem 1.5rem 1.5rem;
+        border-radius: 28px;
+        background: linear-gradient(165deg, rgba(32, 58, 96, 0.78), rgba(14, 30, 54, 0.7));
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.12),
+          0 22px 50px -22px rgba(0, 0, 0, 0.65);
+      }
+      img {
+        width: min(16rem, 80vw);
+        height: auto;
+      }
+      p {
+        margin: 1rem 0 0;
+        line-height: 1.5;
+        color: #c9d8ea;
+        font-size: 0.95rem;
+      }
+      a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 1.25rem;
+        min-height: 44px;
+        padding: 0 1.25rem;
+        border-radius: 999px;
+        background: linear-gradient(165deg, #ff6b2c, #f15a22);
+        color: #fff;
+        font-weight: 600;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="card">
+        <img src="/logo-dark.png" width="2036" height="511" alt="Rabotaem.md" />
+        <p>Ești offline. Verifică conexiunea și reîncearcă.<br />Вы офлайн. Проверьте соединение и попробуйте снова.</p>
+        <a href="/">Reîncearcă / Повторить</a>
+      </div>
+    </main>
+  </body>
+</html>

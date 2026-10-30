@@ -1,0 +1,66 @@
+{
+  "id": "/",
+  "name": "Rabotaem.md",
+  "short_name": "Rabotaem",
+  "description": "Lucru pe loc. Bani pe loc.",
+  "lang": "ro",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "theme_color": "#0B2548",
+  "background_color": "#0B2548",
+  "categories": ["business", "lifestyle"],
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "icons": [
+    {
+      "src": "/icon-192.png?v=r6",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png?v=r6",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192-maskable.png?v=r6",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512-maskable.png?v=r6",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png?v=r6",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Joburi",
+      "short_name": "Joburi",
+      "description": "Vezi joburile deschise",
+      "url": "/",
+      "icons": [{ "src": "/icon-192.png?v=r6", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Postează un job",
+      "short_name": "Postează",
+      "description": "Publică un anunț gratuit",
+      "url": "/post",
+      "icons": [{ "src": "/icon-192.png?v=r6", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}
