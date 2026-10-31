@@ -7,27 +7,34 @@ const DSN =
 let inited = false;
 
 export function initSentry() {
-  if (inited) return;
   if (typeof window === "undefined") return;
-  if (!DSN) return;
-  inited = true;
-  Sentry.init({
-    dsn: DSN,
-    environment: import.meta.env.PROD ? "production" : "development",
-    tracesSampleRate: 0.1,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 1.0,
-    ignoreErrors: [
-      "ResizeObserver loop",
-      "Non-Error promise rejection",
-      "Failed to fetch",
-      "Load failed",
-      "NetworkError",
-    ],
-  });
+  if (inited) return;
+  if (!DSN) {
+    console.warn("[sentry] no DSN");
+    return;
+  }
+  try {
+    Sentry.init({
+      dsn: DSN,
+      environment: import.meta.env.PROD ? "production" : "development",
+      tracesSampleRate: 0.1,
+      replaysSessionSampleRate: 0,
+      replaysOnErrorSampleRate: 1.0,
+      ignoreErrors: [
+        "ResizeObserver loop",
+        "Non-Error promise rejection",
+        "Failed to fetch",
+        "Load failed",
+        "NetworkError",
+      ],
+    });
+    inited = true;
+    (window as any).__RBT_SENTRY_READY = true;
+  } catch (err) {
+    console.error("[sentry] init failed", err);
+  }
 }
 
-// Side-effect import guard — call immediately on client
 if (typeof window !== "undefined") {
   initSentry();
 }
