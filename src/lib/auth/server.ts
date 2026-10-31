@@ -181,6 +181,14 @@ export const auth = betterAuth({
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
+  // Direct Google OAuth (in addition to Grok broker federation).
+  socialProviders: {
+    google: {
+      clientId: env("GOOGLE_CLIENT_ID") ?? "",
+      clientSecret: env("GOOGLE_CLIENT_SECRET") ?? "",
+    },
+  },
+
   // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
   // as trusted first-party identities. The broker owns identity and X emails are
   // synthetic/unverified, so WITHOUT this a login can fail with
@@ -191,7 +199,10 @@ export const auth = betterAuth({
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: GROK_PROVIDERS.map((p) => p.providerId),
+      trustedProviders: [
+        ...GROK_PROVIDERS.map((p) => p.providerId),
+        "google",
+      ],
       // X's synthetic email is never "verified", so don't gate linking on the
       // local user's email-verified state.
       requireLocalEmailVerified: false,
