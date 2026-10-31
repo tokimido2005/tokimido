@@ -51,27 +51,31 @@ export function SocialAuthButtons({ next, locked = false }: { next?: string; loc
         <span>{t("login.continueApple")}</span>
         <span className="btn-apple-soon">{t("login.comingSoon")}</span>
       </button>
-      {GROK_PROVIDERS.map((p) => (
-        <button
-          key={p.providerId}
-          type="button"
-          disabled={busyId !== null || locked}
-          onClick={() => {
-            setError(null);
-            setBusyId(p.providerId);
-            void signIn(p.providerId, {
-              callbackURL,
-              errorCallbackURL: "/login",
-            }).catch((err: unknown) => {
-              setBusyId(null);
-              setError(err instanceof Error ? err.message : t("login.submitIn"));
-            });
-          }}
-          className="sheen flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-semibold text-white transition-transform duration-150 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45"
-        >
-          {t("login.continueWith", { p: p.label })}
-        </button>
-      ))}
+      {GROK_PROVIDERS.map((p) => {
+        // Use direct Google social provider instead of Grok broker for Google.
+        const effectiveId = p.providerId === "grok-google" ? "google" : p.providerId;
+        return (
+          <button
+            key={p.providerId}
+            type="button"
+            disabled={busyId !== null || locked}
+            onClick={() => {
+              setError(null);
+              setBusyId(p.providerId);
+              void signIn(effectiveId, {
+                callbackURL,
+                errorCallbackURL: "/login",
+              }).catch((err: unknown) => {
+                setBusyId(null);
+                setError(err instanceof Error ? err.message : t("login.submitIn"));
+              });
+            }}
+            className="sheen flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-semibold text-white transition-transform duration-150 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45"
+          >
+            {t("login.continueWith", { p: p.label })}
+          </button>
+        );
+      })}
       {error ? <p className="text-sm text-danger">{error}</p> : null}
     </div>
   );
