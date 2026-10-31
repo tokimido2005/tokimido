@@ -9,6 +9,7 @@ import { PushPrompt } from "@/components/push-prompt";
 import { BanGate } from "@/components/ban-screen";
 import { ProfileGate } from "@/components/profile-gate";
 import { MoneyModeProvider } from "@/lib/money-mode";
+import "@/lib/sentry";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Rabotaem.md";
