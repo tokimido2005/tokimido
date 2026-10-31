@@ -258,10 +258,13 @@ function OverviewPane() {
   function testSentry() {
     initSentry();
     try {
-      throw new Error("Sentry test error from Rabotaem admin panel");
-    } catch (err) {
+      const err = new Error("Sentry test error from Rabotaem admin panel");
       Sentry.captureException(err);
+      console.log("[sentry] capture called, ready:", (window as any).__RBT_SENTRY_READY);
       toast.success("Test error sent to Sentry");
+    } catch (err) {
+      console.error("[sentry] test failed", err);
+      toast.error("Sentry test failed");
     }
   }
 
