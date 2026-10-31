@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { getProfileGate, saveMyProfile } from "@/lib/profile";
 import { checkPhoneAvailable } from "@/lib/safety";
 import { seoHead } from "@/lib/seo";
@@ -200,9 +200,6 @@ function CompleteProfile() {
             </button>
           </form>
         </div>
-        <Link to="/" className="mt-6 text-center text-sm text-muted hover:text-navy">
-          {t("login.back")}
-        </Link>
       </main>
     </Shell>
   );
