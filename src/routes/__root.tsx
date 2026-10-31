@@ -7,6 +7,7 @@ import { WelcomeSplash } from "@/components/welcome-splash";
 import { PwaRegister, PushNavigateListener } from "@/components/pwa-register";
 import { PushPrompt } from "@/components/push-prompt";
 import { BanGate } from "@/components/ban-screen";
+import { ProfileGate } from "@/components/profile-gate";
 import { MoneyModeProvider } from "@/lib/money-mode";
 import appCss from "../styles.css?url";
 
@@ -101,9 +102,11 @@ function RootDocument() {
               <MoneyModeProvider>
               <PushNavigateListener />
               <BanGate>
-                <div className="rbt-app">
-                  <Outlet />
-                </div>
+                <ProfileGate>
+                  <div className="rbt-app">
+                    <Outlet />
+                  </div>
+                </ProfileGate>
                 <PwaRegister />
                 <PushPrompt />
               </BanGate>
