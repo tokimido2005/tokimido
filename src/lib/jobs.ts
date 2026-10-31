@@ -1127,6 +1127,8 @@ export const createJob = createServerFn({ method: "POST" })
     const { assertNotBanned } = await import("./admin.server");
     await assertNotBanned(context.userId);
     await assertProfileActive(context.userId);
+    const { assertRateLimit } = await import("./rate-limit.server");
+    await assertRateLimit("post_job", 10, 60);
     const { assertCanPost } = await import("./monetization.server");
     await assertCanPost(context.userId);
     await ensureSafetyTables();
