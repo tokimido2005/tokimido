@@ -32,20 +32,23 @@ export const Route = createFileRoute("/aplicatii")({
 function Inbox() {
   const { t } = useT();
   const { user, isPending } = useCurrentUserState();
-  const [jobs, setJobs] = useState<InboxJob[] | null>(null);
+  const [jobs, setJobs] = useState<InboxJob[]>([]);
   const [given, setGiven] = useState<Array<{ job_id: number; to_user_id: string }>>([]);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [confirm, setConfirm] = useState<{ type: "delete" | "cancel"; jobId: number } | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const reload = useCallback(() => {
     return Promise.all([listPosterInbox(), listMyRatingsGiven()])
       .then(([inbox, ratings]) => {
         setJobs(inbox);
         setGiven(ratings);
+        setLoaded(true);
       })
       .catch((err: unknown) => {
         toast.error(err instanceof Error ? err.message : "Nu am putut încărca aplicațiile");
         setJobs([]);
+        setLoaded(true);
       });
   }, []);
 
@@ -66,14 +69,14 @@ function Inbox() {
   if (!user) return <Navigate to="/login" search={{ next: "/aplicatii" }} />;
 
   const pendingCount =
-    jobs?.reduce((n, j) => n + j.applicants.filter((a) => a.status === "pending").length, 0) ?? 0;
+    jobs.reduce((n, j) => n + j.applicants.filter((a) => a.status === "pending").length, 0);
 
   async function setStatus(applicationId: number, status: "contacted" | "selected" | "declined" | "withdrawn") {
     setBusyId(applicationId);
     try {
       await updateApplicationStatus({ data: { applicationId, status } });
       if (status === "selected") {
-        const job = jobs?.find((j) => j.applicants.some((a) => a.id === applicationId));
+        const job = jobs.find((j) => j.applicants.some((a) => a.id === applicationId));
         if (job?.has_geo) toast.success(t("map.selectedHint"));
       }
       await reload();
@@ -161,7 +164,7 @@ function Inbox() {
           ) : null}
         </div>
 
-        {jobs === null ? (
+        {!loaded ? (
           <div className="mt-6 h-40 animate-pulse rounded-[28px] bg-white/40 dark:bg-white/8" />
         ) : jobs.length === 0 ? (
           <div className="mt-6">
