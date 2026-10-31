@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const KEY = "rabotaem-splash-v19";
+const KEY = "rabotaem-splash-v20";
 const DURATION = 1600;
 
 export function WelcomeSplash() {
@@ -31,12 +31,14 @@ export function WelcomeSplash() {
   if (done) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#071422]">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#071422]"
+      style={{ animation: "fadeInOut 1.6s ease forwards" }}
+    >
       <img
         src="/logo-splash.webp"
         alt=""
-        className="w-[min(78vw,420px)] opacity-0"
-        style={{ animation: "fadeInOut 1.6s ease forwards" }}
+        className="w-[min(78vw,420px)]"
         width={1600}
         height={402}
         decoding="async"
