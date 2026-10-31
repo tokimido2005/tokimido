@@ -723,6 +723,13 @@ html.dark {
   100% { opacity: 0; }
 }
 
+@keyframes splashFade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  65% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
