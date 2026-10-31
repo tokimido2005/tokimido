@@ -37,6 +37,19 @@ export const Route = createFileRoute("/post")({
   component: PostJob,
 });
 
+const FREE_ACCESS: MonetizationAccess = {
+  mode: "free",
+  isPro: false,
+  isAdmin: false,
+  proUntil: null,
+  jobsUsed: 0,
+  appliesUsed: 0,
+  canPost: true,
+  canApply: true,
+  freeJobLimit: 999,
+  freeApplyLimit: 999,
+};
+
 function PostJob() {
   const { t } = useT();
   const { user, isPending } = useCurrentUserState();
@@ -72,7 +85,7 @@ function PostJob() {
   const [error, setError] = useState<string | null>(null);
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null);
   const [gate, setGate] = useState<{ complete: boolean; verified: boolean; phone: string } | null>(null);
-  const [access, setAccess] = useState<MonetizationAccess | undefined>(undefined);
+  const [access, setAccess] = useState<MonetizationAccess>(FREE_ACCESS);
 
   const localities = useMemo(() => localitiesFor(raion), [raion]);
 
@@ -82,53 +95,26 @@ function PostJob() {
       return;
     }
     let cancelled = false;
-    const timeout = setTimeout(() => {
-      if (!cancelled && gate === null) {
-        setGate({ complete: true, verified: true, phone: "" });
-      }
-      if (!cancelled && access === undefined) {
-        setAccess({
-          mode: "free",
-          isPro: false,
-          isAdmin: false,
-          proUntil: null,
-          jobsUsed: 0,
-          appliesUsed: 0,
-          canPost: true,
-          canApply: true,
-          freeJobLimit: 999,
-          freeApplyLimit: 999,
-        });
-      }
-    }, 5000);
 
     getProfileGate()
       .then((g) => {
         if (!cancelled) {
-          clearTimeout(timeout);
           setGate({ complete: g.complete, verified: g.verified, phone: g.phone });
           if (g.phone) setPhone(g.phone);
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          clearTimeout(timeout);
-          setGate({ complete: false, verified: false, phone: "" });
-        }
+        if (!cancelled) setGate({ complete: true, verified: true, phone: "" });
       });
 
     getMyAccess({ data: { t: Date.now() } })
       .then((row) => {
-        if (!cancelled) {
-          clearTimeout(timeout);
-          setAccess(row);
-        }
+        if (!cancelled) setAccess(row);
       })
       .catch(async () => {
         try {
           const settings = await getMonetizationPublic({ data: { t: Date.now() } });
           if (cancelled) return;
-          clearTimeout(timeout);
           setAccess({
             ...settings,
             isPro: false,
@@ -140,16 +126,12 @@ function PostJob() {
             canApply: settings.mode === "free",
           });
         } catch {
-          if (!cancelled) {
-            clearTimeout(timeout);
-            setAccess(undefined);
-          }
+          /* keep free default */
         }
       });
 
     return () => {
       cancelled = true;
-      clearTimeout(timeout);
     };
   }, [user, mode]);
 
@@ -165,35 +147,8 @@ function PostJob() {
 
   if (!user) return <Navigate to="/login" search={{ next: "/post" }} />;
 
-  if (gate === null) {
-    return (
-      <Shell>
-        <main className="mx-auto max-w-2xl px-4 py-16">
-          <div className="h-80 animate-pulse rounded-[32px] bg-white/40 dark:bg-white/8" />
-        </main>
-      </Shell>
-    );
-  }
-
-  if (!gate.complete) return <Navigate to="/complete" search={{ next: "/post" }} />;
-  if (!gate.verified) return <Navigate to="/verify" search={{ next: "/post" }} />;
-
-  if (access === undefined) {
-    return (
-      <Shell>
-        <main className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <div className="h-80 animate-pulse rounded-[32px] bg-white/40 dark:bg-white/8" />
-          <p className="mt-4 text-sm text-muted">Se încarcă formularul...</p>
-          <button
-            className="mt-4 text-sm text-orange underline"
-            onClick={() => window.location.reload()}
-          >
-            Reîncarcă pagina
-          </button>
-        </main>
-      </Shell>
-    );
-  }
+  if (gate && !gate.complete) return <Navigate to="/complete" search={{ next: "/post" }} />;
+  if (gate && !gate.verified) return <Navigate to="/verify" search={{ next: "/post" }} />;
 
   const posterName = user.displayName ?? user.primaryEmail ?? "Utilizator";
 
@@ -288,9 +243,9 @@ function PostJob() {
           <>
             <h1 className="text-3xl font-semibold tracking-tight text-navy">{t("post.pageTitle")}</h1>
             <p className="mt-2 text-sm text-muted">
-              {showPro && access?.mode === "paid"
+              {showPro && access.mode === "paid"
                 ? t("pro.paidMode")
-                : showPro && access?.mode === "freemium"
+                : showPro && access.mode === "freemium"
                   ? t("pro.freemiumMode", { jobs: access.freeJobLimit, apps: access.freeApplyLimit })
                   : t("post.pageLead")}
             </p>
@@ -301,7 +256,7 @@ function PostJob() {
             <p className="mt-2 text-sm text-muted">{t("kind.pick")}</p>
           </>
         )}
-        {showPro && access && !access.canPost ? (
+        {showPro && !access.canPost ? (
           <div className="mt-6">
             <PaywallCard access={access} action="post" />
           </div>
@@ -482,168 +437,75 @@ function PostJob() {
                 <MapPicker value={pin} onChange={setPin} raion={raion} />
               </div>
               {kind === "oficial" ? (
-                <>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label={t("kind.salary")}>
-                      <input
-                        className="field tabular-nums"
-                        type="number"
-                        min={0}
-                        disabled={negotiable}
-                        value={negotiable ? "" : salary}
-                        onChange={(e) => setSalary(e.target.value)}
-                        placeholder="8000"
-                      />
-                    </Field>
-                    <Field label={t("kind.openings")} required>
-                      <input
-                        className="field tabular-nums"
-                        type="number"
-                        min={1}
-                        max={30}
-                        required
-                        value={openings}
-                        onChange={(e) => setOpenings(e.target.value)}
-                      />
-                    </Field>
-                  </div>
-                  <label className="flex items-center gap-2 text-sm text-navy">
-                    <input
-                      type="checkbox"
-                      checked={negotiable}
-                      onChange={(e) => setNegotiable(e.target.checked)}
-                    />
-                    {t("kind.salaryNegotiable")}
-                  </label>
-                  <Field label={t("kind.schedule")}>
-                    <div className="flex flex-wrap gap-2">
-                      {SCHEDULES.map((id) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => setSchedule(id)}
-                          className={
-                            schedule === id
-                              ? "h-11 rounded-full bg-brand px-4 text-sm font-semibold text-white"
-                              : "h-11 rounded-full bg-white/50 dark:bg-white/10 px-4 text-sm font-medium text-navy ring-1 ring-navy/8"
-                          }
-                        >
-                          {t(`schedule.${id}`)}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
+                <div className="grid gap-4 sm:grid-cols-2">
                   <Field label={t("kind.contract")}>
-                    <div className="flex flex-wrap gap-2">
-                      {CONTRACT_TYPES.map((id) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => setContract(id)}
-                          className={
-                            contract === id
-                              ? "h-11 rounded-full bg-brand px-4 text-sm font-semibold text-white"
-                              : "h-11 rounded-full bg-white/50 dark:bg-white/10 px-4 text-sm font-medium text-navy ring-1 ring-navy/8"
-                          }
-                        >
-                          {t(`contract.${id}`)}
-                        </button>
+                    <select className="field" value={contract} onChange={(e) => setContract(e.target.value as typeof contract)}>
+                      {CONTRACT_TYPES.map((c) => (
+                        <option key={c} value={c}>{t(`contract.${c}`)}</option>
                       ))}
+                    </select>
+                  </Field>
+                  <Field label={t("kind.schedule")}>
+                    <select className="field" value={schedule} onChange={(e) => setSchedule(e.target.value as typeof schedule)}>
+                      {SCHEDULES.map((s) => (
+                        <option key={s} value={s}>{t(`schedule.${s}`)}</option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              ) : null}
+              {kind === "rapid" ? (
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field label={t("post.payment")} required>
+                    <input className="field" type="number" min={1} required value={payment} onChange={(e) => setPayment(e.target.value)} />
+                  </Field>
+                  <Field label={t("post.duration")} required>
+                    <div className="flex gap-2">
+                      <input className="field" type="number" min={1} required value={duration} onChange={(e) => setDuration(e.target.value)} />
+                      <select className="field w-24" value={unit} onChange={(e) => setUnit(e.target.value as typeof unit)}>
+                        <option value="hours">{t("post.hours")}</option>
+                        <option value="minutes">{t("post.minutes")}</option>
+                      </select>
                     </div>
                   </Field>
-                </>
-              ) : (
-                <>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label={t("post.date")} required>
-                      <input
-                        className="field tabular-nums"
-                        type="date"
-                        required
-                        min={toMinDate()}
-                        value={workDate}
-                        onChange={(e) => setWorkDate(e.target.value)}
-                      />
-                    </Field>
-                    <Field label={t("post.time")} required>
-                      <input
-                        className="field tabular-nums"
-                        type="time"
-                        required
-                        value={workTime}
-                        onChange={(e) => setWorkTime(e.target.value)}
-                      />
-                    </Field>
-                  </div>
-                  <p className="text-xs text-muted">{t("post.whenHint")}</p>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label={t("post.pay")}>
-                      <input
-                        className="field tabular-nums"
-                        type="number"
-                        min={50}
-                        required
-                        value={payment}
-                        onChange={(e) => setPayment(e.target.value)}
-                      />
-                    </Field>
-                    <Field label={t("post.duration")}>
-                      <div className="flex gap-2">
-                        <input
-                          className="field tabular-nums"
-                          type="number"
-                          min={1}
-                          required
-                          value={duration}
-                          onChange={(e) => setDuration(e.target.value)}
-                        />
-                        <select
-                          className="field w-28 px-2"
-                          value={unit}
-                          onChange={(e) => setUnit(e.target.value as "hours" | "minutes")}
-                        >
-                          <option value="hours">{t("post.hours")}</option>
-                          <option value="minutes">{t("post.minutes")}</option>
-                        </select>
-                      </div>
-                    </Field>
-                  </div>
-                  <Field label={t("post.people")} required>
-                    <div className="flex flex-wrap gap-2">
-                      {["1", "2", "3", "4", "5", "6+"].map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setPeople(n)}
-                          className={
-                            people === n
-                              ? "h-11 min-w-11 rounded-full bg-brand px-3.5 text-sm font-semibold text-white"
-                              : "h-11 min-w-11 rounded-full bg-white/50 dark:bg-white/10 px-3.5 text-sm font-medium text-navy ring-1 ring-navy/8"
-                          }
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
+                  <Field label={t("post.people")}>
+                    <select className="field" value={people} onChange={(e) => setPeople(e.target.value)}>
+                      {["1","2","3","4","5","6+"].map((n) => <option key={n} value={n}>{n}</option>)}
+                    </select>
                     {people === "6+" ? (
-                      <input
-                        className="field mt-2 tabular-nums"
-                        type="number"
-                        min={6}
-                        max={30}
-                        value={peopleCustom}
-                        onChange={(e) => setPeopleCustom(e.target.value)}
-                      />
+                      <input className="field mt-2" type="number" min={6} value={peopleCustom} onChange={(e) => setPeopleCustom(e.target.value)} />
                     ) : null}
                   </Field>
-                </>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label={t("kind.salary")}>
+                    <div className="flex items-center gap-2">
+                      <input className="field" type="number" min={0} value={salary} onChange={(e) => setSalary(e.target.value)} disabled={negotiable} />
+                      <label className="flex items-center gap-1 text-sm">
+                        <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} />
+                        {t("kind.salaryNegotiable")}
+                      </label>
+                    </div>
+                  </Field>
+                  <Field label={t("kind.openings")}>
+                    <input className="field" type="number" min={1} value={openings} onChange={(e) => setOpenings(e.target.value)} />
+                  </Field>
+                </div>
               )}
-              <Field label={t("apply.phone")}>
-                <PhoneLocked phone={phone} />
-                <p className="mt-1.5 text-xs text-muted">{t("verify.changeHint")}</p>
-              </Field>
-              <CaptchaField onChange={setCaptcha} />
-              {access ? <UsageHint access={access} action="post" /> : null}
+              {kind === "rapid" ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label={t("post.date")} required>
+                    <input className="field" type="date" required min={toMinDate()} value={workDate} onChange={(e) => setWorkDate(e.target.value)} />
+                  </Field>
+                  <Field label={t("post.time")} required>
+                    <input className="field" type="time" required value={workTime} onChange={(e) => setWorkTime(e.target.value)} />
+                  </Field>
+                </div>
+              ) : null}
+              {phone ? <PhoneLocked phone={phone} /> : null}
+              <CaptchaField value={captcha} onChange={setCaptcha} />
+              {showPro && access ? <UsageHint access={access} action="post" /> : null}
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               <button
                 type="submit"
