@@ -730,6 +730,19 @@ html.dark {
   100% { opacity: 0; }
 }
 
+@keyframes splashBgFade {
+  0% { opacity: 1; }
+  55% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes splashLogo {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  55% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
