@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const KEY = "rabotaem-splash-v20";
-const DURATION = 1600;
+const KEY = "rabotaem-splash-v21";
+const DURATION = 1800;
 
 export function WelcomeSplash() {
   const [done, setDone] = useState(false);
@@ -32,8 +32,11 @@ export function WelcomeSplash() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#071422]"
-      style={{ animation: "fadeInOut 1.6s ease forwards" }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{
+        background: "#071422",
+        animation: "splashFade 1.8s ease-in-out forwards",
+      }}
     >
       <img
         src="/logo-splash.webp"
