@@ -92,20 +92,8 @@ html.dark {
     background-color: #071422;
   }
 
-  html.rbt-splash-done:not(.dark),
-  html.rbt-splash.is-reveal:not(.dark) {
-    color-scheme: light;
-    background-color: var(--color-canvas);
-  }
-
   html.dark {
     color-scheme: dark;
-  }
-
-  html.rbt-splash:not(.is-reveal),
-  html:has(.splash):not(.is-reveal) {
-    color-scheme: dark;
-    background-color: #071422;
   }
 
   body {
@@ -113,21 +101,6 @@ html.dark {
     color: var(--color-ink);
     background-color: #071422;
     font-family: var(--font-sans);
-  }
-
-  html.rbt-splash-done:not(.dark) body,
-  html.rbt-splash.is-reveal:not(.dark) body {
-    background-color: var(--color-canvas);
-  }
-
-  html.rbt-splash-done.dark body,
-  html.rbt-splash.is-reveal.dark body {
-    background-color: var(--color-canvas);
-  }
-
-  html.rbt-splash:not(.is-reveal) body,
-  html:has(.splash):not(.is-reveal) body {
-    background-color: #071422 !important;
   }
 
   .badge-urgent {
@@ -275,11 +248,6 @@ html.dark {
       min-height: 100dvh;
       min-height: -webkit-fill-available;
     }
-  }
-
-  html.rbt-splash:not(.rbt-splash-done) body,
-  html:has(.splash):not(.rbt-splash-done) body {
-    overflow: hidden;
   }
 
   button:not(:disabled),
@@ -617,85 +585,6 @@ html.dark {
   animation: logo-welcome-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-html.rbt-splash-done .splash {
-  display: none !important;
-}
-
-.splash {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  min-height: 100dvh;
-  min-width: 100%;
-  background: transparent;
-  pointer-events: auto;
-  animation: rbt-blur 2800ms linear both;
-}
-
-.splash-veil {
-  position: absolute;
-  inset: 0;
-  background: #071422;
-  animation: rbt-veil 2800ms ease both;
-}
-
-.splash-logo {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  width: min(78vw, 560px);
-  height: auto;
-  display: block;
-  opacity: 0;
-  animation: rbt-logo-io 2800ms ease both;
-}
-
-@keyframes rbt-veil {
-  0%,
-  30% {
-    opacity: 1;
-  }
-  48%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes rbt-logo-io {
-  0%,
-  8% {
-    opacity: 0;
-  }
-  28%,
-  62% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes rbt-blur {
-  0%,
-  30% {
-    -webkit-backdrop-filter: blur(0);
-    backdrop-filter: blur(0);
-  }
-  48%,
-  62% {
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
-  }
-  100% {
-    -webkit-backdrop-filter: blur(0);
-    backdrop-filter: blur(0);
-  }
-}
-
 .chat-panel {
   box-shadow:
     var(--shadow-glass),
@@ -788,6 +677,7 @@ html.rbt-splash-done .splash {
     0 0 0 1px color-mix(in srgb, var(--color-danger) 55%, transparent),
     0 28px 64px -20px color-mix(in srgb, var(--color-danger) 50%, transparent);
 }
+
 .ban-colon {
   padding-bottom: 1.65rem;
   font-size: 1.45rem;
@@ -795,6 +685,7 @@ html.rbt-splash-done .splash {
   color: var(--color-navy);
   opacity: 0.5;
 }
+
 .inbox-hit {
   box-shadow:
     var(--shadow-glass),
@@ -823,6 +714,13 @@ html.rbt-splash-done .splash {
     opacity: 1;
     transform: translateY(-3px);
   }
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -925,20 +823,5 @@ html.rbt-splash-done .splash {
   .job-card {
     content-visibility: visible;
     contain-intrinsic-size: auto;
-  }
-
-  .splash {
-    animation: none !important;
-    pointer-events: none !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
-  .splash-veil {
-    animation: rbt-veil-m 1400ms ease both !important;
-  }
-
-  .splash-logo {
-    animation: rbt-logo-m 1400ms ease both !important;
   }
 }
