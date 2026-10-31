@@ -31,7 +31,7 @@ import { LangSwitcher, useT } from "@/lib/locale";
 import { ThemeToggle } from "@/lib/theme";
 import { seoHead } from "@/lib/seo";
 import { cn, formatJobDate, formatJobTime, formatMdl } from "@/lib/utils";
-import { Sentry } from "@/lib/sentry";
+import { Sentry, initSentry } from "@/lib/sentry";
 import {
   adminBanUser,
   adminDeleteJob,
@@ -256,6 +256,7 @@ function OverviewPane() {
     : [];
 
   function testSentry() {
+    initSentry();
     try {
       throw new Error("Sentry test error from Rabotaem admin panel");
     } catch (err) {
