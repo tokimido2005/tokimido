@@ -33,7 +33,7 @@ export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 /** The upstream providers to render sign-in buttons for. */
 export { GROK_PROVIDERS };
 
-// ── Live-preview bearer token ────────────────────────────────────────────────
+// ── Live-preview bearer token ───────────────────────────────────────────────────────
 // The embedded preview iframe has partitioned cookies, so we keep the session's
 // bearer token in sessionStorage and attach it to every Better Auth request (and
 // to server functions, via `@/lib/auth/middleware`). Empty everywhere except the
@@ -76,18 +76,13 @@ function inLivePreview(): boolean {
 type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: string };
 
 /**
- * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`),
- * federating through the Grok auth broker.
+ * Start sign-in with one upstream provider.
  *
- * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
- *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
- *   `popup.server.ts`) — 302s to the broker/upstream login (no app chrome) and,
- *   on return, posts the session bearer token back. We store it and refresh the
- *   session; no top-level navigation of the iframe to the broker.
- * - **Deployed** (and local non-iframe): a normal full-page redirect into the broker.
+ * - Direct Google (`providerId === "google"`): uses native social provider
+ *   (requires GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET on the server).
+ * - Grok providers (`grok-google`, `grok-x`): federates through the Grok auth broker.
  *
- * Either way it clears any existing local session FIRST so switching providers
- * actually switches identity.
+ * Live preview uses a popup; deployed uses a full-page redirect.
  */
 export async function signIn(
   providerId: string,
@@ -95,6 +90,18 @@ export async function signIn(
 ): Promise<void> {
   const callbackURL = opts.callbackURL ?? "/";
   const errorCallbackURL = opts.errorCallbackURL ?? "/";
+
+  // Direct Google social login (bypasses Grok broker).
+  if (providerId === "google") {
+    const { data, error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL,
+      errorCallbackURL,
+    });
+    if (error) throw new Error(error.message ?? "Sign-in failed");
+    if (data?.url) window.location.href = data.url;
+    return;
+  }
 
   // Open the popup SYNCHRONOUSLY on the user gesture — before any await
   // (including signOut). Awaiting first drops user-gesture privilege in some
