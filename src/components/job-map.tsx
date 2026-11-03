@@ -30,12 +30,11 @@ function unproject(x: number, y: number, zoom: number): GeoPoint {
   return { lat: (latRad * 180) / Math.PI, lng };
 }
 
-function tileUrl(z: number, x: number, y: number, dark: boolean) {
+function tileUrl(z: number, x: number, y: number, _dark: boolean) {
   const n = 2 ** z;
   const wx = ((x % n) + n) % n;
-  const host = ["a", "b", "c"][Math.abs(wx + y) % 3];
-  const style = dark ? "dark_all" : "rastertiles/voyager";
-  return `https://${host}.basemaps.cartocdn.com/${style}/${z}/${wx}/${y}.png`;
+  // OpenStreetMap standard tiles - clear street names and details
+  return `https://tile.openstreetmap.org/${z}/${wx}/${y}.png`;
 }
 
 function useDark() {
@@ -256,7 +255,7 @@ function MapCanvas({
         </div>
       ) : null}
       <p className="pointer-events-none absolute bottom-1.5 left-2 z-10 text-[10px] text-navy/70 dark:text-white/55">
-        © OpenStreetMap © CARTO
+        © OpenStreetMap contributors
       </p>
     </div>
   );
