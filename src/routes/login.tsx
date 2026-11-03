@@ -60,7 +60,7 @@ function Login() {
     setError(null);
     try {
       if (mode === "up") {
-        if (!accepted || !ageConfirmed) throw new Error("Trebuie să confirmi că ai cel puțin 16 ani și să accepți termenii.");
+        if (!accepted || !ageConfirmed) throw new Error(t("login.ageAndTerms"));
         if (!captcha) throw new Error(t("captcha.required"));
         await verifyCaptcha({ data: captcha });
         await checkPhoneAvailable({ data: phone.trim() });
