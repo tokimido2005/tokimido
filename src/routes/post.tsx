@@ -197,13 +197,13 @@ function PostJob() {
       const duration_minutes = unit === "hours" ? Math.round(dur * 60) : Math.round(dur);
       if (!workDate || !workTime) {
         setBusy(false);
-        setError("Data și ora sunt obligatorii");
+        setError(t("post.dateRequired"));
         return;
       }
       const startsIso = combineDateTime(workDate, workTime);
       if (new Date(startsIso).getTime() <= Date.now()) {
         setBusy(false);
-        setError("Alege o dată și o oră în viitor");
+        setError(t("post.dateFuture"));
         return;
       }
       const res = await createJob({
@@ -228,7 +228,7 @@ function PostJob() {
       track("job_post", { id: res.id });
       await navigate({ to: "/jobs/$id", params: { id: String(res.id) } });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Nu am putut publica anunțul";
+      const message = err instanceof Error ? err.message : t("post.publishFail");
       setError(message);
       toast.error(message);
     } finally {
@@ -316,7 +316,7 @@ function PostJob() {
             </div>
             <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4 rounded-[32px] p-5 glass sm:p-7">
               <div className="rounded-2xl bg-orange/10 px-4 py-3 text-sm leading-relaxed text-navy ring-1 ring-orange/20">
-                <strong>Atenție:</strong> Anunțurile pentru persoane sub 15 ani sunt strict interzise. Platforma poate șterge astfel de anunțuri și bloca contul fără preaviz.
+                {t("post.ageWarning")}
               </div>
               {kind === "oficial" ? (
                 <>
@@ -337,7 +337,7 @@ function PostJob() {
                       minLength={6}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Ex: Vânzător magazin alimentar"
+                      placeholder={t("post.phOficialTitle")}
                     />
                   </Field>
                   <Field label={t("post.description")} required>
@@ -388,7 +388,7 @@ function PostJob() {
                       minLength={20}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Ce trebuie făcut, unde, cînd, ce e inclus."
+                      placeholder={t("post.phRapidDesc")}
                     />
                   </Field>
                   <Field label={t("post.category")}>
@@ -459,7 +459,7 @@ function PostJob() {
               ) : null}
               {kind === "rapid" ? (
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label={"Plată"} required>
+                  <Field label={t("post.payment")} required>
                     <input className="field" type="number" min={1} required value={payment} onChange={(e) => setPayment(e.target.value)} />
                   </Field>
                   <Field label={t("post.duration")} required>
