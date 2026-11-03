@@ -307,9 +307,6 @@ export function MapPicker({
     );
   }
 
-  const mapPoint = value ?? center;
-  const googleEmbed = `https://maps.google.com/maps?q=${mapPoint.lat},${mapPoint.lng}&z=${zoom}&output=embed`;
-
   return (
     <div data-testid="map-picker">
       <label className="mb-3 flex items-center gap-2.5 text-sm font-medium text-navy">
@@ -324,15 +321,17 @@ export function MapPicker({
 
       {showMap ? (
         <>
-          <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-navy/10 sm:h-64">
-            <iframe
-              title="Google Maps"
-              src={googleEmbed}
-              className="absolute inset-0 h-full w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
+          <MapCanvas
+            center={value ?? center}
+            zoom={zoom}
+            pin={value}
+            onCenterChange={setCenter}
+            onZoomChange={setZoom}
+            onPick={(p) => {
+              onChange(p);
+              setGeoErr(null);
+            }}
+          />
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -352,16 +351,12 @@ export function MapPicker({
                 <X className="size-3.5" />
                 {t("map.clear")}
               </button>
-            ) : null}
-            <a
-              href={googleMapsUrl(mapPoint.lat, mapPoint.lng)}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy/8 px-3 text-xs font-semibold text-navy"
-            >
-              <Navigation className="size-3.5" />
-              Deschide în Google Maps
-            </a>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs text-muted">
+                <MapPin className="size-3.5" />
+                {t("map.tap")}
+              </span>
+            )}
           </div>
         </>
       ) : (
@@ -380,18 +375,21 @@ export function MapPicker({
 
 function ExactJobMap({ lat, lng }: GeoPoint) {
   const { t } = useT();
-  const googleEmbed = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+  const [center, setCenter] = useState<GeoPoint>({ lat, lng });
+  const [zoom, setZoom] = useState(16);
+  useEffect(() => {
+    setCenter({ lat, lng });
+    setZoom(16);
+  }, [lat, lng]);
   return (
     <div>
-      <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-navy/10 sm:h-64">
-        <iframe
-          title="Locație exactă"
-          src={googleEmbed}
-          className="absolute inset-0 h-full w-full border-0"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
-      </div>
+      <MapCanvas
+        center={center}
+        zoom={zoom}
+        pin={{ lat, lng }}
+        onCenterChange={setCenter}
+        onZoomChange={setZoom}
+      />
       <a
         href={googleMapsUrl(lat, lng)}
         target="_blank"
