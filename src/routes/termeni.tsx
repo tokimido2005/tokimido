@@ -25,6 +25,26 @@ function TermsPage() {
           este legat de un singur cont. Ești responsabil pentru păstrarea parolei și pentru activitatea din cont.
         </p>
       </LegalBlock>
+      <LegalBlock title="2.1. Vârstă minimă și minori">
+        <p>
+          Pentru a crea un cont pe Rabotaem.md trebuie să ai cel puțin 16 ani. Prin bifarea checkbox-ului de la
+          înregistrare, confirmi că îndeplinești această condiție.
+        </p>
+        <p>
+          Este strict interzisă publicarea de anunțuri care solicită persoane sub 15 ani. Anunțurile de acest tip vor
+          fi șterse imediat, iar contul poate fi blocat.
+        </p>
+        <p>
+          Pentru persoanele între 15 și 18 ani, cel care postează anunțul (angajatorul) este pe deplin responsabil să
+          dețină acordul părinților sau al reprezentantului legal și să respecte toate limitele legale privind
+          munca minorilor (durată, tip de activitate, condiții de siguranță). Rabotaem.md nu verifică aceste
+          documente și nu își asumă nicio răspundere în acest sens.
+        </p>
+        <p>
+          Platforma își rezervă dreptul de a șterge orice anunț sau de a bloca orice cont care încalcă aceste reguli,
+          fără preaviz.
+        </p>
+      </LegalBlock>
       <LegalBlock title="3. Reguli pentru postarea anunțurilor">
         <p>
           Anunțurile trebuie să fie reale. Este interzis să publici anunțuri false, înșelătoare, ilegale sau care cer
