@@ -46,7 +46,7 @@ export function RulesAccept({
         >
           {ageConfirmed ? <Check className="size-3" strokeWidth={3} /> : null}
         </span>
-        <span className="text-sm leading-snug text-navy">Confirm că am cel puțin 16 ani.</span>
+        <span className="text-sm leading-snug text-navy">{t("login.ageConfirm")}</span>
       </label>
 
       <label className="mt-3 flex w-full cursor-pointer items-start gap-3 text-left">
