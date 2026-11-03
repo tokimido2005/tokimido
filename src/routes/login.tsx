@@ -40,6 +40,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [captcha, setCaptcha] = useState<CaptchaValue | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,7 @@ function Login() {
   function toggleMode() {
     setError(null);
     setAccepted(false);
+    setAgeConfirmed(false);
     void navigate({
       search: { next, mode: mode === "in" ? "up" : undefined },
     });
@@ -58,7 +60,7 @@ function Login() {
     setError(null);
     try {
       if (mode === "up") {
-        if (!accepted) throw new Error(t("login.agree"));
+        if (!accepted || !ageConfirmed) throw new Error("Trebuie să confirmi că ai cel puțin 16 ani și să accepți termenii.");
         if (!captcha) throw new Error(t("captcha.required"));
         await verifyCaptcha({ data: captcha });
         await checkPhoneAvailable({ data: phone.trim() });
@@ -140,7 +142,7 @@ function Login() {
     }
   }
 
-  const canCreate = accepted && !busy;
+  const canCreate = accepted && ageConfirmed && !busy;
 
   return (
     <Shell>
@@ -154,14 +156,19 @@ function Login() {
 
           {mode === "up" ? (
             <div className="mt-6">
-              <RulesAccept accepted={accepted} onToggle={() => setAccepted((v) => !v)} />
+              <RulesAccept
+                accepted={accepted}
+                onToggle={() => setAccepted((v) => !v)}
+                ageConfirmed={ageConfirmed}
+                onAgeToggle={() => setAgeConfirmed((v) => !v)}
+              />
             </div>
           ) : null}
 
           {authEnabled ? (
             <>
               <div className={mode === "up" ? "mt-4" : "mt-6"}>
-                <SocialAuthButtons next={next} locked={mode === "up" && !accepted} />
+                <SocialAuthButtons next={next} locked={mode === "up" && (!accepted || !ageConfirmed)} />
               </div>
               <div className="my-6 flex items-center gap-3 text-xs font-medium tracking-wide text-subtle uppercase">
                 <span className="h-px flex-1 bg-navy/12" />
