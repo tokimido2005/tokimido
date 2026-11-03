@@ -29,14 +29,14 @@ export function RulesAccept({
         </ul>
       </div>
 
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={ageConfirmed}
-        data-testid="age-confirm"
-        onClick={onAgeToggle}
-        className="mt-4 flex w-full items-start gap-3 text-left"
-      >
+      <label className="mt-4 flex w-full cursor-pointer items-start gap-3 text-left">
+        <input
+          type="checkbox"
+          checked={ageConfirmed}
+          onChange={onAgeToggle}
+          data-testid="age-confirm"
+          className="sr-only"
+        />
         <span
           className={
             ageConfirmed
@@ -47,16 +47,16 @@ export function RulesAccept({
           {ageConfirmed ? <Check className="size-3" strokeWidth={3} /> : null}
         </span>
         <span className="text-sm leading-snug text-navy">Confirm că am cel puțin 16 ani.</span>
-      </button>
+      </label>
 
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={accepted}
-        data-testid="rules-accept"
-        onClick={onToggle}
-        className="mt-3 flex w-full items-start gap-3 text-left"
-      >
+      <label className="mt-3 flex w-full cursor-pointer items-start gap-3 text-left">
+        <input
+          type="checkbox"
+          checked={accepted}
+          onChange={onToggle}
+          data-testid="rules-accept"
+          className="sr-only"
+        />
         <span
           className={
             accepted
@@ -67,7 +67,7 @@ export function RulesAccept({
           {accepted ? <Check className="size-3" strokeWidth={3} /> : null}
         </span>
         <span className="text-sm leading-snug text-navy">{t("login.agree")}</span>
-      </button>
+      </label>
 
       <p className="mt-3 text-xs leading-relaxed text-muted">
         <Link to="/termeni" className="font-medium text-navy underline">
