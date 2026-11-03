@@ -272,6 +272,7 @@ export function MapPicker({
   raion?: string;
 }) {
   const { t } = useT();
+  const [showMap, setShowMap] = useState(false);
   const [center, setCenter] = useState<GeoPoint>(() => (value ? value : raionCenter(raion)));
   const [zoom, setZoom] = useState(value ? 15 : 12);
   const [geoErr, setGeoErr] = useState<string | null>(null);
@@ -299,51 +300,74 @@ export function MapPicker({
         onChange(point);
         setCenter(point);
         setZoom(16);
+        setShowMap(true);
       },
       () => setGeoErr(t("map.geoFail")),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 },
     );
   }
 
+  const mapPoint = value ?? center;
+  const googleEmbed = `https://maps.google.com/maps?q=${mapPoint.lat},${mapPoint.lng}&z=${zoom}&output=embed`;
+
   return (
     <div data-testid="map-picker">
-      <MapCanvas
-        center={value ?? center}
-        zoom={zoom}
-        pin={value}
-        onCenterChange={setCenter}
-        onZoomChange={setZoom}
-        onPick={(p) => {
-          onChange(p);
-          setGeoErr(null);
-        }}
-      />
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={useMyLocation}
-          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy/8 px-3 text-xs font-semibold text-navy"
-        >
-          <Crosshair className="size-3.5" />
-          {t("map.myLocation")}
-        </button>
-        {value ? (
-          <button
-            type="button"
-            onClick={() => onChange(null)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy/8 px-3 text-xs font-semibold text-navy"
-            data-testid="map-clear"
-          >
-            <X className="size-3.5" />
-            {t("map.clear")}
-          </button>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-xs text-muted">
-            <MapPin className="size-3.5" />
-            {t("map.tap")}
-          </span>
-        )}
-      </div>
+      <label className="mb-3 flex items-center gap-2.5 text-sm font-medium text-navy">
+        <input
+          type="checkbox"
+          checked={showMap}
+          onChange={(e) => setShowMap(e.target.checked)}
+          className="size-4 rounded accent-orange"
+        />
+        Arată locația pe hartă (opțional)
+      </label>
+
+      {showMap ? (
+        <>
+          <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-navy/10 sm:h-64">
+            <iframe
+              title="Google Maps"
+              src={googleEmbed}
+              className="absolute inset-0 h-full w-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={useMyLocation}
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy/8 px-3 text-xs font-semibold text-navy"
+            >
+              <Crosshair className="size-3.5" />
+              {t("map.myLocation")}
+            </button>
+            {value ? (
+              <button
+                type="button"
+                onClick={() => onChange(null)}
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy/8 px-3 text-xs font-semibold text-navy"
+                data-testid="map-clear"
+              >
+                <X className="size-3.5" />
+                {t("map.clear")}
+              </button>
+            ) : null}
+            <a
+              href={googleMapsUrl(mapPoint.lat, mapPoint.lng)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-navy/8 px-3 text-xs font-semibold text-navy"
+            >
+              <Navigation className="size-3.5" />
+              Deschide în Google Maps
+            </a>
+          </div>
+        </>
+      ) : (
+        <p className="text-xs text-muted">Bifează ca să vezi harta. Nu ocupă loc până nu o activezi.</p>
+      )}
+
       {value ? (
         <p className="mt-1.5 text-xs font-medium text-navy" data-testid="map-set">
           {t("map.set")}
@@ -356,21 +380,18 @@ export function MapPicker({
 
 function ExactJobMap({ lat, lng }: GeoPoint) {
   const { t } = useT();
-  const [center, setCenter] = useState<GeoPoint>({ lat, lng });
-  const [zoom, setZoom] = useState(16);
-  useEffect(() => {
-    setCenter({ lat, lng });
-    setZoom(16);
-  }, [lat, lng]);
+  const googleEmbed = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
   return (
     <div>
-      <MapCanvas
-        center={center}
-        zoom={zoom}
-        pin={{ lat, lng }}
-        onCenterChange={setCenter}
-        onZoomChange={setZoom}
-      />
+      <div className="relative h-56 w-full overflow-hidden rounded-2xl bg-navy/10 sm:h-64">
+        <iframe
+          title="Locație exactă"
+          src={googleEmbed}
+          className="absolute inset-0 h-full w-full border-0"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
       <a
         href={googleMapsUrl(lat, lng)}
         target="_blank"
