@@ -226,6 +226,12 @@ export const auth = betterAuth({
   // Secure + the names ourselves. (Browsers allow Secure cookies on
   // `http://localhost`, so local dev still works.)
   advanced: {
+    // Render sits behind Cloudflare, which sets these single-value headers to
+    // the real client IP (clients cannot forge them). Without this Better Auth
+    // only reads the multi-hop X-Forwarded-For, cannot trust it, and puts every
+    // visitor in ONE shared rate-limit bucket — one abuser could block logins
+    // for everyone.
+    ipAddress: { ipAddressHeaders: ["true-client-ip", "cf-connecting-ip"] },
     useSecureCookies: false,
     defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
     cookies: {
