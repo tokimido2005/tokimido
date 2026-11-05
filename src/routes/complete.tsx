@@ -42,6 +42,7 @@ function CompleteProfile() {
   const [lastName, setLastName] = useState(fromName.last);
   const [phone, setPhone] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gate, setGate] = useState<{ complete: boolean; verified: boolean; admin: boolean; phone: string } | null>(
@@ -107,8 +108,8 @@ function CompleteProfile() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!accepted) {
-      setError(t("login.agree"));
+    if (!accepted || !ageConfirmed) {
+      setError(t("login.ageAndTerms"));
       return;
     }
     setBusy(true);
@@ -183,7 +184,12 @@ function CompleteProfile() {
               )}
             </div>
 
-            <RulesAccept accepted={accepted} onToggle={() => setAccepted((v) => !v)} />
+            <RulesAccept
+              accepted={accepted}
+              onToggle={() => setAccepted((v) => !v)}
+              ageConfirmed={ageConfirmed}
+              onAgeToggle={() => setAgeConfirmed((v) => !v)}
+            />
 
             {error ? (
               <p className="text-sm text-danger" data-testid="complete-error">
@@ -192,7 +198,7 @@ function CompleteProfile() {
             ) : null}
             <button
               type="submit"
-              disabled={!accepted || busy}
+              disabled={!accepted || !ageConfirmed || busy}
               data-testid="complete-submit"
               className="sheen flex h-12 w-full items-center justify-center rounded-full text-sm font-semibold glass-orange disabled:cursor-not-allowed disabled:opacity-45"
             >

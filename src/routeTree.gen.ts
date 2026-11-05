@@ -23,6 +23,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PostRouteImport } from './routes/post'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as ResetRouteImport } from './routes/reset'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as CCategoryRouteImport } from './routes/c/$category'
@@ -103,6 +104,11 @@ const ResetRoute = ResetRouteImport.update({
   path: '/reset',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermeniRoute = TermeniRouteImport.update({
   id: '/termeni',
   path: '/termeni',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/post': typeof PostRoute
   '/pro': typeof ProRoute
   '/reset': typeof ResetRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/post': typeof PostRoute
   '/pro': typeof ProRoute
   '/reset': typeof ResetRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/post': typeof PostRoute
   '/pro': typeof ProRoute
   '/reset': typeof ResetRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/post'
     | '/pro'
     | '/reset'
+    | '/sitemap.xml'
     | '/termeni'
     | '/verify'
     | '/c/$category'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/post'
     | '/pro'
     | '/reset'
+    | '/sitemap.xml'
     | '/termeni'
     | '/verify'
     | '/c/$category'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/post'
     | '/pro'
     | '/reset'
+    | '/sitemap.xml'
     | '/termeni'
     | '/verify'
     | '/c/$category'
@@ -316,6 +328,7 @@ export interface RootRouteChildren {
   PostRoute: typeof PostRoute
   ProRoute: typeof ProRoute
   ResetRoute: typeof ResetRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermeniRoute: typeof TermeniRoute
   VerifyRoute: typeof VerifyRoute
   CCategoryRoute: typeof CCategoryRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/termeni': {
       id: '/termeni'
       path: '/termeni'
@@ -519,6 +539,7 @@ const rootRouteChildren: RootRouteChildren = {
   PostRoute: PostRoute,
   ProRoute: ProRoute,
   ResetRoute: ResetRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermeniRoute: TermeniRoute,
   VerifyRoute: VerifyRoute,
   CCategoryRoute: CCategoryRoute,

@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { Briefcase, Zap } from "lucide-react";
@@ -48,6 +49,9 @@ const FREE_ACCESS: MonetizationAccess = {
   canApply: true,
   freeJobLimit: 999,
   freeApplyLimit: 999,
+  monthlyPriceMdl: 0,
+  updatedAt: null,
+  updatedBy: "",
 };
 
 function PostJob() {
@@ -228,7 +232,7 @@ function PostJob() {
       track("job_post", { id: res.id });
       await navigate({ to: "/jobs/$id", params: { id: String(res.id) } });
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("post.publishFail");
+      const message = errorText(err, t, t("post.publishFail"));
       setError(message);
       toast.error(message);
     } finally {
@@ -507,7 +511,7 @@ function PostJob() {
                 </div>
               ) : null}
               {phone ? <PhoneLocked phone={phone} /> : null}
-              <CaptchaField value={captcha} onChange={setCaptcha} />
+              <CaptchaField onChange={setCaptcha} />
               {showPro && access ? <UsageHint access={access} action="post" /> : null}
               {error ? <p className="text-sm text-danger">{error}</p> : null}
               <button

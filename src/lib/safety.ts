@@ -150,6 +150,8 @@ export const submitSupport = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { assertRateLimit } = await import("./rate-limit.server");
+    await assertRateLimit("support", 5, 60);
     await ensureSafetyTables();
     const sql = await getSql();
     await sql.query(

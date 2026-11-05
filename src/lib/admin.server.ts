@@ -5,9 +5,50 @@ import { ADMIN_EMAIL, ADMIN_USERNAME } from "@/lib/admin-public";
 
 export { ADMIN_EMAIL, ADMIN_USERNAME };
 export const ADMIN_USER_ID = "admin-tokimido";
-const ADMIN_PASSWORD = "Nascutinanul2005-";
+/**
+ * The admin password comes ONLY from the environment (never commit it).
+ * - ADMIN_PASSWORD: used when the admin credential is first created.
+ * - ADMIN_PASSWORD_RESET=1: also overwrite an existing admin password with
+ *   ADMIN_PASSWORD on boot (set it for one deploy to rotate, then remove it).
+ * Without ADMIN_PASSWORD no password credential is created (dev gets a random
+ * one printed to the server log).
+ */
+function adminPasswordFromEnv(): string | null {
+  const value = process.env.ADMIN_PASSWORD?.trim();
+  if (value && value.length >= 12) return value;
+  if (value) console.error("[admin] ADMIN_PASSWORD must be at least 12 characters — ignored");
+  return null;
+}
 
-export async function ensureAdminTables() {
+function shouldResetAdminPassword() {
+  return process.env.ADMIN_PASSWORD_RESET?.trim() === "1";
+}
+
+async function resolveAdminPassword(): Promise<string | null> {
+  const fromEnv = adminPasswordFromEnv();
+  if (fromEnv) return fromEnv;
+  if (process.env.NODE_ENV === "production") {
+    console.error("[admin] ADMIN_PASSWORD is not set — admin password login is disabled");
+    return null;
+  }
+  const { randomBytes } = await import("node:crypto");
+  const generated = randomBytes(12).toString("base64url");
+  console.warn(`[admin] dev admin password (set ADMIN_PASSWORD to choose one): ${generated}`);
+  return generated;
+}
+
+// Schema patch runs once per process, not on every admin/ban check.
+let adminTablesReady: Promise<void> | null = null;
+
+export function ensureAdminTables(): Promise<void> {
+  adminTablesReady ??= createAdminTables().catch((err) => {
+    adminTablesReady = null;
+    throw err;
+  });
+  return adminTablesReady;
+}
+
+async function createAdminTables() {
   const sql = await getSql();
   await sql.query(`alter table profiles add column if not exists role text not null default 'user'`);
   await sql.query(`alter table profiles add column if not exists banned_at timestamptz`);
@@ -52,7 +93,6 @@ export async function ensureAdminUser() {
     [ADMIN_USER_ID, ADMIN_EMAIL],
   );
   const userId = existing[0]?.id ?? ADMIN_USER_ID;
-  const password = await hashPassword(ADMIN_PASSWORD);
   const now = new Date().toISOString();
   if (!existing[0]) {
     await sql.query(
@@ -60,29 +100,52 @@ export async function ensureAdminUser() {
        values ($1, $2, $3, true, null, $4::timestamptz, $4::timestamptz)`,
       [ADMIN_USER_ID, "Tokimido", ADMIN_EMAIL, now],
     );
-    await sql.query(
-      `insert into account (
-         id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt"
-       ) values ($1, $2, 'credential', $3, $4, $5::timestamptz, $5::timestamptz)`,
-      [`acc-${ADMIN_USER_ID}`, ADMIN_USER_ID, ADMIN_USER_ID, password, now],
-    );
-  } else {
-    const acc = await sql.query<{ id: string }>(
-      `select id from account where "userId" = $1 and "providerId" = 'credential'`,
-      [userId],
-    );
-    if (!acc[0]) {
+  }
+  const acc = await sql.query<{ id: string }>(
+    `select id from account where "userId" = $1 and "providerId" = 'credential'`,
+    [userId],
+  );
+  if (!acc[0]) {
+    const plain = await resolveAdminPassword();
+    if (plain) {
       await sql.query(
         `insert into account (
            id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt"
          ) values ($1, $2, 'credential', $3, $4, $5::timestamptz, $5::timestamptz)`,
-        [`acc-${userId}`, userId, userId, password, now],
+        [`acc-${userId}`, userId, userId, await hashPassword(plain), now],
       );
-    } else {
-      await sql.query(
-        `update account set password = $1, "updatedAt" = $2::timestamptz where id = $3`,
-        [password, now, acc[0].id],
-      );
+    }
+  } else {
+    // The pre-2026-11 password was committed to a public repo, so the stored
+    // credential is compromised. Replace it exactly once (marker below); after
+    // that only ADMIN_PASSWORD_RESET=1 rotates it, so in-app changes stick.
+    await sql.query(
+      `create table if not exists admin_meta (key text primary key, value text not null default '', created_at timestamptz not null default now())`,
+    );
+    const marker = await sql.query<{ key: string }>(
+      `select key from admin_meta where key = 'password_rotated_v2'`,
+    );
+    const firstRotation = !marker[0];
+    if (firstRotation || shouldResetAdminPassword()) {
+      const plain = adminPasswordFromEnv();
+      if (plain) {
+        await sql.query(
+          `update account set password = $1, "updatedAt" = $2::timestamptz where id = $3`,
+          [await hashPassword(plain), now, acc[0].id],
+        );
+        console.warn("[admin] admin password replaced from ADMIN_PASSWORD");
+      } else if (firstRotation && process.env.NODE_ENV === "production") {
+        // No new password configured: disable the leaked one rather than keep it.
+        await sql.query(`delete from account where id = $1`, [acc[0].id]);
+        console.error("[admin] leaked admin password removed — set ADMIN_PASSWORD and restart to log in");
+      }
+      if (plain || process.env.NODE_ENV === "production") {
+        await sql.query(`delete from "session" where "userId" = $1`, [userId]);
+        await sql.query(
+          `insert into admin_meta (key, value) values ('password_rotated_v2', $1) on conflict (key) do nothing`,
+          [now],
+        );
+      }
     }
   }
   await sql.query(

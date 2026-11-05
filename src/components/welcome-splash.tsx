@@ -12,7 +12,9 @@ export function WelcomeSplash() {
     finished.current = true;
     try {
       window.sessionStorage.setItem(KEY, "1");
-    } catch {}
+    } catch {
+      /* storage unavailable (private mode) — splash just shows again */
+    }
     setDone(true);
   }, []);
 
@@ -22,7 +24,9 @@ export function WelcomeSplash() {
         finish();
         return;
       }
-    } catch {}
+    } catch {
+      /* storage unavailable (private mode) — splash just shows again */
+    }
 
     const t = window.setTimeout(finish, DURATION);
     return () => window.clearTimeout(t);

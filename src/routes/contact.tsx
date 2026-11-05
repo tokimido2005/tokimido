@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -28,7 +29,7 @@ function ContactPage() {
       toast.success(t("contact.sent"));
       setMessage("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("contact.error"));
+      toast.error(errorText(err, t, t("contact.error")));
     } finally {
       setBusy(false);
     }

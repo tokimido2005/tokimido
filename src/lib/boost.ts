@@ -52,6 +52,10 @@ export const purchaseBoost = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { assertNotBanned } = await import("./admin.server");
     await assertNotBanned(context.userId);
+    const { readSettings } = await import("./monetization.server");
+    if ((await readSettings()).mode !== "free") {
+      throw new Error("Plata online nu este încă disponibilă. Contactează-ne pentru promovare.");
+    }
     const { applyBoost } = await import("./boost.server");
     return applyBoost(context.userId, data.jobId, data.tier) as Promise<BoostResult>;
   });

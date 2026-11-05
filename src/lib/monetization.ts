@@ -100,7 +100,13 @@ export const activatePro = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { assertNotBanned } = await import("./admin.server");
     await assertNotBanned(context.userId);
-    const { grantSubscription, getAccessFor } = await import("./monetization.server");
+    const { grantSubscription, getAccessFor, readSettings } = await import("./monetization.server");
+    // No payment provider is wired yet: self-activation would hand out paid
+    // access for free. Only allow it while the platform is fully free.
+    const settings = await readSettings();
+    if (settings.mode !== "free") {
+      throw new Error("Plata online nu este încă disponibilă. Contactează-ne pentru Pro.");
+    }
     await grantSubscription(context.userId, 30, "self");
     return getAccessFor(context.userId) as Promise<MonetizationAccess>;
   });

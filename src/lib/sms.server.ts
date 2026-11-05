@@ -61,7 +61,15 @@ export function clientIp() {
     const req = getRequest();
     if (!req) return "unknown";
     const h = req.headers;
-    const xf = h.get("x-forwarded-for") || h.get("cf-connecting-ip") || h.get("x-real-ip") || "";
+    // Render sits behind Cloudflare: True-Client-IP / CF-Connecting-IP are set
+    // by the edge and cannot be forged by the client, while X-Forwarded-For is
+    // only appended to (its first entry is client-controlled). Use XFF last.
+    const xf =
+      h.get("true-client-ip") ||
+      h.get("cf-connecting-ip") ||
+      h.get("x-real-ip") ||
+      h.get("x-forwarded-for") ||
+      "";
     const ip = xf.split(",")[0]?.trim() || "unknown";
     return ip.slice(0, 80);
   } catch {
