@@ -8,6 +8,7 @@ export const LOCALES: Array<{ id: Locale; label: string }> = [
 
 export const messages: Record<Locale, Record<string, string>> = {
   ro: {
+    "error.rateLimit": "Prea multe încercări. Încearcă din nou peste {m} minute.",
     "post.payment": "Plată",
     "post.ageWarning": "Atenție: Anunțurile pentru persoane sub 15 ani sunt strict interzise. Platforma poate șterge astfel de anunțuri și bloca contul fără preaviz.",
     "post.dateRequired": "Data și ora sunt obligatorii",
@@ -788,6 +789,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     "faq.a7": "Lucru rapid (kalîm) sunt joburi scurte, plătite pe loc, cu dată, oră, durată și număr de oameni. Angajarea oficială e un job cu firmă, salariu, program, oraș și tip de contract. Listele nu se amestecă niciodată.",
   },
   ru: {
+    "error.rateLimit": "Слишком много попыток. Попробуйте снова через {m} мин.",
     "post.payment": "Оплата",
     "post.ageWarning": "Внимание: Объявления для лиц младше 15 лет строго запрещены. Платформа может удалить такие объявления и заблокировать аккаунт без предупреждения.",
     "post.dateRequired": "Дата и время обязательны",
@@ -1567,6 +1569,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     "faq.a7": "Разовая работа (калым) — короткие задания с оплатой на месте: дата, время, длительность и число людей. Официальный найм — вакансия с компанией, зарплатой, графиком, городом и типом договора. Ленты никогда не смешиваются.",
   },
   en: {
+    "error.rateLimit": "Too many attempts. Try again in {m} minutes.",
     "post.payment": "Payment",
     "post.ageWarning": "Warning: Ads for people under 15 are strictly forbidden. The platform may delete such ads and block the account without notice.",
     "post.dateRequired": "Date and time are required",
@@ -2355,6 +2358,18 @@ export function translate(locale: Locale, key: string, vars?: Record<string, str
     }
   }
   return text;
+}
+
+/** Human text for a server error, mapping coded errors (e.g. `rate.limit|60`). */
+export function errorText(
+  err: unknown,
+  t: (key: string, vars?: Record<string, string | number>) => string,
+  fallback: string,
+) {
+  const message = err instanceof Error ? err.message : "";
+  const rate = /^rate\.limit\|(\d+)$/.exec(message);
+  if (rate) return t("error.rateLimit", { m: rate[1] });
+  return message || fallback;
 }
 
 export const REPORT_REASONS = ["false", "scam", "inappropriate", "noshow", "spam", "other"] as const;

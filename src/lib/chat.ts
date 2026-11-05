@@ -358,7 +358,7 @@ FACTS — never contradict:
 - Coverage: all of Moldova (raioane and sate), not just Chișinău.
 
 If the question is unrelated to Rabotaem.md, politely say you only help with this platform and list the topics you can explain.
-Do not offer to process payments, mediate disputes, or contact other users. Do not claim there is in-app chat, contracts, or SMS codes.`;
+Do not offer to process payments, mediate disputes, or contact other users. Do not claim there is in-app chat or contracts. Phone numbers are verified with an SMS code, and a forgotten password is reset by SMS.`;
 
 const inputSchema = z.object({
   lang: z.enum(["ro", "ru"]),
@@ -380,6 +380,13 @@ export const askAssistant = createServerFn({ method: "POST" })
     const history = data.messages.slice(-8);
     const lastUser = [...history].reverse().find((m) => m.role === "user");
     const fallback = localAnswer(lang, lastUser?.content ?? "", "free");
+    // Every Grok call costs money: cap it per IP. Over the cap, answer locally.
+    try {
+      const { assertRateLimit } = await import("./rate-limit.server");
+      await assertRateLimit("assistant", 30, 60);
+    } catch {
+      return { ok: true as const, text: fallback, source: "local" as const };
+    }
     const moneyFact =
       "- Completely free right now. Account, posting, applying, saving jobs, ratings: 0 cost, 0% commission. Do NOT mention Pro, subscriptions, paid plans, Boost, or upgrades.";
 

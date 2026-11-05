@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /cont
+Disallow: /aplicatii
+Disallow: /complete
+Disallow: /verify
+Disallow: /reset
+Disallow: /login
+Disallow: /api/
+Disallow: /_serverFn/
 
 Sitemap: https://rabotaem.md/sitemap.xml

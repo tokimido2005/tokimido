@@ -26,7 +26,102 @@ import { useT } from "@/lib/locale";
 import { track } from "@/lib/analytics";
 import { setClientSeo } from "@/lib/seo";
 
-export const Route = createFileRoute("/jobs/$id/")({ component: JobPage });
+const SITE_URL = "https://rabotaem.md";
+
+// Server-rendered title/description/OG + JobPosting JSON-LD so search engines
+// and link previews (Facebook, Telegram, Viber) see the real job, not the
+// generic site title. The page itself still loads its data client-side.
+export const Route = createFileRoute("/jobs/$id/")({
+  loader: async ({ params }) => {
+    const id = Number(params.id);
+    if (!Number.isInteger(id) || id <= 0) return { job: null as Job | null };
+    try {
+      return { job: await getJob({ data: id }) };
+    } catch {
+      return { job: null as Job | null };
+    }
+  },
+  head: ({ loaderData, params }) => jobHead(loaderData?.job ?? null, params.id),
+  component: JobPage,
+});
+
+function jobHead(job: Job | null, id: string) {
+  const url = `${SITE_URL}/jobs/${encodeURIComponent(id)}`;
+  if (!job) {
+    return {
+      meta: [{ title: "Anunț indisponibil · Rabotaem.md" }, { name: "robots", content: "noindex" }],
+    };
+  }
+  const place = [job.locality, job.raion].filter(Boolean).join(", ");
+  const pay = job.payment_mdl ? ` · ${job.payment_mdl} MDL` : "";
+  const title = `${job.title}${place ? ` — ${place}` : ""}${pay} · Rabotaem.md`;
+  const description = job.description.replace(/\s+/g, " ").trim().slice(0, 155);
+  const official = isOficial(job);
+  const posted = new Date(job.created_at);
+  const validThrough = job.starts_at
+    ? new Date(job.starts_at)
+    : new Date(posted.getTime() + 30 * 24 * 3600 * 1000);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description,
+    datePosted: posted.toISOString(),
+    validThrough: validThrough.toISOString(),
+    employmentType: !official
+      ? "TEMPORARY"
+      : job.contract_type === "intern"
+        ? "INTERN"
+        : job.contract_type === "prestari"
+          ? "CONTRACTOR"
+          : job.schedule === "part"
+            ? "PART_TIME"
+            : "FULL_TIME",
+    hiringOrganization: {
+      "@type": official && job.company ? "Organization" : "Person",
+      name: (official && job.company) || job.poster_name || "Rabotaem.md",
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.locality || job.raion,
+        addressRegion: job.raion,
+        addressCountry: "MD",
+      },
+    },
+    ...(job.payment_mdl
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: "MDL",
+            value: {
+              "@type": "QuantitativeValue",
+              value: job.payment_mdl,
+              ...(official && job.salary_period === "month" ? { unitText: "MONTH" } : {}),
+            },
+          },
+        }
+      : {}),
+    directApply: true,
+    url,
+  };
+  const open = job.status === "open";
+  return {
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:url", content: url },
+      ...(open ? [] : [{ name: "robots", content: "noindex" }]),
+    ],
+    links: [{ rel: "canonical", href: url }],
+    scripts: open
+      ? [{ type: "application/ld+json", children: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }]
+      : [],
+  };
+}
 
 function JobPage() {
   const { t } = useT();

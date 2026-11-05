@@ -2,7 +2,17 @@ import "@tanstack/react-start/server-only";
 import { getSql } from "@/lib/db";
 import { clientIp } from "@/lib/sms.server";
 
-export async function ensureRateLimitTable() {
+let rateTableReady: Promise<void> | null = null;
+
+export function ensureRateLimitTable(): Promise<void> {
+  rateTableReady ??= createRateLimitTable().catch((err) => {
+    rateTableReady = null;
+    throw err;
+  });
+  return rateTableReady;
+}
+
+async function createRateLimitTable() {
   const sql = await getSql();
   await sql.query(`
     create table if not exists rate_limits (
@@ -31,4 +41,8 @@ export async function assertRateLimit(action: string, max: number, windowMinutes
     throw new Error(`rate.limit|${windowMinutes}`);
   }
   await sql.query(`insert into rate_limits (ip, action) values ($1, $2)`, [ip, action]);
+  // Keep the table small: prune old rows now and then.
+  if (Math.random() < 0.02) {
+    await sql.query(`delete from rate_limits where created_at < now() - interval '2 days'`);
+  }
 }

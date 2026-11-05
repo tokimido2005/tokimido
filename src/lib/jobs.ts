@@ -704,6 +704,27 @@ async function cleanupPublicListings(sql: Awaited<ReturnType<typeof getSql>>) {
 
 let jobsReady = false;
 
+/**
+ * Invented sample listings (seed-* users, fake ratings and "verified phone"
+ * badges) must never look like real ads to visitors. They are created only
+ * outside production, or when SEED_DEMO_JOBS=1 is set explicitly.
+ */
+function sampleSeedEnabled() {
+  if (process.env.SEED_DEMO_JOBS?.trim() === "1") return true;
+  return process.env.NODE_ENV !== "production";
+}
+
+/**
+ * Sample/demo rows stay out of public listings in production unless
+ * SHOW_DEMO_JOBS=1. Admin views query the table directly and still see them.
+ */
+function sampleJobsVisible() {
+  if (process.env.SHOW_DEMO_JOBS?.trim() === "1") return true;
+  return process.env.NODE_ENV !== "production";
+}
+
+const HIDE_SAMPLE_JOBS_SQL = `(j.user_id not like 'seed-%' and j.user_id <> 'demo-rabotaem' and coalesce(j.is_demo, false) = false)`;
+
 async function seedIfEmpty() {
   const sql = await getSql();
   if (jobsReady) {
@@ -737,6 +758,15 @@ async function seedIfEmpty() {
     await expireDueJobs();
   } catch (err) {
     console.error("[jobs] schema patch failed", err);
+  }
+  if (!sampleSeedEnabled()) {
+    try {
+      await expireDueJobs();
+    } catch (err) {
+      console.error("[jobs] expire failed", err);
+    }
+    jobsReady = true;
+    return;
   }
   try {
     const rows = await sql.query<{ n: number }>("select count(*)::int as n from jobs");
@@ -931,7 +961,10 @@ async function seedDemoApplications() {
 }
 
 const JOB_SELECT = `j.id, j.user_id, j.title, j.description, j.category, j.raion, j.locality,
-  j.payment_mdl, j.duration_minutes, j.people_needed, j.contact_phone, j.poster_name,
+  j.payment_mdl, j.duration_minutes, j.people_needed,
+  -- Never expose the poster's phone in listings: it is shared only through
+  -- getContactPhone once an application links both users (see profile.ts).
+  null::text as contact_phone, j.poster_name,
   j.status, j.created_at, j.starts_at, coalesce(j.views_count, 0) as views_count,
   (j.geo_lat is not null and j.geo_lng is not null) as has_geo,
   coalesce(j.kind, 'rapid') as kind,
@@ -970,6 +1003,7 @@ export const listJobs = createServerFn({ method: "POST" })
       "j.status = 'open'",
       "j.people_needed > (select count(*)::int from applications a where a.job_id = j.id and a.status = 'selected')",
       "coalesce(j.hidden, false) = false",
+      ...(sampleJobsVisible() ? [] : [HIDE_SAMPLE_JOBS_SQL]),
       `not exists (
          select 1 from profiles p
          where p.user_id = j.user_id
@@ -1052,13 +1086,14 @@ export const listJobs = createServerFn({ method: "POST" })
   });
 
 export const getJob = createServerFn({ method: "POST" })
-  .validator((id: number) => id)
+  .validator((id: unknown) => z.number().int().positive().max(2_147_483_647).parse(id))
   .handler(async ({ data: id }) => {
     await seedIfEmpty();
     const sql = await getSql();
     const rows = await sql.query<Job>(
       `select ${JOB_SELECT} from jobs j
-       where j.id = $1 and coalesce(j.hidden, false) = false`,
+       where j.id = $1 and coalesce(j.hidden, false) = false
+       ${sampleJobsVisible() ? "" : `and ${HIDE_SAMPLE_JOBS_SQL}`}`,
       [id],
     );
     return rows[0] ?? null;
