@@ -118,11 +118,13 @@ async function logSms(row: {
   );
 }
 
-async function deliverSms(e164: string, body: string): Promise<boolean> {
+type Delivery = { ok: boolean; detail: string };
+
+async function deliverSms(e164: string, body: string): Promise<Delivery> {
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
   const token = process.env.TWILIO_AUTH_TOKEN?.trim();
   const from = process.env.TWILIO_FROM?.trim();
-  if (!sid || !token || !from) return false;
+  if (!sid || !token || !from) return { ok: false, detail: "twilio_not_configured" };
   try {
     const auth = Buffer.from(`${sid}:${token}`).toString("base64");
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
@@ -132,12 +134,34 @@ async function deliverSms(e164: string, body: string): Promise<boolean> {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({ To: e164, From: from, Body: body }),
+      signal: AbortSignal.timeout(15000),
     });
-    return res.ok;
+    if (res.ok) return { ok: true, detail: "twilio" };
+    // Keep Twilio's own error code + message: it says exactly what to fix
+    // (21608 trial/unverified number, 21408 country not enabled, 21212 bad From…).
+    let info = "";
+    try {
+      const data = (await res.json()) as { code?: number; message?: string };
+      info = `${data.code ?? ""} ${data.message ?? ""}`.trim();
+    } catch {
+      info = await res.text().catch(() => "");
+    }
+    console.error(`[sms] twilio ${res.status} for ${e164.slice(0, 7)}…: ${info}`);
+    return { ok: false, detail: `twilio_${res.status} ${info}`.slice(0, 300) };
   } catch (err) {
     console.error("[sms] twilio", err);
-    return false;
+    return { ok: false, detail: `twilio_error ${err instanceof Error ? err.message : ""}`.slice(0, 300) };
   }
+}
+
+/**
+ * Showing the code on screen defeats verification (and lets anyone reset
+ * another user's password). Only allowed outside production, or explicitly
+ * with SMS_PREVIEW_CODES=1 for a private test deploy.
+ */
+function previewCodesAllowed() {
+  if (process.env.SMS_PREVIEW_CODES?.trim() === "1") return true;
+  return process.env.NODE_ENV !== "production";
 }
 
 type CodeRow = {
@@ -185,7 +209,7 @@ export async function assertSendLimits(phone: string, ip: string, purpose: SmsPu
   }
   const ten = await sql.query<{ n: number }>(
     `select count(*)::int as n from sms_log
-     where phone = $1 and event = 'send' and created_at > now() - interval '10 minutes'`,
+     where phone = $1 and event in ('send', 'send_failed') and created_at > now() - interval '10 minutes'`,
     [phone],
   );
   if ((ten[0]?.n ?? 0) >= PER_PHONE_10MIN) {
@@ -201,7 +225,7 @@ export async function assertSendLimits(phone: string, ip: string, purpose: SmsPu
   }
   const day = await sql.query<{ n: number }>(
     `select count(*)::int as n from sms_log
-     where phone = $1 and event = 'send' and created_at > now() - interval '1 day'`,
+     where phone = $1 and event in ('send', 'send_failed') and created_at > now() - interval '1 day'`,
     [phone],
   );
   if ((day[0]?.n ?? 0) >= PER_PHONE_DAY) {
@@ -218,7 +242,7 @@ export async function assertSendLimits(phone: string, ip: string, purpose: SmsPu
   if (ip && ip !== "unknown") {
     const hour = await sql.query<{ n: number }>(
       `select count(*)::int as n from sms_log
-       where ip = $1 and event in ('send', 'lookup_miss')
+       where ip = $1 and event in ('send', 'send_failed', 'lookup_miss')
          and created_at > now() - interval '1 hour'`,
       [ip],
     );
@@ -258,19 +282,26 @@ export async function sendSmsCode(opts: {
     [phone, opts.userId ?? null, opts.purpose, code_hash, ip],
   );
 
-  const sent = await deliverSms(
+  const delivery = await deliverSms(
     toE164(phone),
     `Rabotaem.md: codul tău este ${code}. Valabil 10 minute.`,
   );
+  const preview = !delivery.ok && previewCodesAllowed();
   await logSms({
     phone,
     user_id: opts.userId,
     ip,
     purpose: opts.purpose,
-    event: "send",
-    detail: sent ? "twilio" : "preview",
+    event: delivery.ok ? "send" : "send_failed",
+    detail: preview ? `preview (${delivery.detail})` : delivery.detail,
   });
-  return { ok: true as const, sent, previewCode: sent ? undefined : code, phone };
+  if (!delivery.ok && !preview) {
+    // The code was not delivered: drop it so it cannot be guessed/used, and
+    // tell the user instead of pretending the SMS went out.
+    await sql.query(`delete from sms_codes where phone = $1 and purpose = $2`, [phone, opts.purpose]);
+    throw new Error("sms.errSend");
+  }
+  return { ok: true as const, sent: delivery.ok, previewCode: preview ? code : undefined, phone };
 }
 
 export async function verifySmsCode(opts: {
