@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { getProfileGate, saveMyProfile } from "@/lib/profile";
@@ -125,7 +126,7 @@ function CompleteProfile() {
       });
       window.location.href = verifyHref(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("complete.submit"));
+      setError(errorText(err, t, t("complete.submit")));
     } finally {
       setBusy(false);
     }

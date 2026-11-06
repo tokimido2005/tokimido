@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Building2, Clock, Eye, MapPin, ShieldCheck, Users, Wallet } from "lucide-react";
@@ -310,12 +311,14 @@ function JobPage() {
       toast.success(t("toast.applied"));
       await navigate({ to: "/jobs/$id/aplicat", params: { id: String(listing.id) } });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("job.applyFail");
-      if (/verific[aă]/i.test(msg) && /sms|telefon/i.test(msg)) {
+      const msg = errorText(err, t, t("job.applyFail"));
+      // Route on the server's original (Romanian) text, not the translation.
+      const raw = err instanceof Error ? err.message : "";
+      if (/verific[aă]/i.test(raw) && /sms|telefon/i.test(raw)) {
         await navigate({ to: "/verify", search: { next: `/jobs/${listing.id}` } });
         return;
       }
-      if (/completeaz/i.test(msg)) {
+      if (/completeaz/i.test(raw)) {
         await navigate({ to: "/complete", search: { next: `/jobs/${listing.id}` } });
         return;
       }

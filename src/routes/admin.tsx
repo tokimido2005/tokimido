@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -239,7 +240,7 @@ function OverviewPane() {
   useEffect(() => {
     getAdminStats()
       .then(setStats)
-      .catch((err: unknown) => toast.error(err instanceof Error ? err.message : t("home.loadError")));
+      .catch((err: unknown) => toast.error(errorText(err, t, t("home.loadError"))));
   }, [t]);
 
   const cards = stats
@@ -386,7 +387,7 @@ function MoneyPane() {
         setSubs(people);
       })
       .catch((err: unknown) => {
-        if (!cancelled) toast.error(err instanceof Error ? err.message : t("home.loadError"));
+        if (!cancelled) toast.error(errorText(err, t, t("home.loadError")));
       });
     return () => {
       cancelled = true;
@@ -430,7 +431,7 @@ function MoneyPane() {
       const { notifyMoneyChanged } = await import("@/lib/money-mode");
       notifyMoneyChanged(saved);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusy(false);
     }
@@ -466,7 +467,7 @@ function MoneyPane() {
       setSubs(await listProSubscribers());
       setGrantUser("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusy(false);
     }
@@ -479,7 +480,7 @@ function MoneyPane() {
       toast.success(t("money.revokeOk"));
       setSubs(await listProSubscribers());
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusy(false);
     }
@@ -793,7 +794,7 @@ function JobsPane() {
     return listAdminJobs({ data: { q, status } })
       .then(setRows)
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : t("home.loadError"));
+        toast.error(errorText(err, t, t("home.loadError")));
         setRows([]);
       });
   }, [q, status, t]);
@@ -809,7 +810,7 @@ function JobsPane() {
       await adminHideJob({ data: { id: job.id, hidden } });
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -824,7 +825,7 @@ function JobsPane() {
       setPendingDelete(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -838,7 +839,7 @@ function JobsPane() {
       else toast.success(t("admin.demoGenerated", { n: res.created }));
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setDemoBusy(false);
     }
@@ -853,7 +854,7 @@ function JobsPane() {
       else toast.success(t("admin.demoDeleted", { n: res.deleted }));
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setDemoBusy(false);
     }
@@ -1021,7 +1022,7 @@ function UsersPane() {
     return listAdminUsers({ data: q })
       .then(setRows)
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : t("home.loadError"));
+        toast.error(errorText(err, t, t("home.loadError")));
         setRows([]);
       });
   }, [q, t]);
@@ -1035,7 +1036,7 @@ function UsersPane() {
     try {
       setDetail(await getAdminUserDetail({ data: id }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("home.loadError"));
+      toast.error(errorText(err, t, t("home.loadError")));
     }
   }
 
@@ -1051,7 +1052,7 @@ function UsersPane() {
       await reload();
       if (detail?.user.id === userId) await openUser(userId);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -1069,7 +1070,7 @@ function UsersPane() {
       await reload();
       if (detail?.user.id === userId) await openUser(userId);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -1082,7 +1083,7 @@ function UsersPane() {
       await reload();
       if (detail?.user.id === userId) await openUser(userId);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -1098,7 +1099,7 @@ function UsersPane() {
       setMsgTitle("");
       setMsgBody("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -1184,7 +1185,7 @@ function UsersPane() {
                     await reload();
                     await openUser(detail.user.id);
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+                    toast.error(errorText(err, t, t("toast.updateFail")));
                   } finally {
                     setBusyId(null);
                   }
@@ -1199,7 +1200,7 @@ function UsersPane() {
                     await reload();
                     await openUser(detail.user.id);
                   } catch (err) {
-                    toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+                    toast.error(errorText(err, t, t("toast.updateFail")));
                   } finally {
                     setBusyId(null);
                   }
@@ -1421,7 +1422,7 @@ function ReportsPane() {
     return listAdminReports()
       .then(setRows)
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : t("home.loadError"));
+        toast.error(errorText(err, t, t("home.loadError")));
         setRows([]);
       });
   }, [t]);
@@ -1442,7 +1443,7 @@ function ReportsPane() {
       setBanTarget(null);
       setBanReason("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -1622,7 +1623,7 @@ function MessagesPane() {
     listSupportMessages()
       .then(setRows)
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : t("home.loadError"));
+        toast.error(errorText(err, t, t("home.loadError")));
         setRows([]);
       });
     listAdminUsers({ data: "" })
@@ -1639,7 +1640,7 @@ function MessagesPane() {
       setTitle("");
       setBody("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusy(false);
     }
@@ -1736,7 +1737,7 @@ function LogPane() {
     listAdminLog({ data: { filter } })
       .then(setRows)
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : t("home.loadError"));
+        toast.error(errorText(err, t, t("home.loadError")));
         setRows([]);
       });
   }, [t, filter]);
@@ -1831,7 +1832,7 @@ function SmsPane() {
       listSmsLog({ data: { q } })
         .then(setRows)
         .catch((err: unknown) => {
-          toast.error(err instanceof Error ? err.message : t("home.loadError"));
+          toast.error(errorText(err, t, t("home.loadError")));
           setRows([]);
         });
     }, 180);

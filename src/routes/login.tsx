@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { authClient, authEnabled } from "@/lib/auth/client";
@@ -136,7 +137,7 @@ function Login() {
       }
       window.location.href = next ?? "/";
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("login.submitIn"));
+      setError(errorText(err, t, t("login.submitIn")));
     } finally {
       setBusy(false);
     }

@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BOOST_PACKAGES, activeBoostTier, purchaseBoost, type BoostTier } from "@/lib/boost";
@@ -43,7 +44,7 @@ export function JobBoost({
       setOpen(false);
       toast.success(t("boost.ok", { d: untilLabel(res.until) }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusy(false);
     }

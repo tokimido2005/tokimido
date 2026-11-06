@@ -2,16 +2,17 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Command } from "cmdk";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/locale";
 
 export function Combobox({
   value,
   onChange,
   options,
   placeholder,
-  searchPlaceholder = "Caută…",
+  searchPlaceholder,
   allowCustom = false,
   disabled = false,
-  emptyText = "Nu s-a găsit",
+  emptyText,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -22,6 +23,7 @@ export function Combobox({
   disabled?: boolean;
   emptyText?: string;
 }) {
+  const { t } = useT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,7 @@ export function Combobox({
             <Command.Input
               value={query}
               onValueChange={setQuery}
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholder ?? t("combo.search")}
               className="h-11 w-full border-b border-navy/10 bg-transparent px-3 text-sm outline-none"
             />
             <Command.List className="max-h-64 overflow-y-auto p-1">
@@ -91,7 +93,7 @@ export function Combobox({
               ))}
               {filtered.length === 0 ? (
                 <Command.Empty className="px-3 py-3 text-sm text-muted">
-                  {emptyText}
+                  {emptyText ?? t("combo.empty")}
                 </Command.Empty>
               ) : null}
               {allowCustom && query.trim() && !options.some((o) => o.toLowerCase() === query.trim().toLowerCase()) ? (
@@ -100,7 +102,7 @@ export function Combobox({
                   onSelect={() => select(query.trim())}
                   className="cursor-pointer rounded-xl px-3 py-2 text-sm text-orange data-[selected=true]:bg-orange/10"
                 >
-                  Folosește „{query.trim()}”
+                  {t("combo.use", { q: query.trim() })}
                 </Command.Item>
               ) : null}
             </Command.List>

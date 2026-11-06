@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useState } from "react";
 import { GROK_PROVIDERS, authEnabled, signIn } from "@/lib/auth/client";
 import { useT } from "@/lib/locale";
@@ -67,7 +68,7 @@ export function SocialAuthButtons({ next, locked = false }: { next?: string; loc
                 errorCallbackURL: "/login",
               }).catch((err: unknown) => {
                 setBusyId(null);
-                setError(err instanceof Error ? err.message : t("login.submitIn"));
+                setError(errorText(err, t, t("login.submitIn")));
               });
             }}
             className="sheen flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-semibold text-white transition-transform duration-150 active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-45"
