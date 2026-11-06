@@ -36,6 +36,8 @@ import { useMoneyMode } from "@/lib/money-mode";
 import { ProBadge } from "@/components/paywall";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
+import { deleteMyAccount, isDeleteConfirmWord } from "@/lib/account-delete";
+import { signOut } from "@/lib/auth/client";
 
 type Tab = "jobs" | "apps" | "saved" | "ratings" | "reports" | "inbox";
 
@@ -564,8 +566,91 @@ function Account() {
             ) : null}
           </div>
         )}
+        <DeleteAccount />
       </main>
     </Shell>
+  );
+}
+
+function DeleteAccount() {
+  const { t } = useT();
+  const [open, setOpen] = useState(false);
+  const [word, setWord] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const expected = t("account.deleteWord");
+
+  async function onDelete() {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteMyAccount({ data: { confirm: word } });
+      toast.success(t("account.deleteDone"));
+      // The server already ended the session; clear local state and leave.
+      try {
+        await signOut("/");
+      } catch {
+        window.location.href = "/";
+      }
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : "";
+      setError(raw.startsWith("account.") ? t(raw) : t("account.deleteFail"));
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="mt-10 rounded-[28px] p-5 ring-1 ring-danger/25 sm:p-6" data-testid="delete-account">
+      <h2 className="text-base font-semibold tracking-tight text-navy">{t("account.deleteTitle")}</h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted">{t("account.deleteBody")}</p>
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="mt-4 h-11 rounded-full px-4 text-sm font-semibold text-danger ring-1 ring-danger/40 hover:bg-danger/8"
+        >
+          {t("account.deleteOpen")}
+        </button>
+      ) : (
+        <div className="mt-4 space-y-3">
+          <label className="block text-sm text-navy">
+            {t("account.deleteType", { w: expected })}
+            <input
+              className="field mt-1.5"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="characters"
+              data-testid="delete-confirm"
+            />
+          </label>
+          {error ? <p className="text-sm text-danger">{error}</p> : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy || !isDeleteConfirmWord(word)}
+              onClick={() => void onDelete()}
+              data-testid="delete-submit"
+              className="h-11 rounded-full bg-danger px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {busy ? t("account.deleteBusy") : t("account.deleteConfirm")}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setOpen(false);
+                setWord("");
+                setError(null);
+              }}
+              className="h-11 rounded-full px-4 text-sm font-medium text-muted hover:bg-navy/6"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
