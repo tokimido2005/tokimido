@@ -24,7 +24,7 @@ import { formatDuration, formatMdl } from "@/lib/utils";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/locale";
 import { track } from "@/lib/analytics";
-import { setClientSeo } from "@/lib/seo";
+import { jsonLdHtml, setClientSeo } from "@/lib/seo";
 
 const SITE_URL = "https://rabotaem.md";
 
@@ -118,7 +118,7 @@ function jobHead(job: Job | null, id: string) {
     ],
     links: [{ rel: "canonical", href: url }],
     scripts: open
-      ? [{ type: "application/ld+json", children: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }]
+      ? [{ type: "application/ld+json", children: jsonLdHtml(jsonLd) }]
       : [],
   };
 }

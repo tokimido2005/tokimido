@@ -6,6 +6,7 @@ import { Shell } from "@/components/shell";
 import { WorkKindTabs } from "@/components/work-kind-tabs";
 import type { Job } from "@/lib/jobs";
 import { useT } from "@/lib/locale";
+import { jsonLdHtml } from "@/lib/seo";
 
 export function SeoListing({
   title,
@@ -30,13 +31,13 @@ export function SeoListing({
       "@type": "ListItem",
       position: i + 1,
       name: job.title,
-      url: `/jobs/${job.id}`,
+      url: `https://rabotaem.md/jobs/${job.id}`,
     })),
   };
   return (
     <Shell>
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />
         <WorkKindTabs active="rapid" />
         <p className="mt-8 text-sm font-semibold tracking-[0.16em] text-orange uppercase">{t("home.kindKicker")}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">{title}</h1>

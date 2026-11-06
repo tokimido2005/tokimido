@@ -111,7 +111,8 @@ export const saveMyPhoto = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ photo: z.string().max(180_000) }).parse(d))
   .handler(async ({ context, data }) => {
     await ensureProfilesTable();
-    if (data.photo && !data.photo.startsWith("data:image/")) {
+    // Raster images only: an SVG data URL can carry script.
+    if (data.photo && !/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(data.photo)) {
       throw new Error("Format de imagine invalid");
     }
     const sql = await getSql();

@@ -68,8 +68,12 @@ export async function assertPhoneFree(phone: string, exceptUserId?: string) {
 }
 
 export const checkPhoneAvailable = createServerFn({ method: "POST" })
-  .validator((phone: string) => phone)
+  .validator((phone: unknown) => z.string().trim().min(6).max(30).parse(phone))
   .handler(async ({ data: phone }) => {
+    // Public endpoint that reveals whether a number is registered: cap it so
+    // nobody can enumerate which phone numbers have accounts.
+    const { assertRateLimit } = await import("./rate-limit.server");
+    await assertRateLimit("phone_check", 20, 60);
     await assertPhoneFree(phone);
     return { ok: true as const };
   });
