@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Flag } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import { REPORT_REASONS, type ReportReason } from "@/lib/i18n";
+import { REPORT_REASONS, type ReportReason, errorText } from "@/lib/i18n";
 import { useT } from "@/lib/locale";
 import { submitReport } from "@/lib/community";
 import { track } from "@/lib/analytics";
@@ -38,7 +38,7 @@ export function ReportButton({
       setOpen(false);
       setDetails("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("report.send"));
+      toast.error(errorText(err, t, t("report.send")));
     } finally {
       setBusy(false);
     }

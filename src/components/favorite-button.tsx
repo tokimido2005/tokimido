@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useState, type MouseEvent } from "react";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
@@ -85,7 +86,7 @@ export function FavoriteButton({
     } catch (err) {
       setOn(!next);
       onChange?.(!next);
-      toast.error(err instanceof Error ? err.message : t("job.save"));
+      toast.error(errorText(err, t, t("job.save")));
     } finally {
       setBusy(false);
     }

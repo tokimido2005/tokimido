@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
@@ -146,7 +147,7 @@ export function PushPrompt() {
       toast.success(t("push.enabled"));
       setStep("raion");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("push.denied"));
+      toast.error(errorText(err, t, t("push.denied")));
       dismiss();
     } finally {
       setBusy(false);

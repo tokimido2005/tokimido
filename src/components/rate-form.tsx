@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Stars } from "@/components/stars";
@@ -46,7 +47,7 @@ export function RateForm({
       notifyRatingsChanged();
       onDone?.();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("review.send"));
+      toast.error(errorText(err, t, t("review.send")));
     } finally {
       setBusy(false);
     }

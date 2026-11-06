@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
@@ -26,7 +27,8 @@ export const Route = createFileRoute("/")({
     } catch (err) {
       return {
         jobs: [] as Job[],
-        error: err instanceof Error ? err.message : "Nu am putut încărca joburile",
+        // Translated when rendered (the loader has no language context).
+        error: err instanceof Error && err.message ? err.message : "error.loadJobs",
       };
     }
   },
@@ -41,6 +43,7 @@ function Home() {
   const [filters, setFilters] = useState<JobFilters>(EMPTY);
   const [jobs, setJobs] = useState<Job[] | null>(loaded.jobs);
   const [error, setError] = useState<string | null>(loaded.error);
+  const errorMessage = error ? errorText(new Error(error), t, t("error.loadJobs")) : null;
   const { ids: savedIds, setSaved } = useSavedIds();
   const { isPending } = useCurrentUserState();
   const totalActive = loaded.jobs?.length ?? 0;
@@ -76,7 +79,7 @@ function Home() {
         })
         .catch((err: unknown) => {
           if (!cancelled) {
-            setError(err instanceof Error ? err.message : t("home.loadError"));
+            setError(errorText(err, t, t("home.loadError")));
             setJobs([]);
           }
         });
@@ -137,7 +140,7 @@ function Home() {
           <Filters value={filters} onChange={setFilters} />
           <div className="mt-6">
             {error ? (
-              <div className="rounded-[24px] p-6 text-sm text-danger glass">{error}</div>
+              <div className="rounded-[24px] p-6 text-sm text-danger glass">{errorMessage}</div>
             ) : jobs === null ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (

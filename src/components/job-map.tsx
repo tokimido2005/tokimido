@@ -315,7 +315,7 @@ export function MapPicker({
           onChange={(e) => setShowMap(e.target.checked)}
           className="size-4 rounded accent-orange"
         />
-        Arată locația pe hartă (opțional)
+        {t("map.show")}
       </label>
 
       {showMap ? (
@@ -359,7 +359,7 @@ export function MapPicker({
           </div>
         </>
       ) : (
-        <p className="text-xs text-muted">Bifează ca să vezi harta. Nu ocupă loc până nu o activezi.</p>
+        <p className="text-xs text-muted">{t("map.toggleHint")}</p>
       )}
 
       {value ? (

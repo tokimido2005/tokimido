@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
@@ -103,7 +104,7 @@ function PublicProfile() {
                         toast.success(blocked ? t("block.unblocked") : t("block.blocked"));
                       })
                       .catch((err: unknown) => {
-                        toast.error(err instanceof Error ? err.message : t("block.fail"));
+                        toast.error(errorText(err, t, t("block.fail")));
                       })
                       .finally(() => setBlockBusy(false));
                   }}

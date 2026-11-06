@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { Check, Crown } from "lucide-react";
@@ -54,7 +55,7 @@ function ProPage() {
       setAccess(next);
       toast.success(t("pro.ok"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusy(false);
     }

@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Camera } from "lucide-react";
@@ -111,7 +112,7 @@ function Account() {
     if (!user) return;
     let cancelled = false;
     reload().catch((err: unknown) => {
-      if (!cancelled) setError(err instanceof Error ? err.message : t("home.loadError"));
+      if (!cancelled) setError(errorText(err, t, t("home.loadError")));
     });
     getMyAccess({ data: { t: Date.now() } })
       .then((row) => {
@@ -157,7 +158,7 @@ function Account() {
       await cancelApplication({ data: id });
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("account.cancelApp"));
+      toast.error(errorText(err, t, t("account.cancelApp")));
     } finally {
       setBusyId(null);
     }
@@ -773,7 +774,7 @@ function BioBox({ initial, onSaved }: { initial: string; onSaved: () => Promise<
               toast.success(t("bio.save"));
               return onSaved();
             })
-            .catch((err: unknown) => toast.error(err instanceof Error ? err.message : t("bio.save")))
+            .catch((err: unknown) => toast.error(errorText(err, t, t("bio.save"))))
             .finally(() => setBusy(false));
         }}
         className="mt-2 h-10 rounded-full px-4 text-sm font-semibold glass-navy disabled:opacity-45"
@@ -817,7 +818,7 @@ function NotifySettings({ me, onSaved }: { me: Profile | null; onSaved: () => Pr
       }
       await onSaved();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("push.denied"));
+      toast.error(errorText(err, t, t("push.denied")));
     } finally {
       setBusy(false);
     }

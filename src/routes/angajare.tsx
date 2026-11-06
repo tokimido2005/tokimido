@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Briefcase } from "lucide-react";
@@ -24,7 +25,8 @@ export const Route = createFileRoute("/angajare")({
     } catch (err) {
       return {
         jobs: [] as Job[],
-        error: err instanceof Error ? err.message : "Nu am putut încărca anunțurile",
+        // Translated when rendered (the loader has no language context).
+        error: err instanceof Error && err.message ? err.message : "error.loadListings",
       };
     }
   },
@@ -39,6 +41,7 @@ function AngajarePage() {
   const [filters, setFilters] = useState<JobFilters>(EMPTY);
   const [jobs, setJobs] = useState<Job[] | null>(loaded.jobs);
   const [error, setError] = useState<string | null>(loaded.error);
+  const errorMessage = error ? errorText(new Error(error), t, t("error.loadListings")) : null;
   const { ids: savedIds, setSaved } = useSavedIds();
 
   const query = useMemo(() => {
@@ -72,7 +75,7 @@ function AngajarePage() {
         })
         .catch((err: unknown) => {
           if (!cancelled) {
-            setError(err instanceof Error ? err.message : t("home.loadError"));
+            setError(errorText(err, t, t("home.loadError")));
             setJobs([]);
           }
         });
@@ -113,7 +116,7 @@ function AngajarePage() {
           </p>
           <div className="mt-4">
             {error ? (
-              <div className="rounded-[24px] p-6 text-sm text-danger glass">{error}</div>
+              <div className="rounded-[24px] p-6 text-sm text-danger glass">{errorMessage}</div>
             ) : jobs === null ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (

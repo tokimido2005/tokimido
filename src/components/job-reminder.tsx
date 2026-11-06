@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { toast } from "sonner";
@@ -28,7 +29,7 @@ export function JobReminder({ jobId }: { jobId: number }) {
       setSetAt(res.remindAt);
       toast.success(t("remind.set"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("remind.add"));
+      toast.error(errorText(err, t, t("remind.add")));
     } finally {
       setBusy(false);
     }

@@ -1,3 +1,4 @@
+import { errorText } from "@/lib/i18n";
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Ban, Bell, CheckCircle2, Phone, RefreshCw, Trash2 } from "lucide-react";
@@ -46,7 +47,7 @@ function Inbox() {
         setLoaded(true);
       })
       .catch((err: unknown) => {
-        toast.error(err instanceof Error ? err.message : "Nu am putut încărca aplicațiile");
+        toast.error(errorText(err, t, t("error.loadApps")));
         setJobs([]);
         setLoaded(true);
       });
@@ -81,7 +82,7 @@ function Inbox() {
       }
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Nu am putut actualiza");
+      toast.error(errorText(err, t, t("error.update")));
     } finally {
       setBusyId(null);
     }
@@ -91,10 +92,10 @@ function Inbox() {
     setBusyId(jobId);
     try {
       await completeJob({ data: jobId });
-      toast.success("Anunțul e finalizat. Poți evalua colaborarea.");
+      toast.success(t("apps.doneToast"));
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Nu am putut actualiza");
+      toast.error(errorText(err, t, t("error.update")));
     } finally {
       setBusyId(null);
     }
@@ -124,7 +125,7 @@ function Inbox() {
       setConfirm(null);
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("toast.updateFail"));
+      toast.error(errorText(err, t, t("toast.updateFail")));
     } finally {
       setBusyId(null);
     }
@@ -139,10 +140,10 @@ function Inbox() {
           starts_at: combineDateTime(date, time),
         },
       });
-      toast.success("Anunțul e din nou activ");
+      toast.success(t("apps.reactivatedToast"));
       await reload();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Nu am putut reactiva");
+      toast.error(errorText(err, t, t("error.reactivate")));
     } finally {
       setBusyId(null);
     }
@@ -153,13 +154,13 @@ function Inbox() {
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-navy">Aplicații primite</h1>
-            <p className="mt-2 text-sm text-muted">Nume, prenume și telefon — vorbești direct.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-navy">{t("apps.title")}</h1>
+            <p className="mt-2 text-sm text-muted">{t("apps.lead")}</p>
           </div>
           {pendingCount > 0 ? (
             <span className="inline-flex h-10 items-center gap-2 rounded-full bg-orange px-3 text-sm font-semibold text-white">
               <Bell className="size-4" />
-              {pendingCount} {pendingCount === 1 ? "cerere nouă" : "cereri noi"}
+              {pendingCount} {pendingCount === 1 ? t("apps.newOne") : t("apps.newMany")}
             </span>
           ) : null}
         </div>
@@ -212,7 +213,7 @@ function Inbox() {
                         className="inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-3.5 text-sm font-semibold text-white"
                       >
                         <CheckCircle2 className="size-3.5" />
-                        Finalizat
+                        {t("apps.completed")}
                       </button>
                     ) : null}
                     {job.status !== "cancelled" ? (
@@ -223,7 +224,7 @@ function Inbox() {
                         className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white/70 dark:bg-white/10 px-3.5 text-sm font-medium text-navy ring-1 ring-navy/10"
                       >
                         <Ban className="size-3.5" />
-                        Anulează
+                        {t("apps.cancel")}
                       </button>
                     ) : null}
                     <button
@@ -233,7 +234,7 @@ function Inbox() {
                       className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:text-danger"
                     >
                       <Trash2 className="size-3.5" />
-                      Șterge
+                      {t("apps.delete")}
                     </button>
                   </div>
                 </div>
@@ -247,7 +248,7 @@ function Inbox() {
                 ) : null}
 
                 {job.applicants.length === 0 ? (
-                  <p className="mt-4 text-sm text-muted">Nimeni nu a aplicat încă.</p>
+                  <p className="mt-4 text-sm text-muted">{t("apps.none")}</p>
                 ) : (
                   <ul className="mt-4 space-y-3">
                     {job.applicants.map((a) => (
@@ -292,6 +293,7 @@ function ReactivatePanel({
   busy: boolean;
   onSubmit: (date: string, time: string) => void;
 }) {
+  const { t } = useT();
   const expired = job.status === "expired";
   const past = job.starts_at ? new Date(job.starts_at).getTime() <= Date.now() : false;
   const [date, setDate] = useState(() =>
@@ -306,13 +308,13 @@ function ReactivatePanel({
     <div className="mt-4 rounded-2xl bg-orange/12 p-4">
       <p className="text-sm font-semibold text-navy">
         {expired
-          ? "Anunțul a expirat. Reactivează-l cu o dată și oră nouă ca să apară din nou în listă."
+          ? t("apps.expiredReactivate")
           : left === 1
-            ? "Un muncitor a eliberat un loc. Reactivează anunțul ca să cauți înlocuitor."
-            : `Mai sunt ${left} locuri libere. Reactivează anunțul ca să apară din nou în listă.`}
+            ? t("apps.oneFreed")
+            : t("apps.slotsLeft", { n: left })}
       </p>
       <p className="mt-1 text-xs text-muted">
-        Cei confirmați rămân. Locurile libere se actualizează automat. Poți păstra data sau o poți schimba.
+        {t("apps.reactivateHint")}
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
         <input
@@ -336,7 +338,7 @@ function ReactivatePanel({
           className="sheen inline-flex h-12 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold glass-orange disabled:opacity-60"
         >
           <RefreshCw className="size-3.5" />
-          Reactivează jobul
+          {t("apps.reactivateBtn")}
         </button>
       </div>
     </div>
@@ -358,6 +360,7 @@ function ApplicantRow({
   onStatus: (status: "contacted" | "selected" | "declined" | "withdrawn") => void;
   onRated: () => void;
 }) {
+  const { t } = useT();
   const name = [app.first_name, app.last_name].filter(Boolean).join(" ") || app.applicant_name;
   const label =
     app.status === "selected"
@@ -393,7 +396,7 @@ function ApplicantRow({
       </div>
       {app.message ? <p className="mt-2 text-sm leading-relaxed text-muted">{app.message}</p> : null}
       {alreadyRated && jobCompleted && app.status === "selected" ? (
-        <p className="mt-3 text-xs font-medium text-navy">Ai evaluat deja această colaborare.</p>
+        <p className="mt-3 text-xs font-medium text-navy">{t("apps.alreadyRated")}</p>
       ) : null}
       {canRate ? (
         <div className="mt-3">
