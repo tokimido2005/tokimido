@@ -88,6 +88,9 @@ export function PushPrompt() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // Loading the Firebase SDK (~50 KB) only makes sense once the visitor has
+    // allowed notifications; everyone else skips it.
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
     listenForegroundMessages((payload) => {
       toast(payload.title, {
         description: payload.body,

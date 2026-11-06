@@ -36,19 +36,21 @@ function LogoImg({
   return (
     <>
       <img
-        src="/logo.webp?v=r4"
+        src="/logo-900.webp?v=r5"
         alt="Rabotaem.md"
         width={LOGO_W}
         height={LOGO_H}
         decoding="async"
+        loading="lazy"
         className={cn(cls, "dark:hidden")}
       />
       <img
-        src="/logo-dark.webp?v=r4"
+        src="/logo-dark-900.webp?v=r5"
         alt=""
         width={LOGO_W}
         height={LOGO_H}
         decoding="async"
+        loading="lazy"
         className={cn(cls, "hidden dark:block")}
         aria-hidden="true"
       />

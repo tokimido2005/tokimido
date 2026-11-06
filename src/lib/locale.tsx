@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { LOCALES, translate, type Locale } from "@/lib/i18n";
+import { LOCALES, loadLocale, translate, type Locale } from "@/lib/i18n";
 
 const STORAGE_KEY = "rabotaem-lang";
 
@@ -29,18 +29,31 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const next = readLocale();
-    setLocaleState(next);
-    document.documentElement.lang = next;
+    // RU/EN strings are a separate download; switch once they have arrived.
+    void loadLocale(next)
+      .then(() => {
+        setLocaleState(next);
+        document.documentElement.lang = next;
+      })
+      .catch(() => {
+        /* network error: stay on Romanian */
+      });
   }, []);
 
   function setLocale(next: Locale) {
-    setLocaleState(next);
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
       /* ignore */
     }
-    document.documentElement.lang = next;
+    void loadLocale(next)
+      .then(() => {
+        setLocaleState(next);
+        document.documentElement.lang = next;
+      })
+      .catch(() => {
+        /* network error: keep the current language */
+      });
   }
 
   const value = useMemo(
