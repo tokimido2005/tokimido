@@ -8,8 +8,9 @@ export const ADMIN_USER_ID = "admin-tokimido";
 /**
  * The admin password comes ONLY from the environment (never commit it).
  * - ADMIN_PASSWORD: used when the admin credential is first created.
- * - ADMIN_PASSWORD_RESET=1: also overwrite an existing admin password with
- *   ADMIN_PASSWORD on boot (set it for one deploy to rotate, then remove it).
+ * - Changing ADMIN_PASSWORD in the host's environment applies the new value
+ *   on the next restart (no extra flag needed).
+ * - ADMIN_PASSWORD_RESET=1: force re-applying the same value on every boot.
  * Without ADMIN_PASSWORD no password credential is created (dev gets a random
  * one printed to the server log).
  */
@@ -18,6 +19,13 @@ function adminPasswordFromEnv(): string | null {
   if (value && value.length >= 12) return value;
   if (value) console.error("[admin] ADMIN_PASSWORD must be at least 12 characters — ignored");
   return null;
+}
+
+/** Keyed (HMAC) fingerprint so the stored value reveals nothing about the password. */
+async function passwordFingerprint(plain: string) {
+  const { createHmac } = await import("node:crypto");
+  const key = process.env.BETTER_AUTH_SECRET?.trim() || "admin-fp";
+  return createHmac("sha256", key).update(`admin-password:${plain}`).digest("hex");
 }
 
 function shouldResetAdminPassword() {
@@ -114,38 +122,57 @@ export async function ensureAdminUser() {
          ) values ($1, $2, 'credential', $3, $4, $5::timestamptz, $5::timestamptz)`,
         [`acc-${userId}`, userId, userId, await hashPassword(plain), now],
       );
+      await sql.query(
+        `create table if not exists admin_meta (key text primary key, value text not null default '', created_at timestamptz not null default now())`,
+      );
+      await sql.query(
+        `insert into admin_meta (key, value) values ('password_env_fp', $1)
+         on conflict (key) do update set value = excluded.value, created_at = now()`,
+        [await passwordFingerprint(plain)],
+      );
     }
   } else {
-    // The pre-2026-11 password was committed to a public repo, so the stored
-    // credential is compromised. Replace it exactly once (marker below); after
-    // that only ADMIN_PASSWORD_RESET=1 rotates it, so in-app changes stick.
+    // ADMIN_PASSWORD in the environment is the source of truth: whenever its
+    // value changes (or on the first boot after the leaked password), the
+    // stored credential is replaced and admin sessions are signed out. A
+    // keyed fingerprint of the last applied value is kept so an unchanged
+    // value is not re-applied on every restart.
     await sql.query(
       `create table if not exists admin_meta (key text primary key, value text not null default '', created_at timestamptz not null default now())`,
     );
-    const marker = await sql.query<{ key: string }>(
-      `select key from admin_meta where key = 'password_rotated_v2'`,
+    const meta = await sql.query<{ key: string; value: string }>(
+      `select key, value from admin_meta where key in ('password_rotated_v2', 'password_env_fp')`,
     );
-    const firstRotation = !marker[0];
-    if (firstRotation || shouldResetAdminPassword()) {
-      const plain = adminPasswordFromEnv();
-      if (plain) {
-        await sql.query(
-          `update account set password = $1, "updatedAt" = $2::timestamptz where id = $3`,
-          [await hashPassword(plain), now, acc[0].id],
-        );
-        console.warn("[admin] admin password replaced from ADMIN_PASSWORD");
-      } else if (firstRotation && process.env.NODE_ENV === "production") {
-        // No new password configured: disable the leaked one rather than keep it.
-        await sql.query(`delete from account where id = $1`, [acc[0].id]);
-        console.error("[admin] leaked admin password removed — set ADMIN_PASSWORD and restart to log in");
-      }
-      if (plain || process.env.NODE_ENV === "production") {
-        await sql.query(`delete from "session" where "userId" = $1`, [userId]);
-        await sql.query(
-          `insert into admin_meta (key, value) values ('password_rotated_v2', $1) on conflict (key) do nothing`,
-          [now],
-        );
-      }
+    const firstRotation = !meta.some((m) => m.key === "password_rotated_v2");
+    const appliedFp = meta.find((m) => m.key === "password_env_fp")?.value ?? "";
+    const plain = adminPasswordFromEnv();
+    const fp = plain ? await passwordFingerprint(plain) : "";
+    const envChanged = Boolean(plain) && fp !== appliedFp;
+    if (plain && (firstRotation || envChanged || shouldResetAdminPassword())) {
+      await sql.query(
+        `update account set password = $1, "updatedAt" = $2::timestamptz where id = $3`,
+        [await hashPassword(plain), now, acc[0].id],
+      );
+      await sql.query(`delete from "session" where "userId" = $1`, [userId]);
+      await sql.query(
+        `insert into admin_meta (key, value) values ('password_env_fp', $1)
+         on conflict (key) do update set value = excluded.value, created_at = now()`,
+        [fp],
+      );
+      await sql.query(
+        `insert into admin_meta (key, value) values ('password_rotated_v2', $1) on conflict (key) do nothing`,
+        [now],
+      );
+      console.warn("[admin] admin password set from ADMIN_PASSWORD");
+    } else if (!plain && firstRotation && process.env.NODE_ENV === "production") {
+      // No new password configured: disable the leaked one rather than keep it.
+      await sql.query(`delete from account where id = $1`, [acc[0].id]);
+      await sql.query(`delete from "session" where "userId" = $1`, [userId]);
+      await sql.query(
+        `insert into admin_meta (key, value) values ('password_rotated_v2', $1) on conflict (key) do nothing`,
+        [now],
+      );
+      console.error("[admin] leaked admin password removed — set ADMIN_PASSWORD and restart to log in");
     }
   }
   await sql.query(
