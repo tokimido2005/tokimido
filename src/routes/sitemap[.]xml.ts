@@ -46,6 +46,18 @@ export const Route = createFileRoute("/sitemap.xml")({
         } catch (err) {
           console.error("[sitemap] jobs failed", err);
         }
+        try {
+          const { getSql } = await import("@/lib/db");
+          const sql = await getSql();
+          const rows = await sql.query<{ slug: string; updated_at: string }>(
+            `select slug, updated_at from companies order by updated_at desc limit 2000`,
+          );
+          for (const c of rows) {
+            urls.push(entry(`/firma/${encodeURIComponent(c.slug)}`, "weekly", "0.6", new Date(c.updated_at).toISOString().slice(0, 10)));
+          }
+        } catch (err) {
+          console.error("[sitemap] companies failed", err);
+        }
         const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
         return new Response(body, {
           headers: {

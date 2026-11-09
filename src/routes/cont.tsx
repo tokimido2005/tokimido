@@ -297,6 +297,13 @@ function Account() {
           >
             {t("cv.myTitle")} →
           </Link>
+          <Link
+            to="/firma"
+            data-testid="account-company-link"
+            className="inline-flex h-10 items-center rounded-full bg-white/70 px-4 text-sm font-medium text-navy ring-1 ring-navy/10 dark:bg-white/10"
+          >
+            {t("company.myTitle")} →
+          </Link>
           <TabBtn active={tab === "saved"} onClick={() => setTab("saved")}>
             {t("account.saved")}
           </TabBtn>

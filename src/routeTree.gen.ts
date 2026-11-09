@@ -30,6 +30,8 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as CCategoryRouteImport } from './routes/c/$category'
 import { Route as CvIndexRouteImport } from './routes/cv/index'
 import { Route as CvEditRouteImport } from './routes/cv/edit'
+import { Route as FirmaIndexRouteImport } from './routes/firma/index'
+import { Route as FirmaSlugRouteImport } from './routes/firma/$slug'
 import { Route as JobsIdRouteImport } from './routes/jobs/$id'
 import { Route as RRaionRouteImport } from './routes/r/$raion'
 import { Route as UUserIdRouteImport } from './routes/u/$userId'
@@ -144,6 +146,16 @@ const CvEditRoute = CvEditRouteImport.update({
   path: '/cv/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FirmaIndexRoute = FirmaIndexRouteImport.update({
+  id: '/firma/',
+  path: '/firma/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FirmaSlugRoute = FirmaSlugRouteImport.update({
+  id: '/firma/$slug',
+  path: '/firma/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsIdRoute = JobsIdRouteImport.update({
   id: '/jobs/$id',
   path: '/jobs/$id',
@@ -206,10 +218,12 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
+  '/firma/$slug': typeof FirmaSlugRoute
   '/jobs/$id': typeof JobsIdRouteWithChildren
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv/': typeof CvIndexRoute
+  '/firma/': typeof FirmaIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
@@ -237,9 +251,11 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
+  '/firma/$slug': typeof FirmaSlugRoute
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv': typeof CvIndexRoute
+  '/firma': typeof FirmaIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
@@ -268,10 +284,12 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
+  '/firma/$slug': typeof FirmaSlugRoute
   '/jobs/$id': typeof JobsIdRouteWithChildren
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv/': typeof CvIndexRoute
+  '/firma/': typeof FirmaIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
@@ -301,10 +319,12 @@ export interface FileRouteTypes {
     | '/verify'
     | '/c/$category'
     | '/cv/edit'
+    | '/firma/$slug'
     | '/jobs/$id'
     | '/r/$raion'
     | '/u/$userId'
     | '/cv/'
+    | '/firma/'
     | '/api/auth/$'
     | '/api/telegram/webhook'
     | '/cv/a/$id'
@@ -332,9 +352,11 @@ export interface FileRouteTypes {
     | '/verify'
     | '/c/$category'
     | '/cv/edit'
+    | '/firma/$slug'
     | '/r/$raion'
     | '/u/$userId'
     | '/cv'
+    | '/firma'
     | '/api/auth/$'
     | '/api/telegram/webhook'
     | '/cv/a/$id'
@@ -362,10 +384,12 @@ export interface FileRouteTypes {
     | '/verify'
     | '/c/$category'
     | '/cv/edit'
+    | '/firma/$slug'
     | '/jobs/$id'
     | '/r/$raion'
     | '/u/$userId'
     | '/cv/'
+    | '/firma/'
     | '/api/auth/$'
     | '/api/telegram/webhook'
     | '/cv/a/$id'
@@ -394,10 +418,12 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   CCategoryRoute: typeof CCategoryRoute
   CvEditRoute: typeof CvEditRoute
+  FirmaSlugRoute: typeof FirmaSlugRoute
   JobsIdRoute: typeof JobsIdRouteWithChildren
   RRaionRoute: typeof RRaionRoute
   UUserIdRoute: typeof UUserIdRoute
   CvIndexRoute: typeof CvIndexRoute
+  FirmaIndexRoute: typeof FirmaIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTelegramWebhookRoute: typeof ApiTelegramWebhookRoute
   CvAIdRoute: typeof CvAIdRoute
@@ -552,6 +578,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CvEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/firma/': {
+      id: '/firma/'
+      path: '/firma'
+      fullPath: '/firma/'
+      preLoaderRoute: typeof FirmaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/firma/$slug': {
+      id: '/firma/$slug'
+      path: '/firma/$slug'
+      fullPath: '/firma/$slug'
+      preLoaderRoute: typeof FirmaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs/$id': {
       id: '/jobs/$id'
       path: '/jobs/$id'
@@ -645,10 +685,12 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   CCategoryRoute: CCategoryRoute,
   CvEditRoute: CvEditRoute,
+  FirmaSlugRoute: FirmaSlugRoute,
   JobsIdRoute: JobsIdRouteWithChildren,
   RRaionRoute: RRaionRoute,
   UUserIdRoute: UUserIdRoute,
   CvIndexRoute: CvIndexRoute,
+  FirmaIndexRoute: FirmaIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTelegramWebhookRoute: ApiTelegramWebhookRoute,
   CvAIdRoute: CvAIdRoute,

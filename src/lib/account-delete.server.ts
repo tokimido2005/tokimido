@@ -97,6 +97,7 @@ export async function deleteUserData(userId: string) {
     ["rating_prompts", "to_user_id"],
     ["cvs", "user_id"],
     ["cv_files", "user_id"],
+    ["companies", "owner_id"],
   ] as const) {
     await run(`delete from ${table} where ${column} = $1`, [userId]);
   }

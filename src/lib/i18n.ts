@@ -1267,6 +1267,38 @@ export const messages: Record<Locale, Record<string, string>> = {
     "kind.tabOficial": "Caut angajare",
     "kind.change": "Schimbă tipul",
     "kind.company": "Firmă",
+    "company.myTitle": "Pagina firmei",
+    "company.createTitle": "Fă pagina firmei",
+    "company.editTitle": "Pagina firmei tale",
+    "company.lead": "Candidații văd logo-ul, descrierea și toate anunțurile tale într-un singur loc. Asta inspiră încredere.",
+    "company.viewPublic": "Vezi cum o văd candidații",
+    "company.logoAdd": "Adaugă logo",
+    "company.logoChange": "Schimbă logo-ul",
+    "company.errLogo": "Logo-ul trebuie să fie o imagine PNG, JPG sau WEBP.",
+    "company.errWebsite": "Adresa site-ului nu pare corectă (ex: www.firma.md).",
+    "company.name": "Numele firmei",
+    "company.renameWarn": "Dacă schimbi numele, insigna „Firmă verificată” se scoate până la o nouă verificare.",
+    "company.description": "Despre firmă",
+    "company.descriptionHint": "Cu ce vă ocupați, de câți ani, ce fel de oameni căutați.",
+    "company.descriptionPh": "Ex: Suntem o rețea de 5 magazine de electronice din Chișinău, din 2012…",
+    "company.city": "Orașul",
+    "company.website": "Site-ul web",
+    "company.size": "Câți angajați aveți",
+    "company.employees": "{n} angajați",
+    "company.save": "Salvează pagina firmei",
+    "company.saved": "Pagina firmei a fost salvată",
+    "company.notFound": "Firma nu a fost găsită",
+    "company.seeJobs": "Vezi angajările",
+    "company.verified": "Firmă verificată",
+    "company.edit": "Modifică pagina",
+    "company.adminVerify": "Admin: marchează verificată",
+    "company.adminUnverify": "Admin: scoate verificarea",
+    "company.verifiedToast": "Firma a fost marcată ca verificată",
+    "company.unverified": "Verificarea a fost scoasă",
+    "company.openJobs": "Anunțuri deschise ({n})",
+    "company.noJobs": "Firma nu are acum anunțuri deschise.",
+    "company.seePage": "Vezi pagina firmei",
+    "company.postHint": "Nu ai încă pagina firmei? Fă-o în 2 minute: logo și descriere, ca să ai mai mulți candidați →",
     "kind.salary": "Salariu",
     "kind.salaryMonth": "{n} MDL / lună",
     "kind.salaryNegotiable": "Negociabil",
@@ -1456,7 +1488,7 @@ export function errorText(
   const banned = /^Contul este blocat: (.+)$/s.exec(message);
   if (banned) return t("srv.bannedReason", { r: banned[1] });
   // Coded keys thrown by newer server code (account.*, srv.*, error.*).
-  if (/^(account|srv|error|tg|cv)\.[A-Za-z0-9_.]+$/.test(message)) return t(message);
+  if (/^(account|srv|error|tg|cv|company)\.[A-Za-z0-9_.]+$/.test(message)) return t(message);
   // Raw schema-validation output (JSON issue list) is not for humans.
   if (message.startsWith("[") && message.includes('"code"')) {
     // Validation issues may carry a translation key as their message.
