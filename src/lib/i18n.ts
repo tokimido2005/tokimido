@@ -753,7 +753,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     "reset.ok": "Parola a fost schimbată. Poți intra în cont.",
     "reset.mismatch": "Parolele nu coincid.",
     "verify.title": "Verifică telefonul",
-    "verify.blurb": "Trimitem un SMS la numărul din cont. Nu poți introduce alt număr aici.",
+    "verify.blurb": "Confirmă numărul din cont prin Telegram sau prin SMS. Nu poți introduce alt număr aici.",
     "verify.changeHint": "Ca să schimbi numărul, deschide Contul meu.",
     "phone.locked": "Telefonul din cont",
     "phone.change": "Schimbă numărul",

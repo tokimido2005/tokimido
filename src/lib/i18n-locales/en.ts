@@ -744,7 +744,7 @@ const messages: Record<string, string> = {
   "reset.ok": "Password updated. You can sign in.",
   "reset.mismatch": "Passwords do not match.",
   "verify.title": "Verify your phone",
-  "verify.blurb": "We text the number on your account. You cannot enter a different number here.",
+  "verify.blurb": "Confirm the number on your account via Telegram or SMS. You cannot enter a different number here.",
   "verify.changeHint": "To change the number, open My account.",
   "phone.locked": "Account phone",
   "phone.change": "Change number",
