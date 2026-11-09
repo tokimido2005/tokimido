@@ -48,7 +48,7 @@ import { refreshAppsSummary, useAppsSummary } from "@/lib/apps-summary";
 type View = "primite" | "trimise";
 
 export const Route = createFileRoute("/aplicatii")({
-  head: () => seoHead("Aplicații", "Aplicațiile primite la anunțurile tale și cele la care ai aplicat, pe Rabotaem.md."),
+  head: () => seoHead("Aplicații", "Aplicațiile primite la anunțurile tale și cele la care ai aplicat, pe Rabotaem.md.", { noindex: true }),
   validateSearch: (s: Record<string, unknown>): { tab?: View } => ({
     tab: s.tab === "primite" || s.tab === "trimise" ? s.tab : undefined,
   }),

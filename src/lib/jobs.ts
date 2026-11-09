@@ -1036,7 +1036,7 @@ const filtersSchema = z.object({
   raion: z.string().optional(),
   locality: z.string().optional(),
   category: z.string().optional(),
-  when: z.enum(["today", "urgent", "soon3h"]).optional(),
+  when: z.enum(["today", "urgent", "soon3h", "weekend"]).optional(),
   blocked: z.string().optional(),
   excludeId: z.number().int().optional(),
   preferRaion: z.string().optional(),
@@ -1101,6 +1101,11 @@ export const listJobs = createServerFn({ method: "POST" })
       conditions.push(`j.starts_at <= now() + interval '24 hours'`);
     } else if (data.when === "soon3h") {
       conditions.push(`j.starts_at <= now() + interval '3 hours'`);
+    } else if (kind === "rapid" && data.when === "weekend") {
+      // Saturday or Sunday (Chișinău time) within the next 8 days.
+      conditions.push(
+        `extract(isodow from j.starts_at at time zone 'Europe/Chisinau') in (6, 7) and j.starts_at <= now() + interval '8 days'`,
+      );
     }
     if (data.excludeId) {
       conditions.push(`j.id <> $${i++}`);

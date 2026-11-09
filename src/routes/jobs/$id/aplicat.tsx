@@ -6,7 +6,7 @@ import { seoHead } from "@/lib/seo";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/jobs/$id/aplicat")({
-  head: () => seoHead("Aplicație trimisă", "Confirmarea aplicației tale pe Rabotaem.md."),
+  head: () => seoHead("Aplicație trimisă", "Confirmarea aplicației tale pe Rabotaem.md.", { noindex: true }),
   loader: async ({ params }) => {
     const n = Number(params.id);
     if (!Number.isFinite(n)) return { job: null };

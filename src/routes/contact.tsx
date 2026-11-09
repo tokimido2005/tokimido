@@ -9,7 +9,7 @@ import { track } from "@/lib/analytics";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/contact")({
-  head: () => seoHead("Contact / Support", "Scrie echipei Rabotaem.md pentru întrebări sau probleme."),
+  head: () => seoHead("Contact / Support", "Scrie echipei Rabotaem.md pentru întrebări sau probleme.", { path: "/contact" }),
   component: ContactPage,
 });
 

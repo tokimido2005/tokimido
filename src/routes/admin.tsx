@@ -87,7 +87,7 @@ export const Route = createFileRoute("/admin")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({
     tab: TABS.includes(s.tab as Tab) ? (s.tab as Tab) : undefined,
   }),
-  head: () => seoHead("Admin", "Panou de administrare Rabotaem.md."),
+  head: () => seoHead("Admin", "Panou de administrare Rabotaem.md.", { noindex: true }),
   component: AdminPage,
 });
 

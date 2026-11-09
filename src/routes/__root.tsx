@@ -30,7 +30,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Lucru pe loc. Bani pe loc. Platformă gratuită pentru joburi de scurtă durată în toată Moldova.",
+          "Kalîmuri și lucru pe zi în toată Moldova. Plata în aceeași zi, fără comision, gratuit.",
       },
       { name: "apple-mobile-web-app-title", content: "Rabotaem" },
       { name: "apple-mobile-web-app-capable", content: "yes" },

@@ -1,14 +1,31 @@
 const SITE = "Rabotaem.md";
+export const SITE_ORIGIN = "https://rabotaem.md";
 
-export function seoHead(title: string, description: string) {
+type SeoOptions = {
+  /** Path of the canonical URL (e.g. "/angajare"). Adds canonical + og:url. */
+  path?: string;
+  /** Keep the page out of Google (private or thin pages). */
+  noindex?: boolean;
+};
+
+/** Absolute URL on the public site; each path segment stays as given. */
+export function siteUrl(path: string) {
+  return `${SITE_ORIGIN}${path === "/" ? "/" : path}`;
+}
+
+export function seoHead(title: string, description: string, opts: SeoOptions = {}) {
   const full = title.includes(SITE) ? title : `${title} · ${SITE}`;
+  const url = opts.path ? siteUrl(opts.path) : null;
   return {
     meta: [
       { title: full },
       { name: "description", content: description },
       { property: "og:title", content: full },
       { property: "og:description", content: description },
+      ...(url ? [{ property: "og:url", content: url }] : []),
+      ...(opts.noindex ? [{ name: "robots", content: "noindex" }] : []),
     ],
+    links: url && !opts.noindex ? [{ rel: "canonical", href: url }] : [],
   };
 }
 

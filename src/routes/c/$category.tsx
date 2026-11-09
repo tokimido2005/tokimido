@@ -18,8 +18,13 @@ export const Route = createFileRoute("/c/$category")({
   },
   head: ({ params }) => {
     const id = params.category;
-    const name = isCategoryId(id) ? translate("ro", `cat.${id}`) : id;
-    return seoHead(translate("ro", "seo.catTitle", { c: name }), translate("ro", "seo.catDesc", { c: name }));
+    const known = isCategoryId(id);
+    const name = known ? translate("ro", `cat.${id}`) : id;
+    return seoHead(
+      translate("ro", "seo.catTitle", { c: name }),
+      translate("ro", "seo.catDesc", { c: name }),
+      known ? { path: `/c/${encodeURIComponent(id)}` } : { noindex: true },
+    );
   },
   component: CategoryPage,
 });

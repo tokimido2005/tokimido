@@ -11,7 +11,7 @@ import { seoHead } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/firma/")({
-  head: () => ({ ...seoHead("Pagina firmei", "Pagina firmei tale pe Rabotaem.md."), meta: [{ name: "robots", content: "noindex" }] }),
+  head: () => seoHead("Pagina firmei", "Pagina firmei tale pe Rabotaem.md.", { noindex: true }),
   component: MyCompanyPage,
 });
 

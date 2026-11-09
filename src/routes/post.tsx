@@ -37,7 +37,7 @@ export const Route = createFileRoute("/post")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     kind: isJobKind(typeof s.kind === "string" ? s.kind : "") ? (s.kind as JobKind) : undefined,
   }),
-  head: () => seoHead("Postez un anunț", "Publică lucru rapid sau angajare oficială pe Rabotaem.md."),
+  head: () => seoHead("Postez un anunț", "Publică lucru rapid sau angajare oficială pe Rabotaem.md.", { path: "/post" }),
   component: PostJob,
 });
 

@@ -20,7 +20,7 @@ export const Route = createFileRoute("/complete")({
   validateSearch: (s: Record<string, unknown>): CompleteSearch => ({
     next: safeNextPath(typeof s.next === "string" ? s.next : undefined),
   }),
-  head: () => seoHead("Finalizează contul", "Adaugă telefonul și acceptă regulile pentru a activa contul."),
+  head: () => seoHead("Finalizează contul", "Adaugă telefonul și acceptă regulile pentru a activa contul.", { noindex: true }),
   component: CompleteProfile,
 });
 

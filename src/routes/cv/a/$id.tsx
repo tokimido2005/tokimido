@@ -12,7 +12,7 @@ import { formatPhoneDisplay } from "@/lib/phone";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/cv/a/$id")({
-  head: () => ({ ...seoHead("CV candidat", "CV trimis pe Rabotaem.md."), meta: [{ name: "robots", content: "noindex" }] }),
+  head: () => seoHead("CV candidat", "CV trimis pe Rabotaem.md.", { noindex: true }),
   component: ApplicationCvPage,
 });
 

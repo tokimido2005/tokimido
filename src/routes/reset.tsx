@@ -10,7 +10,7 @@ import { Logo } from "@/components/logo";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/reset")({
-  head: () => seoHead("Parolă uitată", "Resetează parola contului Rabotaem.md prin Telegram sau SMS."),
+  head: () => seoHead("Parolă uitată", "Resetează parola contului Rabotaem.md prin Telegram sau SMS.", { noindex: true }),
   validateSearch: (s: Record<string, unknown>): { tg?: string } => ({
     tg: typeof s.tg === "string" && /^[\w-]{20,80}$/.test(s.tg) ? s.tg : undefined,
   }),

@@ -17,7 +17,7 @@ import { seoHead } from "@/lib/seo";
 import { cn, formatMdl } from "@/lib/utils";
 
 export const Route = createFileRoute("/alerte")({
-  head: () => ({ ...seoHead("Alertele mele", "Primește anunțurile noi potrivite pentru tine."), meta: [{ name: "robots", content: "noindex" }] }),
+  head: () => seoHead("Alertele mele", "Primește anunțurile noi potrivite pentru tine.", { noindex: true }),
   component: AlertsPage,
 });
 

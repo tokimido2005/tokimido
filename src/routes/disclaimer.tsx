@@ -3,7 +3,7 @@ import { LegalPage } from "@/components/legal-page";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/disclaimer")({
-  head: () => seoHead("Disclaimer", "Rabotaem.md este o platformă de anunțuri, nu o agenție de recrutare."),
+  head: () => seoHead("Disclaimer", "Rabotaem.md este o platformă de anunțuri, nu o agenție de recrutare.", { path: "/disclaimer" }),
   component: DisclaimerPage,
 });
 
