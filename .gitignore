@@ -4,9 +4,12 @@ node_modules
 .nitro
 dist
 .tanstack
-screenshots/**
-!screenshots/**/*.mjs
 *.log
 .env
 .env.local
 .env.*.local
+
+# QA scripts and local screenshots
+screenshots/
+.project_id
+.node_modules.lock

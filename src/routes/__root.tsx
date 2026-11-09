@@ -16,9 +16,6 @@ import appCss from "../styles.css?url";
 const APP_NAME = "Rabotaem.md";
 const host = import.meta.env.VITE_PUBLIC_HOSTNAME;
 const ogImage = host ? `https://${host}/og.jpg` : undefined;
-const xBanner = host
-  ? `https://og.grok.me/v1/banner.png?host=${encodeURIComponent(host)}&title=${encodeURIComponent(APP_NAME)}&color=0B2548`
-  : undefined;
 
 const THEME_BOOT = `(function(){try{var h=document.documentElement;h.style.backgroundColor="#071422";h.style.colorScheme="dark";if(document.body)document.body.style.backgroundColor="#071422";var t=localStorage.getItem("rabotaem-theme");var d=t==="dark"||(t!=="light"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(d)h.classList.add("dark");var k="rabotaem-splash-v23";var seen=sessionStorage.getItem(k)==="1"||location.pathname!=="/"||(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)||/bot|crawl|spider|lighthouse|headless/i.test(navigator.userAgent);window.__RBT_SPLASH_PLAY=!seen;if(seen){h.classList.add("rbt-splash-done");if(!d){h.style.colorScheme="light";h.style.backgroundColor="#dce6f0";if(document.body)document.body.style.backgroundColor="#dce6f0"}}else{try{sessionStorage.setItem(k,"1")}catch(e){}h.classList.add("rbt-splash");setTimeout(function(){if(!h.classList.contains("rbt-splash-done")){h.classList.remove("rbt-splash","is-reveal");h.classList.add("rbt-splash-done")}},1600)}}catch(e){document.documentElement.classList.add("rbt-splash");document.documentElement.style.backgroundColor="#071422"}})();`;
 const ANALYTICS_BOOT = `window.dataLayer=window.dataLayer||[];window.rabotaemTrack=window.rabotaemTrack||function(){};`;
@@ -54,13 +51,6 @@ export const Route = createRootRoute({
             { property: "og:image:height", content: "630" },
           ]
         : []),
-      ...(xBanner
-        ? [
-            { property: "x:game:image", content: xBanner },
-            { property: "x:game:image:width", content: "1200" },
-            { property: "x:game:image:height", content: "264" },
-          ]
-        : []),
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=r6" },
@@ -71,8 +61,6 @@ export const Route = createRootRoute({
       { rel: "shortcut icon", href: "/favicon.ico?v=r6" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "manifest", href: "/__grok/manifest.webmanifest" },
-      { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png?v=r6" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com" },
