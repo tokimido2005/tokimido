@@ -96,6 +96,8 @@ export async function wipeAllButAdmin() {
     ["rating_skips", "to_user_id"],
     ["rating_prompts", "user_id"],
     ["rating_prompts", "to_user_id"],
+    ["cvs", "user_id"],
+    ["cv_files", "user_id"],
   ] as const) {
     await run(`delete from ${table} where ${not(column)}`, [keep]);
   }

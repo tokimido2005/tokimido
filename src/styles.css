@@ -845,3 +845,41 @@ html.dark {
     contain-intrinsic-size: auto;
   }
 }
+
+/* CV document (screen + print / "Save as PDF") */
+.cv-h {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0b2548;
+  border-bottom: 2px solid rgb(241 90 34 / 0.35);
+  padding-bottom: 0.35rem;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .cv-doc,
+  .cv-doc * {
+    visibility: visible !important;
+  }
+  .cv-doc {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

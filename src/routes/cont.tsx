@@ -282,6 +282,13 @@ function Account() {
           >
             {t("account.apps")} →
           </Link>
+          <Link
+            to="/cv"
+            data-testid="account-cv-link"
+            className="inline-flex h-10 items-center rounded-full bg-white/70 px-4 text-sm font-medium text-navy ring-1 ring-navy/10 dark:bg-white/10"
+          >
+            {t("cv.myTitle")} →
+          </Link>
           <TabBtn active={tab === "saved"} onClick={() => setTab("saved")}>
             {t("account.saved")}
           </TabBtn>

@@ -13,6 +13,8 @@ import { ReportButton } from "@/components/report-dialog";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
 import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";
+import { OfficialApply } from "@/components/official-apply";
+import { JobDetailsBlock } from "@/components/job-details";
 import { getMyProfile, getProfileGate } from "@/lib/profile";
 import { getMyAccess, type MonetizationAccess } from "@/lib/monetization";
 import { useMoneyMode } from "@/lib/money-mode";
@@ -303,6 +305,11 @@ function JobPage() {
         await navigate({ to: "/pro" });
         return;
       }
+      if (isOficial(listing)) {
+        document.getElementById("aplica")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setBusy(false);
+        return;
+      }
       await applyToJob({
         data: {
           jobId: listing.id,
@@ -424,7 +431,13 @@ function JobPage() {
                   label={t("kind.salary")}
                   value={
                     job.payment_mdl > 0
-                      ? t("kind.salaryMonth", { n: formatMdl(job.payment_mdl).replace(" MDL", "") })
+                      ? t("kind.salaryMonth", {
+                          n:
+                            formatMdl(job.payment_mdl).replace(" MDL", "") +
+                            ((job.details?.salary_max ?? 0) > job.payment_mdl
+                              ? ` – ${formatMdl(job.details!.salary_max).replace(" MDL", "")}`
+                              : ""),
+                        })
                       : t("kind.salaryNegotiable")
                   }
                   accent
@@ -462,6 +475,7 @@ function JobPage() {
             </button>
           ) : null}
           <p className="mt-6 whitespace-pre-wrap text-base leading-relaxed text-navy/85">{job.description}</p>
+          {official ? <JobDetailsBlock details={job.details} /> : null}
           <p className="mt-5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm text-muted">
             <span>
               {t("job.postedBy")}{" "}
@@ -519,6 +533,21 @@ function JobPage() {
               <div className="mt-5">
                 <PaywallCard access={access!} action="apply" />
               </div>
+            ) : user && official && gate ? (
+              <OfficialApply
+                jobId={job.id}
+                jobTitle={job.title}
+                company={job.company}
+                firstName={firstName}
+                lastName={lastName}
+                phone={phone}
+                onApplied={() => {
+                  setApplied(true);
+                  setAppTick((n) => n + 1);
+                  toast.success(t("toast.applied"));
+                  void navigate({ to: "/jobs/$id/aplicat", params: { id: String(job.id) } });
+                }}
+              />
             ) : user ? (
               <div className="mt-5 space-y-3">
                 {firstName || lastName ? (
@@ -541,7 +570,7 @@ function JobPage() {
             ) : (
               <p className="mt-3 text-sm text-muted">{t("apply.loginHint")}</p>
             )}
-            {applyBlocked ? null : (
+            {applyBlocked || (user && official && gate?.complete && gate.verified) ? null : (
               <button
                 type="button"
                 data-testid="apply-btn"

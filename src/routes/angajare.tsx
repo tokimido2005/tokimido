@@ -1,7 +1,7 @@
 import { errorText } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Briefcase } from "lucide-react";
+import { Briefcase, FileText } from "lucide-react";
 import { Shell } from "@/components/shell";
 import { Filters, type JobFilters } from "@/components/filters";
 import { JobCard } from "@/components/job-card";
@@ -100,6 +100,14 @@ function AngajarePage() {
             className="sheen inline-flex h-12 items-center rounded-full px-5 text-sm font-semibold glass-navy"
           >
             {t("angajare.post")}
+          </Link>
+          <Link
+            to="/cv"
+            data-testid="angajare-cv"
+            className="sheen inline-flex h-12 items-center gap-2 rounded-full px-5 text-sm font-semibold glass-orange"
+          >
+            <FileText className="size-4" />
+            {t("angajare.myCv")}
           </Link>
         </div>
 

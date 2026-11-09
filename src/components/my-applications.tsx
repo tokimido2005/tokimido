@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, ChevronDown, ChevronRight, Clock3, MapPin, Wallet, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, ChevronDown, ChevronRight, Clock3, FileText, MapPin, Wallet, XCircle } from "lucide-react";
+import { OfficialProgress } from "@/components/my-application-status";
+import { formatJobDate, formatJobTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { cancelApplication, listMyApplications, type MyApplication } from "@/lib/jobs";
 import { listPendingRatings, type PendingRating } from "@/lib/ratings";
@@ -13,7 +15,7 @@ import { formatMdl } from "@/lib/utils";
 import { markSelectedSeen, refreshAppsSummary } from "@/lib/apps-summary";
 import { cn } from "@/lib/utils";
 
-const ACTIVE = new Set(["pending", "contacted", "selected"]);
+const ACTIVE = new Set(["pending", "contacted", "interview", "selected"]);
 
 /** "Where I applied": the worker side of the Applications page. */
 export function MyApplications({ onCount }: { onCount?: (n: number) => void }) {
@@ -45,7 +47,7 @@ export function MyApplications({ onCount }: { onCount?: (n: number) => void }) {
   // Seeing the list counts as having seen the "selected" news.
   useEffect(() => {
     if (!apps) return;
-    markSelectedSeen(apps.filter((a) => a.status === "selected").map((a) => a.id));
+    markSelectedSeen(apps.filter((a) => a.status === "selected" || a.status === "interview"));
   }, [apps]);
 
   async function runCancel() {
@@ -77,7 +79,7 @@ export function MyApplications({ onCount }: { onCount?: (n: number) => void }) {
     );
   }
 
-  const order = (a: MyApplication) => (a.status === "selected" ? 0 : ACTIVE.has(a.status) ? 1 : 2);
+  const order = (a: MyApplication) => (a.status === "selected" || a.status === "interview" ? 0 : ACTIVE.has(a.status) ? 1 : 2);
   const sorted = [...apps].sort((a, b) => order(a) - order(b));
   const current = sorted.filter((a) => ACTIVE.has(a.status) && !["cancelled", "completed"].includes(a.job_status));
   const old = sorted.filter((a) => !current.includes(a));
@@ -141,9 +143,12 @@ function MyAppCard({
 }) {
   const { t } = useT();
   const jobGone = a.job_status === "cancelled";
+  const official = a.job_kind === "oficial";
   const status =
     a.status === "selected"
-      ? { cls: "bg-emerald-600 text-white", icon: CheckCircle2, text: t("my.stSelected") }
+      ? { cls: "bg-emerald-600 text-white", icon: CheckCircle2, text: t(official ? "my.stHired" : "my.stSelected") }
+      : a.status === "interview"
+        ? { cls: "bg-[#1d6fd8] text-white", icon: CalendarClock, text: t("my.stInterview") }
       : a.status === "declined"
         ? { cls: "bg-navy/8 text-navy", icon: XCircle, text: t("my.stDeclined") }
         : a.status === "withdrawn"
@@ -151,7 +156,10 @@ function MyAppCard({
           : jobGone
             ? { cls: "bg-navy/8 text-navy", icon: XCircle, text: t("my.stJobCancelled") }
             : { cls: "bg-amber-100 text-amber-900 dark:bg-amber-400/20 dark:text-amber-100", icon: Clock3, text: t("my.stWaiting") };
-  const canCancel = (a.status === "pending" || a.status === "contacted" || a.status === "selected") && !jobGone && a.job_status !== "completed";
+  const canCancel =
+    (a.status === "pending" || a.status === "contacted" || a.status === "interview" || a.status === "selected") &&
+    !jobGone &&
+    a.job_status !== "completed";
 
   return (
     <article className="overflow-hidden rounded-[26px] glass" data-testid="my-app" data-status={a.status}>
@@ -167,6 +175,7 @@ function MyAppCard({
         >
           {a.job_title}
         </Link>
+        {official && a.job_company ? <p className="text-base text-muted">{a.job_company}</p> : null}
         <div className="mt-2 space-y-1.5 text-base text-navy">
           {a.job_starts_at ? (
             <p className="font-medium">
@@ -193,8 +202,38 @@ function MyAppCard({
             {t(a.job_has_geo ? "my.seeDetailsMap" : "my.seeDetails")}
             <ChevronRight className="size-5" />
           </Link>
+        ) : a.status === "interview" ? (
+          <div className="mt-4 rounded-2xl bg-[#1d6fd8]/8 p-4" data-testid="my-app-interview">
+            {a.interview_at ? (
+              <p className="text-lg font-bold text-navy">
+                {formatJobDate(a.interview_at)} · {formatJobTime(a.interview_at)}
+              </p>
+            ) : null}
+            {a.interview_note ? <p className="mt-1 whitespace-pre-wrap text-base text-navy">{a.interview_note}</p> : null}
+            <Link
+              to="/jobs/$id"
+              params={{ id: String(a.job_id) }}
+              className="mt-3 flex h-12 items-center justify-center gap-2 rounded-full bg-[#1d6fd8] text-base font-bold text-white"
+            >
+              {t("my.seeDetails")}
+              <ChevronRight className="size-5" />
+            </Link>
+          </div>
         ) : a.status === "pending" || a.status === "contacted" ? (
-          <p className="mt-3 text-sm leading-relaxed text-muted">{t("my.waitingHint")}</p>
+          <div className="mt-4">
+            {official ? <OfficialProgress app={{ status: a.status as never, viewedAt: a.viewed_at ?? null }} /> : null}
+            <p className="text-sm leading-relaxed text-muted">{t(official ? "my.waitingHintOficial" : "my.waitingHint")}</p>
+          </div>
+        ) : null}
+        {official && a.cv_kind ? (
+          <Link
+            to="/cv/a/$id"
+            params={{ id: String(a.id) }}
+            className="mt-2 inline-flex h-11 items-center gap-2 rounded-full px-3 text-base font-medium text-[#1d6fd8] hover:bg-[#1d6fd8]/8"
+          >
+            <FileText className="size-4" />
+            {t("my.seeSentCv")}
+          </Link>
         ) : null}
 
         {rating ? (

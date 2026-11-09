@@ -2,13 +2,13 @@ import { useEffect, useSyncExternalStore } from "react";
 import { getAppsSummary } from "@/lib/jobs";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
-export type SelectedApp = { id: number; job_id: number; title: string; starts_at: string | null };
+export type SelectedApp = { id: number; job_id: number; title: string; starts_at: string | null; status: string };
 type Summary = { newApplicants: number; selected: SelectedApp[] };
 
 const SEEN_KEY = "rabotaem-seen-selected";
 const EMPTY: Summary = { newApplicants: 0, selected: [] };
 
-let state: { summary: Summary; seen: number[] } = { summary: EMPTY, seen: [] };
+let state: { summary: Summary; seen: string[] } = { summary: EMPTY, seen: [] };
 const listeners = new Set<() => void>();
 let lastFetch = 0;
 let inflight: Promise<void> | null = null;
@@ -19,10 +19,17 @@ function emit() {
   for (const l of listeners) l();
 }
 
-function readSeen(): number[] {
+export function seenKey(a: { id: number; status: string }) {
+  return `${a.id}:${a.status}`;
+}
+
+function readSeen(): string[] {
   try {
     const raw = JSON.parse(localStorage.getItem(SEEN_KEY) || "[]") as unknown;
-    return Array.isArray(raw) ? raw.filter((n): n is number => typeof n === "number").slice(-200) : [];
+    // Old format stored bare ids of "selected" applications.
+    return Array.isArray(raw)
+      ? raw.map((n) => (typeof n === "number" ? `${n}:selected` : String(n))).slice(-200)
+      : [];
   } catch {
     return [];
   }
@@ -46,9 +53,9 @@ export function refreshAppsSummary(force = false) {
 }
 
 /** Remember that the user has seen these selections (banner and badge go away). */
-export function markSelectedSeen(ids: number[]) {
-  if (ids.length === 0) return;
-  const seen = [...new Set([...readSeen(), ...ids])].slice(-200);
+export function markSelectedSeen(items: Array<{ id: number; status: string }>) {
+  if (items.length === 0) return;
+  const seen = [...new Set([...readSeen(), ...items.map(seenKey)])].slice(-200);
   try {
     localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
   } catch {
@@ -63,7 +70,7 @@ function subscribe(l: () => void) {
   return () => listeners.delete(l);
 }
 
-const serverSnapshot = { summary: EMPTY, seen: [] as number[] };
+const serverSnapshot = { summary: EMPTY, seen: [] as string[] };
 
 /** Counters for the Applications menu; polls gently while the tab is visible. */
 export function useAppsSummary() {
@@ -99,7 +106,7 @@ export function useAppsSummary() {
     };
   }, [userId]);
 
-  const unseen = user ? snap.summary.selected.filter((s) => !snap.seen.includes(s.id)) : [];
+  const unseen = user ? snap.summary.selected.filter((s) => !snap.seen.includes(seenKey(s))) : [];
   const newApplicants = user ? snap.summary.newApplicants : 0;
   return { newApplicants, unseen, selected: user ? snap.summary.selected : [], badge: newApplicants + unseen.length };
 }

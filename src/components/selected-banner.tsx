@@ -13,7 +13,7 @@ export function SelectedBanner() {
   const onItsPage = first ? pathname === `/jobs/${first.job_id}` : false;
 
   useEffect(() => {
-    if (first && onItsPage) markSelectedSeen([first.id]);
+    if (first && onItsPage) markSelectedSeen([first]);
   }, [first, onItsPage]);
 
   if (!first || onItsPage) return null;
@@ -22,13 +22,13 @@ export function SelectedBanner() {
       <div className="flex items-center gap-3 rounded-[22px] bg-emerald-600 p-3 pl-4 text-white shadow-lg">
         <CheckCircle2 className="size-6 shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-base font-semibold">{t("sel.bannerTitle")}</p>
+          <p className="text-base font-semibold">{t(first.status === "interview" ? "sel.bannerInterview" : "sel.bannerTitle")}</p>
           <p className="truncate text-sm text-white/90">{first.title}</p>
         </div>
         <Link
           to="/jobs/$id"
           params={{ id: String(first.job_id) }}
-          onClick={() => markSelectedSeen([first.id])}
+          onClick={() => markSelectedSeen([first])}
           className="inline-flex h-11 shrink-0 items-center rounded-full bg-white px-4 text-sm font-bold text-emerald-700"
         >
           {t("sel.seeDetails")}
@@ -36,7 +36,7 @@ export function SelectedBanner() {
         <button
           type="button"
           aria-label={t("sel.hide")}
-          onClick={() => markSelectedSeen(unseen.map((u) => u.id))}
+          onClick={() => markSelectedSeen(unseen)}
           className="grid size-9 shrink-0 place-items-center rounded-full text-white/80 hover:bg-white/15"
         >
           <X className="size-5" />

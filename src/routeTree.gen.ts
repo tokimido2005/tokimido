@@ -27,11 +27,14 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as CCategoryRouteImport } from './routes/c/$category'
+import { Route as CvIndexRouteImport } from './routes/cv/index'
+import { Route as CvEditRouteImport } from './routes/cv/edit'
 import { Route as JobsIdRouteImport } from './routes/jobs/$id'
 import { Route as RRaionRouteImport } from './routes/r/$raion'
 import { Route as UUserIdRouteImport } from './routes/u/$userId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiTelegramWebhookRouteImport } from './routes/api/telegram/webhook'
+import { Route as CvAIdRouteImport } from './routes/cv/a/$id'
 import { Route as JobsIdIndexRouteImport } from './routes/jobs/$id/index'
 import { Route as JobsIdAplicatRouteImport } from './routes/jobs/$id/aplicat'
 
@@ -125,6 +128,16 @@ const CCategoryRoute = CCategoryRouteImport.update({
   path: '/c/$category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CvIndexRoute = CvIndexRouteImport.update({
+  id: '/cv/',
+  path: '/cv/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CvEditRoute = CvEditRouteImport.update({
+  id: '/cv/edit',
+  path: '/cv/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsIdRoute = JobsIdRouteImport.update({
   id: '/jobs/$id',
   path: '/jobs/$id',
@@ -148,6 +161,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 const ApiTelegramWebhookRoute = ApiTelegramWebhookRouteImport.update({
   id: '/api/telegram/webhook',
   path: '/api/telegram/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CvAIdRoute = CvAIdRouteImport.update({
+  id: '/cv/a/$id',
+  path: '/cv/a/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JobsIdIndexRoute = JobsIdIndexRouteImport.update({
@@ -180,11 +198,14 @@ export interface FileRoutesByFullPath {
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
+  '/cv/edit': typeof CvEditRoute
   '/jobs/$id': typeof JobsIdRouteWithChildren
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
+  '/cv/': typeof CvIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
+  '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
 }
@@ -207,10 +228,13 @@ export interface FileRoutesByTo {
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
+  '/cv/edit': typeof CvEditRoute
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
+  '/cv': typeof CvIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
+  '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
   '/jobs/$id': typeof JobsIdIndexRoute
 }
@@ -234,11 +258,14 @@ export interface FileRoutesById {
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
   '/c/$category': typeof CCategoryRoute
+  '/cv/edit': typeof CvEditRoute
   '/jobs/$id': typeof JobsIdRouteWithChildren
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
+  '/cv/': typeof CvIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
+  '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
 }
@@ -263,11 +290,14 @@ export interface FileRouteTypes {
     | '/termeni'
     | '/verify'
     | '/c/$category'
+    | '/cv/edit'
     | '/jobs/$id'
     | '/r/$raion'
     | '/u/$userId'
+    | '/cv/'
     | '/api/auth/$'
     | '/api/telegram/webhook'
+    | '/cv/a/$id'
     | '/jobs/$id/aplicat'
     | '/jobs/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -290,10 +320,13 @@ export interface FileRouteTypes {
     | '/termeni'
     | '/verify'
     | '/c/$category'
+    | '/cv/edit'
     | '/r/$raion'
     | '/u/$userId'
+    | '/cv'
     | '/api/auth/$'
     | '/api/telegram/webhook'
+    | '/cv/a/$id'
     | '/jobs/$id/aplicat'
     | '/jobs/$id'
   id:
@@ -316,11 +349,14 @@ export interface FileRouteTypes {
     | '/termeni'
     | '/verify'
     | '/c/$category'
+    | '/cv/edit'
     | '/jobs/$id'
     | '/r/$raion'
     | '/u/$userId'
+    | '/cv/'
     | '/api/auth/$'
     | '/api/telegram/webhook'
+    | '/cv/a/$id'
     | '/jobs/$id/aplicat'
     | '/jobs/$id/'
   fileRoutesById: FileRoutesById
@@ -344,11 +380,14 @@ export interface RootRouteChildren {
   TermeniRoute: typeof TermeniRoute
   VerifyRoute: typeof VerifyRoute
   CCategoryRoute: typeof CCategoryRoute
+  CvEditRoute: typeof CvEditRoute
   JobsIdRoute: typeof JobsIdRouteWithChildren
   RRaionRoute: typeof RRaionRoute
   UUserIdRoute: typeof UUserIdRoute
+  CvIndexRoute: typeof CvIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTelegramWebhookRoute: typeof ApiTelegramWebhookRoute
+  CvAIdRoute: typeof CvAIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -479,6 +518,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CCategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cv/': {
+      id: '/cv/'
+      path: '/cv'
+      fullPath: '/cv/'
+      preLoaderRoute: typeof CvIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cv/edit': {
+      id: '/cv/edit'
+      path: '/cv/edit'
+      fullPath: '/cv/edit'
+      preLoaderRoute: typeof CvEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs/$id': {
       id: '/jobs/$id'
       path: '/jobs/$id'
@@ -512,6 +565,13 @@ declare module '@tanstack/react-router' {
       path: '/api/telegram/webhook'
       fullPath: '/api/telegram/webhook'
       preLoaderRoute: typeof ApiTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cv/a/$id': {
+      id: '/cv/a/$id'
+      path: '/cv/a/$id'
+      fullPath: '/cv/a/$id'
+      preLoaderRoute: typeof CvAIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/jobs/$id/': {
@@ -563,11 +623,14 @@ const rootRouteChildren: RootRouteChildren = {
   TermeniRoute: TermeniRoute,
   VerifyRoute: VerifyRoute,
   CCategoryRoute: CCategoryRoute,
+  CvEditRoute: CvEditRoute,
   JobsIdRoute: JobsIdRouteWithChildren,
   RRaionRoute: RRaionRoute,
   UUserIdRoute: UUserIdRoute,
+  CvIndexRoute: CvIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTelegramWebhookRoute: ApiTelegramWebhookRoute,
+  CvAIdRoute: CvAIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
