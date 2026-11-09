@@ -74,14 +74,15 @@ export function useAppsSummary() {
     () => serverSnapshot,
   );
 
+  const userId = user?.id ?? null;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       state = { summary: EMPTY, seen: [] };
       emit();
       return;
     }
     users += 1;
-    void refreshAppsSummary(users === 1);
+    void refreshAppsSummary();
     const onFocus = () => {
       if (document.visibilityState === "visible") void refreshAppsSummary();
     };
@@ -96,7 +97,7 @@ export function useAppsSummary() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
     };
-  }, [user]);
+  }, [userId]);
 
   const unseen = user ? snap.summary.selected.filter((s) => !snap.seen.includes(s.id)) : [];
   const newApplicants = user ? snap.summary.newApplicants : 0;

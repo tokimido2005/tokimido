@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 import { getSql } from "@/lib/db";
 import { isCategoryId } from "@/lib/categories";
 import { isKnownRaion } from "@/lib/moldova";
+import { once } from "@/lib/once";
 
 export const DEMO_USER_ID = "demo-rabotaem";
 
@@ -296,7 +297,9 @@ const TEMPLATES: DemoTemplate[] = [
   },
 ];
 
-export async function ensureDemoJobColumn() {
+export const ensureDemoJobColumn = once(ensureDemoJobColumnImpl);
+
+async function ensureDemoJobColumnImpl() {
   const sql = await getSql();
   await sql.query(`alter table jobs add column if not exists is_demo boolean not null default false`);
   await sql.query(`create index if not exists jobs_is_demo_idx on jobs (is_demo) where is_demo = true`);

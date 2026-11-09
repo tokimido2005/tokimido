@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { REPORT_REASONS } from "@/lib/i18n";
+import { once } from "@/lib/once";
 
 export type Report = {
   id: number;
@@ -15,7 +16,9 @@ export type Report = {
   created_at: string;
 };
 
-export async function ensureCommunityTables() {
+export const ensureCommunityTables = once(ensureCommunityTablesImpl);
+
+async function ensureCommunityTablesImpl() {
   const sql = await getSql();
   await sql.query("alter table profiles add column if not exists photo_data text");
   await sql.query(`

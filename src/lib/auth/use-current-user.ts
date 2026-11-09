@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { authClient, authEnabled } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
@@ -55,23 +56,32 @@ export type CurrentUserState = {
  * call keeps a stable hook order across every render of a given component.
  */
 export function useCurrentUserState(): CurrentUserState {
-  if (!authEnabled) return { user: DEV_USER, isPending: false };
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
+  if (!authEnabled) return STABLE_DEV_STATE;
+  // authEnabled is constant for the app's lifetime, so hook order is stable.
   const { data, isPending } = authClient.useSession();
-  const user = data?.user;
-  return {
-    user: user
-      ? {
-          id: user.id,
-          displayName: user.name ?? null,
-          primaryEmail: user.email ?? null,
-          profileImageUrl: user.image ?? null,
-          isDevFallback: false,
-        }
-      : null,
-    isPending,
-  };
+  const u = data?.user;
+  // Keep the SAME object while the user doesn't change: many effects depend on
+  // `user`, and a fresh object on every render made them refetch in a loop.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const user = useMemo<AppUser | null>(
+    () =>
+      u
+        ? {
+            id: u.id,
+            displayName: u.name ?? null,
+            primaryEmail: u.email ?? null,
+            profileImageUrl: u.image ?? null,
+            isDevFallback: false,
+          }
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [u?.id, u?.name, u?.email, u?.image],
+  );
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return useMemo(() => ({ user, isPending }), [user, isPending]);
 }
+
+const STABLE_DEV_STATE: CurrentUserState = { user: DEV_USER, isPending: false };
 
 /**
  * Convenience view of `useCurrentUserState().user` for display (e.g.

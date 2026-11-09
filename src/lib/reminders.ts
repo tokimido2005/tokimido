@@ -2,8 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { once } from "@/lib/once";
 
-export async function ensureReminderTables() {
+export const ensureReminderTables = once(ensureReminderTablesImpl);
+
+async function ensureReminderTablesImpl() {
   const sql = await getSql();
   await sql.query(`
     create table if not exists job_reminders (

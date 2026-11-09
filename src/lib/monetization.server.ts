@@ -1,5 +1,6 @@
 import "@tanstack/react-start/server-only";
 import { getSql } from "@/lib/db";
+import { once } from "@/lib/once";
 
 export const MONEY_MODES = ["free", "freemium", "paid"] as const;
 export type MoneyMode = (typeof MONEY_MODES)[number];
@@ -58,7 +59,9 @@ export function isMoneyMode(v: string): v is MoneyMode {
   return (MONEY_MODES as readonly string[]).includes(v);
 }
 
-export async function ensureMonetizationTables() {
+export const ensureMonetizationTables = once(ensureMonetizationTablesImpl);
+
+async function ensureMonetizationTablesImpl() {
   const sql = await getSql();
   await sql.query(`
     create table if not exists monetization_settings (

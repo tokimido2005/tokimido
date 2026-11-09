@@ -2,6 +2,7 @@ import webpush from "web-push";
 import { getSql } from "@/lib/db";
 import { FIREBASE_CONFIG } from "@/lib/firebase-config";
 import { google } from "googleapis";
+import { once } from "@/lib/once";
 
 async function getAccessToken() {
   const email = process.env.FIREBASE_CLIENT_EMAIL;
@@ -33,7 +34,9 @@ type Device = {
   auth: string;
 };
 
-export async function ensurePushTables() {
+export const ensurePushTables = once(ensurePushTablesImpl);
+
+async function ensurePushTablesImpl() {
   const sql = await getSql();
   await sql.query(`alter table profiles add column if not exists fcm_token text`);
   await sql.query(`alter table profiles add column if not exists notify_raion text not null default ''`);

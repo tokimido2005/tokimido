@@ -18,6 +18,7 @@ import { assertCaptcha, captchaSchema } from "@/lib/captcha";
 import { assertNotBlocked, blockedSetFor, ensureSafetyTables } from "@/lib/safety";
 import { assertProfileActive, ensureProfilesTable } from "@/lib/profile";
 import { normalizeJobGeo } from "@/lib/geo";
+import { once } from "@/lib/once";
 
 async function accountContactPhone(userId: string) {
   const sql = await getSql();
@@ -545,7 +546,9 @@ async function insertSeedJob(
   );
 }
 
-async function ensureApplicationNameColumns() {
+const ensureApplicationNameColumns = once(ensureApplicationNameColumnsImpl);
+
+async function ensureApplicationNameColumnsImpl() {
   const sql = await getSql();
   await sql.query(
     "alter table applications add column if not exists first_name text not null default ''",
@@ -555,7 +558,9 @@ async function ensureApplicationNameColumns() {
   );
 }
 
-async function ensureJobScheduleColumns() {
+const ensureJobScheduleColumns = once(ensureJobScheduleColumnsImpl);
+
+async function ensureJobScheduleColumnsImpl() {
   const sql = await getSql();
   await sql.query("alter table jobs add column if not exists starts_at timestamptz");
   await sql.query("alter table jobs add column if not exists views_count integer not null default 0");
@@ -572,7 +577,21 @@ async function ensureJobScheduleColumns() {
   );
 }
 
-async function expireDueJobs() {
+let expireRanAt = 0;
+let expireRunning: Promise<void> | null = null;
+
+/** Mark past jobs expired — at most every 30 s, not on every request. */
+function expireDueJobs(): Promise<void> {
+  if (expireRunning) return expireRunning;
+  if (Date.now() - expireRanAt < 30_000) return Promise.resolve();
+  expireRanAt = Date.now();
+  expireRunning = expireDueJobsNow().finally(() => {
+    expireRunning = null;
+  });
+  return expireRunning;
+}
+
+async function expireDueJobsNow() {
   const sql = await getSql();
   await ensurePushTables();
   const newly = await sql.query<{ id: number; user_id: string; title: string }>(
