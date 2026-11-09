@@ -6,22 +6,17 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Combobox } from "@/components/combobox";
 import { JobCard } from "@/components/job-card";
-import { JobWhen } from "@/components/job-when";
 import { RateForm } from "@/components/rate-form";
 import { RatingTagList } from "@/components/rating-tags-list";
 import { RatingBadge, Stars } from "@/components/stars";
-import { StatusBadge } from "@/components/status-badge";
 import { useSavedIds } from "@/components/favorite-button";
 import {
-  cancelApplication,
   listFavoriteJobs,
-  listMyApplications,
   listMyJobs,
   type Job,
-  type MyApplication,
 } from "@/lib/jobs";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { compressPhotoFile, formatJobDate, formatJobTime, formatMdl } from "@/lib/utils";
+import { compressPhotoFile, formatJobDate, formatJobTime } from "@/lib/utils";
 import { countHiddenRatings, getPublicProfile, listPendingRatings, type PendingRating, type RatingSummary } from "@/lib/ratings";
 import { getMyProfile, saveMyBio, saveMyPhoto, type Profile } from "@/lib/profile";
 import { updatePushPrefs } from "@/lib/push";
@@ -70,7 +65,6 @@ function Account() {
   const search = Route.useSearch();
   const [tab, setTab] = useState<Tab>(search.tab ?? "jobs");
   const [jobs, setJobs] = useState<Job[] | null>(null);
-  const [apps, setApps] = useState<MyApplication[] | null>(null);
   const [saved, setSavedJobs] = useState<Job[] | null>(null);
   const [pending, setPending] = useState<PendingRating[]>([]);
   const [summary, setSummary] = useState<RatingSummary | null>(null);
@@ -80,7 +74,6 @@ function Account() {
   const [inbox, setInbox] = useState<InboxMessage[] | null>(null);
   const [access, setAccess] = useState<MonetizationAccess | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<number | null>(null);
   const { ids: savedIds, setSaved } = useSavedIds();
   const { showPro, mode } = useMoneyMode();
 
@@ -92,7 +85,6 @@ function Account() {
     if (!user) return Promise.resolve();
     return Promise.all([
       listMyJobs(),
-      listMyApplications(),
       listFavoriteJobs(),
       listPendingRatings(),
       getPublicProfile({ data: user.id }),
@@ -100,10 +92,9 @@ function Account() {
       listMyReports().catch(() => [] as Report[]),
       listMyInbox().catch(() => [] as InboxMessage[]),
       countHiddenRatings().catch(() => 0),
-    ]).then(([j, a, f, p, s, profile, r, inboxRows, hidden]) => {
+    ]).then(([j, f, p, s, profile, r, inboxRows, hidden]) => {
       setHiddenRatings(hidden);
       setJobs(j);
-      setApps(a);
       setSavedJobs(f);
       setPending(p);
       setSummary(s);
@@ -154,19 +145,6 @@ function Account() {
       ? `/cont?tab=${search.tab}${search.msg ? `&msg=${search.msg}` : ""}`
       : "/cont";
     return <Navigate to="/login" search={{ next }} />;
-  }
-
-  async function onCancelApp(id: number) {
-    if (!window.confirm(t("account.cancelAppConfirm"))) return;
-    setBusyId(id);
-    try {
-      await cancelApplication({ data: id });
-      await reload();
-    } catch (err) {
-      toast.error(errorText(err, t, t("account.cancelApp")));
-    } finally {
-      setBusyId(null);
-    }
   }
 
   async function onPhoto(e: ChangeEvent<HTMLInputElement>) {
@@ -296,9 +274,14 @@ function Account() {
           <TabBtn active={tab === "jobs"} onClick={() => setTab("jobs")}>
             {t("account.jobs")}
           </TabBtn>
-          <TabBtn active={tab === "apps"} onClick={() => setTab("apps")}>
-            {t("account.apps")}
-          </TabBtn>
+          <Link
+            to="/aplicatii"
+            search={{ tab: "trimise" }}
+            data-testid="account-apps-link"
+            className="inline-flex h-10 items-center rounded-full bg-white/70 px-4 text-sm font-medium text-navy ring-1 ring-navy/10 dark:bg-white/10"
+          >
+            {t("account.apps")} →
+          </Link>
           <TabBtn active={tab === "saved"} onClick={() => setTab("saved")}>
             {t("account.saved")}
           </TabBtn>
@@ -351,103 +334,7 @@ function Account() {
             )}
           </div>
         ) : tab === "apps" ? (
-          <div className="mt-6 space-y-3">
-            {apps === null ? (
-              <div className="h-40 animate-pulse rounded-[28px] bg-white/40 dark:bg-white/8" />
-            ) : apps.length === 0 ? (
-              <Empty
-                title={t("profile.noneApplied")}
-                body={t("account.emptyAppliedBody")}
-                cta={t("account.seeJobs")}
-                to="/"
-              />
-            ) : (
-              apps.map((a) => {
-                const canCancel = a.status !== "withdrawn" && a.status !== "declined";
-                const appLabel =
-                  a.status === "selected"
-                    ? t("account.appSelected")
-                    : a.status === "contacted"
-                      ? t("account.appContacted")
-                      : a.status === "withdrawn"
-                        ? t("account.appWithdrawn")
-                        : a.status === "declined"
-                          ? t("account.appDeclined")
-                          : t("account.appSent");
-                const pendingForThis = pending.find(
-                  (p) => p.jobId === a.job_id && p.otherRole === "poster",
-                );
-                return (
-                  <div key={a.id} className="rounded-[24px] p-5 glass">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <Link
-                          to="/jobs/$id"
-                          params={{ id: String(a.job_id) }}
-                          className="font-semibold text-navy hover:text-orange"
-                        >
-                          {a.job_title}
-                        </Link>
-                        <p className="mt-1 text-sm text-muted">
-                          {a.job_locality}, {a.job_raion} · {formatMdl(a.job_payment_mdl)}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-navy">
-                          <JobWhen startsAt={a.job_starts_at} variant="inline" />
-                        </p>
-                        {a.status === "selected" && a.job_has_geo ? (
-                          <Link
-                            to="/jobs/$id"
-                            params={{ id: String(a.job_id) }}
-                            className="mt-2 inline-flex text-sm font-semibold text-orange"
-                            data-testid="map-see-exact"
-                          >
-                            {t("map.seeExact")}
-                          </Link>
-                        ) : a.job_has_geo && a.status !== "declined" && a.status !== "withdrawn" && a.status !== "selected" ? (
-                          <p className="mt-2 text-xs leading-relaxed text-muted">{t("map.privacy")}</p>
-                        ) : null}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="rounded-full bg-navy/8 px-2.5 py-1 text-xs font-semibold text-navy">
-                          {appLabel}
-                        </span>
-                        <StatusBadge
-                          job={{
-                            status: a.job_status,
-                            people_needed: a.job_people_needed,
-                            selected_count: a.job_selected_count,
-                            starts_at: a.job_starts_at,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <p className="mt-3 line-clamp-2 text-sm text-muted">{a.message}</p>
-                    {pendingForThis ? (
-                      <div className="mt-4">
-                        <RateForm
-                          jobId={pendingForThis.jobId}
-                          toUserId={pendingForThis.otherUserId}
-                          otherName={pendingForThis.otherName}
-                          otherRole="poster"
-                          onDone={() => void reload()}
-                        />
-                      </div>
-                    ) : null}
-                    {canCancel ? (
-                      <button
-                        type="button"
-                        disabled={busyId === a.id}
-                        onClick={() => void onCancelApp(a.id)}
-                        className="mt-3 h-10 rounded-full px-3.5 text-sm font-medium text-danger hover:bg-danger/8"
-                      >
-                        {t("account.cancelApp")}
-                      </button>
-                    ) : null}
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <Navigate to="/aplicatii" search={{ tab: "trimise" }} replace />
         ) : tab === "saved" ? (
           <div className="mt-6">
             {saved === null ? (

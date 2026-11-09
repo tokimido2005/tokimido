@@ -184,7 +184,7 @@ html.dark {
     transition: width 180ms cubic-bezier(0.2, 0, 0, 1), height 180ms cubic-bezier(0.2, 0, 0, 1);
   }
 
-  .tab-bar-item span {
+  .tab-bar-item > span {
     display: block;
     max-height: 1.15em;
     overflow: hidden;
@@ -217,7 +217,7 @@ html.dark {
     height: 1.2rem;
   }
 
-  html.rbt-tab-compact .tab-bar-item span {
+  html.rbt-tab-compact .tab-bar-item > span {
     max-height: 0;
     opacity: 0;
     transform: translateY(4px);
@@ -759,7 +759,7 @@ html.dark {
   .chat-typing span,
   .tab-bar,
   .tab-bar-item,
-  .tab-bar-item span,
+  .tab-bar-item > span,
   .tab-bar-icon,
   .rbt-chat-dock {
     animation: none !important;
@@ -779,7 +779,7 @@ html.dark {
   [role="button"],
   .tab-bar,
   .tab-bar-item,
-  .tab-bar-item span,
+  .tab-bar-item > span,
   .tab-bar-icon,
   .job-card,
   .rbt-chat-dock {

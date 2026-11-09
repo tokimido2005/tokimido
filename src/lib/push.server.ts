@@ -20,6 +20,8 @@ export type PushPayload = {
   title: string;
   body: string;
   url: string;
+  /** Also send through the Telegram bot to users who linked it (important events only). */
+  telegram?: boolean;
 };
 
 type Device = {
@@ -193,6 +195,9 @@ async function sendOne(device: Device, payload: PushPayload) {
 export async function notifyUsers(userIds: string[], payload: PushPayload, except?: string) {
   const unique = [...new Set(userIds.filter((id) => id && id !== except))];
   if (unique.length === 0) return;
+  if (payload.telegram) {
+    void import("./telegram.server").then((m) => m.notifyTelegram(unique, payload)).catch(() => {});
+  }
   try {
     const devices = await devicesFor(unique);
     await Promise.all(devices.map((device) => sendOne(device, payload)));

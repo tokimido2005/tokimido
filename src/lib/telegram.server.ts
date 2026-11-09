@@ -383,3 +383,37 @@ export async function acceptTelegramNumber(userId: string, token: string) {
   }
   return result;
 }
+
+/**
+ * Send a notification to a user's linked Telegram chat (if they verified via
+ * Telegram). Best effort: silently skipped when not linked or bot disabled.
+ */
+export async function notifyTelegram(userIds: string[], payload: { title: string; body: string; url: string }) {
+  if (!telegramEnabled() || userIds.length === 0) return;
+  try {
+    await ensureTelegramTables();
+    const sql = await getSql();
+    const placeholders = userIds.map((_, i) => `$${i + 1}`).join(",");
+    const rows = await sql.query<{ chat_id: string }>(
+      `select chat_id from telegram_links where user_id in (${placeholders})`,
+      userIds,
+    );
+    const link = `${siteUrl()}${payload.url.startsWith("/") ? payload.url : `/${payload.url}`}`;
+    const httpsLink = link.startsWith("https://");
+    const text = `🔔 ${payload.title}\n\n${payload.body}${httpsLink ? "" : `\n\n${link}`}`;
+    await Promise.all(
+      rows.map((r) =>
+        tgApi("sendMessage", {
+          chat_id: Number(r.chat_id),
+          text,
+          disable_web_page_preview: true,
+          ...(httpsLink
+            ? { reply_markup: { inline_keyboard: [[{ text: "👉 Vezi detaliile", url: link }]] } }
+            : {}),
+        }),
+      ),
+    );
+  } catch (err) {
+    console.error("[telegram] notify", err);
+  }
+}

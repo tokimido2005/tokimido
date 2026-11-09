@@ -3,6 +3,8 @@ import { Briefcase, PlusCircle, UserRound, Wallet, Zap } from "lucide-react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useT } from "@/lib/locale";
 import { cn } from "@/lib/utils";
+import { useAppsSummary } from "@/lib/apps-summary";
+import { NavBadge } from "@/components/header";
 
 const PRELOAD_ROUTES = ["/", "/angajare", "/post", "/aplicatii", "/cont"] as const;
 
@@ -10,6 +12,7 @@ export function TabBar() {
   const { t } = useT();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { badge } = useAppsSummary();
 
   useEffect(() => {
     let interval = 0;
@@ -65,7 +68,12 @@ export function TabBar() {
             aria-current={active ? "page" : undefined}
             className={cn("tab-bar-item", active && "tab-bar-item-active")}
           >
-            <item.icon className="tab-bar-icon" strokeWidth={active ? 2.4 : 1.8} />
+            <div className="relative">
+              <item.icon className="tab-bar-icon" strokeWidth={active ? 2.4 : 1.8} />
+              {item.id === "apps" && badge > 0 ? (
+                <NavBadge n={badge} className="absolute -top-1.5 -right-3 ml-0" />
+              ) : null}
+            </div>
             <span>{item.label}</span>
           </Link>
         );
