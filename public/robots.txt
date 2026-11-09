@@ -3,6 +3,7 @@ Allow: /
 Disallow: /admin
 Disallow: /cont
 Disallow: /aplicatii
+Disallow: /cv
 Disallow: /complete
 Disallow: /verify
 Disallow: /reset
