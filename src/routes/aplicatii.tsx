@@ -20,7 +20,7 @@ import {
 import { canComplete, canReactivate, formatSlots, remainingSlots } from "@/lib/job-status";
 import { combineDateTime, formatMdl, toDateInputValue, toTimeInputValue, tomorrowDateInput } from "@/lib/utils";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { listMyRatingsGiven } from "@/lib/ratings";
+import { listMyRatingsGiven, listPendingRatings } from "@/lib/ratings";
 import { ConfirmDialog, EmptyState } from "@/components/confirm-dialog";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
@@ -35,15 +35,17 @@ function Inbox() {
   const { user, isPending } = useCurrentUserState();
   const [jobs, setJobs] = useState<InboxJob[]>([]);
   const [given, setGiven] = useState<Array<{ job_id: number; to_user_id: string }>>([]);
+  const [ratable, setRatable] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<number | null>(null);
   const [confirm, setConfirm] = useState<{ type: "delete" | "cancel"; jobId: number } | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const reload = useCallback(() => {
-    return Promise.all([listPosterInbox(), listMyRatingsGiven()])
-      .then(([inbox, ratings]) => {
+    return Promise.all([listPosterInbox(), listMyRatingsGiven(), listPendingRatings()])
+      .then(([inbox, ratings, pending]) => {
         setJobs(inbox);
         setGiven(ratings);
+        setRatable(new Set(pending.map((p) => `${p.jobId}:${p.otherUserId}`)));
         setLoaded(true);
       })
       .catch((err: unknown) => {
@@ -255,7 +257,7 @@ function Inbox() {
                       <ApplicantRow
                         key={a.id}
                         app={a}
-                        jobCompleted={job.status === "completed"}
+                        ratable={ratable.has(`${job.id}:${a.user_id}`)}
                         alreadyRated={given.some((g) => g.job_id === job.id && g.to_user_id === a.user_id)}
                         busy={busyId === a.id}
                         onStatus={(s) => void setStatus(a.id, s)}
@@ -348,14 +350,14 @@ function ReactivatePanel({
 function ApplicantRow({
   app,
   busy,
-  jobCompleted,
+  ratable,
   alreadyRated,
   onStatus,
   onRated,
 }: {
   app: Application;
   busy: boolean;
-  jobCompleted: boolean;
+  ratable: boolean;
   alreadyRated: boolean;
   onStatus: (status: "contacted" | "selected" | "declined" | "withdrawn") => void;
   onRated: () => void;
@@ -372,7 +374,7 @@ function ApplicantRow({
           : app.status === "withdrawn"
             ? "A anulat"
             : "Nou";
-  const canRate = jobCompleted && app.status === "selected" && !alreadyRated;
+  const canRate = ratable && app.status === "selected" && !alreadyRated;
 
   return (
     <li className="rounded-2xl bg-white/55 dark:bg-white/10 p-4">
@@ -395,7 +397,7 @@ function ApplicantRow({
         <span className="rounded-full bg-navy/8 px-2.5 py-1 text-xs font-semibold text-navy">{label}</span>
       </div>
       {app.message ? <p className="mt-2 text-sm leading-relaxed text-muted">{app.message}</p> : null}
-      {alreadyRated && jobCompleted && app.status === "selected" ? (
+      {alreadyRated && app.status === "selected" ? (
         <p className="mt-3 text-xs font-medium text-navy">{t("apps.alreadyRated")}</p>
       ) : null}
       {canRate ? (

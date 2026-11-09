@@ -7,6 +7,7 @@ import { Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { RatingBadge, Stars } from "@/components/stars";
+import { RatingTagList } from "@/components/rating-tags-list";
 import { ReportButton } from "@/components/report-dialog";
 import { TrustBadges, computeTrust } from "@/components/trust-badges";
 import { getPublicProfile } from "@/lib/ratings";
@@ -169,6 +170,12 @@ function PublicProfile() {
               ))}
             </ul>
           ) : null}
+          {profile.topTags.length > 0 ? (
+            <div className="mt-5" data-testid="profile-top-tags">
+              <p className="text-xs font-medium text-muted">{t("review.topTags")}</p>
+              <RatingTagList tags={profile.topTags} counts className="mt-2" />
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-8">
@@ -218,6 +225,7 @@ function PublicProfile() {
                       </div>
                       <span className="text-xs text-subtle">{when}</span>
                     </div>
+                    {r.tags?.length ? <RatingTagList tags={r.tags} className="mt-2" /> : null}
                     {r.comment ? (
                       <p className="mt-3 text-sm leading-relaxed text-navy/85">{r.comment}</p>
                     ) : null}
