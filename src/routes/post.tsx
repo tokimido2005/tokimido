@@ -28,6 +28,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { combineDateTime, tomorrowDateInput } from "@/lib/utils";
 import { useT } from "@/lib/locale";
 import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE } from "@/lib/cv-shared";
+import { HEAVY_CATEGORIES } from "@/lib/age";
 
 type Search = { kind?: JobKind };
 
@@ -86,6 +87,7 @@ function PostJob() {
   const [schedule, setSchedule] = useState<(typeof SCHEDULES)[number]>("full");
   const [phone, setPhone] = useState("");
   const [duties, setDuties] = useState("");
+  const [adultsChoice, setAdultsChoice] = useState<boolean | null>(null);
   const [requirements, setRequirements] = useState("");
   const [offer, setOffer] = useState("");
   const [expNeeded, setExpNeeded] = useState<(typeof JOB_EXPERIENCE)[number] | "">("");
@@ -102,6 +104,7 @@ function PostJob() {
   const [access, setAccess] = useState<MonetizationAccess>(FREE_ACCESS);
 
   const localities = useMemo(() => localitiesFor(raion), [raion]);
+  const adultsOnly = adultsChoice ?? (HEAVY_CATEGORIES as readonly string[]).includes(category);
 
   useEffect(() => {
     if (!user) {
@@ -247,6 +250,7 @@ function PostJob() {
           captcha,
           geo_lat: pin?.lat ?? null,
           geo_lng: pin?.lng ?? null,
+          adults_only: adultsOnly,
         },
       });
       toast.success(t("toast.posted"));
@@ -581,6 +585,21 @@ function PostJob() {
                     <input className="field" type="time" required value={workTime} onChange={(e) => setWorkTime(e.target.value)} />
                   </Field>
                 </div>
+              ) : null}
+              {kind === "rapid" ? (
+                <label className="flex items-start gap-3 rounded-2xl bg-navy/5 p-4 text-sm text-navy">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-5 shrink-0"
+                    checked={adultsOnly}
+                    onChange={(e) => setAdultsChoice(e.target.checked)}
+                    data-testid="post-adults-only"
+                  />
+                  <span>
+                    <span className="block text-base font-semibold">{t("age.heavyLabel")}</span>
+                    {t("age.heavyHint")}
+                  </span>
+                </label>
               ) : null}
               {phone ? <PhoneLocked phone={phone} /> : null}
               <CaptchaField onChange={setCaptcha} />

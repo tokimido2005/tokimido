@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { isValidBirthYear } from "@/lib/age";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { assertPhoneFree, normalizePhone } from "@/lib/safety";
@@ -61,6 +62,7 @@ const profileSchema = z.object({
   last_name: z.string().trim().min(2).max(40),
   phone: z.string().trim().min(8).max(20),
   bio: z.string().trim().max(280).optional().default(""),
+  birth_year: z.number().int().optional(),
 });
 
 export const saveMyProfile = createServerFn({ method: "POST" })
@@ -76,6 +78,7 @@ export const saveMyProfile = createServerFn({ method: "POST" })
       [context.userId],
     );
     const phoneChanged = !existing[0] || existing[0].phone !== phone;
+    if (data.birth_year !== undefined && !isValidBirthYear(data.birth_year)) throw new Error("srv.birthYearInvalid");
     if (phoneChanged && existing[0]?.phone && existing[0].phone.replace(/\D/g, "").length >= 8) {
       throw new Error("Numărul se schimbă doar din profil, cu un nou SMS.");
     }
@@ -91,6 +94,9 @@ export const saveMyProfile = createServerFn({ method: "POST" })
          phone_verified_at = case when ${phoneChanged ? "true" : "false"} then null else profiles.phone_verified_at end`,
       [context.userId, data.first_name, data.last_name, phone, data.bio ?? ""],
     );
+    if (data.birth_year !== undefined) {
+      await sql.query("update profiles set birth_year = $2 where user_id = $1", [context.userId, data.birth_year]);
+    }
     return { ok: true as const, phoneChanged };
   });
 
@@ -148,11 +154,28 @@ export const getMyProfile = createServerFn({ method: "GET" })
     return rows[0] ?? null;
   });
 
+/** Year of birth (asked once; never shown publicly). */
+export const saveBirthYear = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((d: unknown) => z.object({ year: z.number().int() }).parse(d))
+  .handler(async ({ context, data }) => {
+    if (!isValidBirthYear(data.year)) throw new Error("srv.birthYearInvalid");
+    await ensureProfilesTable();
+    const sql = await getSql();
+    await sql.query(
+      `insert into profiles (user_id, birth_year, accepted_rules_at) values ($1, $2, now())
+       on conflict (user_id) do update set birth_year = excluded.birth_year`,
+      [context.userId, data.year],
+    );
+    return { ok: true as const };
+  });
+
 export const getProfileGate = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const { isAdminId } = await import("./admin.server");
-    if (await isAdminId(context.userId)) return { complete: true, verified: true, admin: true, phone: "" };
+    if (await isAdminId(context.userId))
+      return { complete: true, verified: true, admin: true, phone: "", birthYear: null as number | null };
     await ensureProfilesTable();
     const sql = await getSql();
     const rows = await sql.query<{
@@ -160,8 +183,9 @@ export const getProfileGate = createServerFn({ method: "GET" })
       last_name: string;
       phone: string;
       phone_verified_at: string | null;
+      birth_year: number | null;
     }>(
-      "select first_name, last_name, phone, phone_verified_at from profiles where user_id = $1",
+      "select first_name, last_name, phone, phone_verified_at, birth_year from profiles where user_id = $1",
       [context.userId],
     );
     const row = rows[0];
@@ -170,6 +194,7 @@ export const getProfileGate = createServerFn({ method: "GET" })
       verified: Boolean(row?.phone_verified_at),
       admin: false,
       phone: row?.phone ?? "",
+      birthYear: row?.birth_year ?? null,
     };
   });
 

@@ -18,6 +18,7 @@ import { assertCaptcha, captchaSchema } from "@/lib/captcha";
 import { assertNotBlocked, blockedSetFor, ensureSafetyTables } from "@/lib/safety";
 import { assertProfileActive, ensureProfilesTable } from "@/lib/profile";
 import { normalizeJobGeo } from "@/lib/geo";
+import { ADULT_AGE, HEAVY_CATEGORIES, MIN_AGE, ageFromYear } from "@/lib/age";
 import { cvIsUsable, jobDetailsSchema, normalizeCv, normalizeJobDetails, type CvData, type JobDetails } from "@/lib/cv-shared";
 import { once } from "@/lib/once";
 
@@ -89,6 +90,7 @@ export type Job = {
   boost_tier: string;
   boost_until: string | null;
   details?: JobDetails;
+  adults_only?: boolean;
 };
 
 export type Application = {
@@ -601,8 +603,28 @@ function expireDueJobs(): Promise<void> {
   return expireRunning;
 }
 
+let logsCleanedAt = 0;
+
+/** Technical logs are kept only as long as needed for safety (see privacy policy). */
+async function cleanupOldLogs() {
+  if (Date.now() - logsCleanedAt < 6 * 60 * 60_000) return;
+  logsCleanedAt = Date.now();
+  const sql = await getSql();
+  for (const q of [
+    "delete from sms_log where created_at < now() - interval '180 days'",
+    "delete from rate_limits where created_at < now() - interval '30 days'",
+  ]) {
+    try {
+      await sql.query(q);
+    } catch {
+      /* table may not exist yet */
+    }
+  }
+}
+
 async function expireDueJobsNow() {
   const sql = await getSql();
+  void cleanupOldLogs();
   await ensurePushTables();
   const newly = await sql.query<{ id: number; user_id: string; title: string }>(
     `update jobs
@@ -1006,6 +1028,7 @@ const JOB_SELECT = `j.id, j.user_id, j.title, j.description, j.category, j.raion
   coalesce(j.boost_tier, '') as boost_tier,
   j.boost_until,
   coalesce(j.details, '{}'::jsonb) as details,
+  (coalesce(j.adults_only, false) or coalesce(j.kind, 'rapid') = 'oficial') as adults_only,
   (select count(*)::int from applications a where a.job_id = j.id) as application_count,
   (select count(*)::int from applications a where a.job_id = j.id and a.status = 'selected') as selected_count,
   coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}), 0) as poster_rating_avg,
@@ -1186,6 +1209,7 @@ const createJobSchema = z.object({
   schedule: z.string().trim().max(40).optional().default(""),
   salary_period: z.enum(["spot", "month", "hour"]).optional().default("spot"),
   details: jobDetailsSchema.optional(),
+  adults_only: z.boolean().optional(),
 });
 
 export const createJob = createServerFn({ method: "POST" })
@@ -1239,8 +1263,8 @@ export const createJob = createServerFn({ method: "POST" })
       `insert into jobs (
         user_id, title, description, category, raion, locality,
         payment_mdl, duration_minutes, people_needed, contact_phone, poster_name, starts_at,
-        geo_lat, geo_lng, kind, company, contract_type, schedule, salary_period, details
-      ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb) returning id`,
+        geo_lat, geo_lng, kind, company, contract_type, schedule, salary_period, details, adults_only
+      ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb,$21) returning id`,
       [
         context.userId,
         data.title,
@@ -1262,6 +1286,9 @@ export const createJob = createServerFn({ method: "POST" })
         kind === "oficial" ? data.schedule : "",
         kind === "oficial" ? "month" : "spot",
         JSON.stringify(kind === "oficial" ? normalizeJobDetails(data.details) : {}),
+        kind === "oficial"
+          ? true
+          : (data.adults_only ?? (HEAVY_CATEGORIES as readonly string[]).includes(data.category)),
       ],
     );
     const jobId = rows[0].id;
@@ -1324,6 +1351,14 @@ export const applyToJob = createServerFn({ method: "POST" })
     if (job.user_id === context.userId) throw new Error("Nu poți aplica la propriul anunț");
     await assertNotBlocked(context.userId, job.user_id);
     if (job.people_needed <= job.selected_count) throw new Error("Locurile sunt ocupate");
+    // Age rules: 16+ everywhere, 18+ for "angajare" and heavy physical work.
+    const by = await sql.query<{ birth_year: number | null }>("select birth_year from profiles where user_id = $1", [
+      context.userId,
+    ]);
+    const age = ageFromYear(by[0]?.birth_year);
+    if (age === null) throw new Error("srv.needBirthYear");
+    if (age < MIN_AGE) throw new Error("srv.tooYoung");
+    if (job.adults_only && age < ADULT_AGE) throw new Error("srv.adultsOnly");
     const contactPhone = await accountContactPhone(context.userId);
     const profile = await sql.query<{ first_name: string; last_name: string }>(
       `select coalesce(first_name,'') as first_name, coalesce(last_name,'') as last_name

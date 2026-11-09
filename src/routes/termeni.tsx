@@ -27,22 +27,29 @@ function TermsPage() {
       </LegalBlock>
       <LegalBlock title="2.1. Vârstă minimă și minori">
         <p>
-          Pentru a crea un cont pe Rabotaem.md trebuie să ai cel puțin 16 ani. Prin bifarea checkbox-ului de la
-          înregistrare, confirmi că îndeplinești această condiție.
+          Pentru a crea un cont pe Rabotaem.md trebuie să ai cel puțin 16 ani. La completarea profilului îți indici anul
+          nașterii; acesta nu se afișează public și este folosit doar pentru regulile de mai jos.
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>
+            <b>Lucru rapid:</b> de la 16 ani. Anunțurile marcate „Muncă fizică grea (doar 18+)” sunt doar pentru persoane
+            de la 18 ani.
+          </li>
+          <li>
+            <b>Angajare oficială:</b> doar de la 18 ani.
+          </li>
+        </ul>
+        <p>
+          Codul muncii al Republicii Moldova interzice folosirea persoanelor sub 18 ani la munci grele, vătămătoare sau
+          periculoase și prevede pentru ele un timp de muncă redus. Cel care publică anunțul (angajatorul) răspunde
+          integral de respectarea acestor reguli: tipul muncii, durata, pauzele, condițiile de siguranță și, unde legea o
+          cere, acordul părinților sau al reprezentantului legal. Anunțurile cu muncă fizică grea trebuie marcate „doar
+          18+”.
         </p>
         <p>
-          Este strict interzisă publicarea de anunțuri care solicită persoane sub 15 ani. Anunțurile de acest tip vor
-          fi șterse imediat, iar contul poate fi blocat.
-        </p>
-        <p>
-          Pentru persoanele între 15 și 18 ani, cel care postează anunțul (angajatorul) este pe deplin responsabil să
-          dețină acordul părinților sau al reprezentantului legal și să respecte toate limitele legale privind
-          munca minorilor (durată, tip de activitate, condiții de siguranță). Rabotaem.md nu verifică aceste
-          documente și nu își asumă nicio răspundere în acest sens.
-        </p>
-        <p>
-          Platforma își rezervă dreptul de a șterge orice anunț sau de a bloca orice cont care încalcă aceste reguli,
-          fără preaviz.
+          Este strict interzisă publicarea de anunțuri pentru persoane sub 16 ani. Platforma poate șterge orice anunț și
+          bloca orice cont care încalcă aceste reguli, fără preaviz. Rabotaem.md nu verifică documentele părților și nu
+          este parte la înțelegerile dintre ele.
         </p>
       </LegalBlock>
       <LegalBlock title="3. Reguli pentru postarea anunțurilor">
@@ -73,9 +80,12 @@ function TermsPage() {
       </LegalBlock>
       <LegalBlock title="6. Date personale">
         <p>
-          Colectăm doar ce este necesar ca să funcționeze contul, anunțurile, aplicațiile și verificarea telefonului.
-          Nu vindem datele tale. Poți cere ștergerea contului și a datelor asociate, din cont sau scriindu-ne la
-          contact.
+          Colectăm doar ce este necesar ca să funcționeze contul, anunțurile, aplicațiile, CV-urile și verificarea
+          telefonului. Nu vindem datele tale. Detaliile sunt în{" "}
+          <Link to="/confidentialitate" className="font-medium text-navy underline">
+            Politica de confidențialitate
+          </Link>
+          .
         </p>
       </LegalBlock>
       <LegalBlock title="7. Blocarea conturilor">

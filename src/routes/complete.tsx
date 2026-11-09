@@ -12,6 +12,7 @@ import { safeNextPath } from "@/components/social-auth";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useT } from "@/lib/locale";
+import { birthYearRange, isValidBirthYear } from "@/lib/age";
 
 type CompleteSearch = { next?: string };
 
@@ -44,6 +45,7 @@ function CompleteProfile() {
   const [phone, setPhone] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [birthYear, setBirthYear] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gate, setGate] = useState<{ complete: boolean; verified: boolean; admin: boolean; phone: string } | null>(
@@ -113,6 +115,11 @@ function CompleteProfile() {
       setError(t("login.ageAndTerms"));
       return;
     }
+    const by = Number(birthYear);
+    if (!isValidBirthYear(by)) {
+      setError(t("age.yearInvalid", { max: birthYearRange().max }));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -122,6 +129,7 @@ function CompleteProfile() {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: (gate?.phone || phone).trim(),
+          birth_year: by,
         },
       });
       window.location.href = verifyHref(next);
@@ -184,6 +192,21 @@ function CompleteProfile() {
                 </>
               )}
             </div>
+
+            <label className="block">
+              <span className="text-sm font-medium text-navy">{t("age.yearLabel")}</span>
+              <input
+                className="field mt-1 tabular-nums"
+                required
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="1990"
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                data-testid="complete-birth-year"
+              />
+              <span className="mt-1 block text-xs text-muted">{t("age.yearHint")}</span>
+            </label>
 
             <RulesAccept
               accepted={accepted}
