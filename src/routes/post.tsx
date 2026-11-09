@@ -29,6 +29,7 @@ import { combineDateTime, tomorrowDateInput } from "@/lib/utils";
 import { useT } from "@/lib/locale";
 import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE } from "@/lib/cv-shared";
 import { HEAVY_CATEGORIES } from "@/lib/age";
+import { getMyCompany } from "@/lib/companies";
 
 type Search = { kind?: JobKind };
 
@@ -104,6 +105,17 @@ function PostJob() {
   const [access, setAccess] = useState<MonetizationAccess>(FREE_ACCESS);
 
   const localities = useMemo(() => localitiesFor(raion), [raion]);
+  const [myCompany, setMyCompany] = useState<{ slug: string; name: string } | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (!user || kind !== "oficial" || myCompany !== undefined) return;
+    getMyCompany()
+      .then((c) => {
+        setMyCompany(c ? { slug: c.slug, name: c.name } : null);
+        if (c) setCompany((prev) => prev || c.name);
+      })
+      .catch(() => setMyCompany(null));
+  }, [user, kind, myCompany]);
   const adultsOnly = adultsChoice ?? (HEAVY_CATEGORIES as readonly string[]).includes(category);
 
   useEffect(() => {
@@ -359,6 +371,11 @@ function PostJob() {
                       placeholder="Ex: Market Plus SRL"
                     />
                   </Field>
+                  {myCompany === null ? (
+                    <Link to="/firma" className="-mt-2 block text-sm font-semibold text-[#1d6fd8]" data-testid="post-make-company">
+                      {t("company.postHint")}
+                    </Link>
+                  ) : null}
                   <Field label={t("post.title")} required>
                     <input
                       className="field"

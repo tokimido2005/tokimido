@@ -14,6 +14,7 @@ import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
 import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";
 import { OfficialApply } from "@/components/official-apply";
+import { CompanyLink } from "@/components/company-link";
 import { BirthYearAsk } from "@/components/birth-year-ask";
 import { ADULT_AGE, ageFromYear } from "@/lib/age";
 import { JobDetailsBlock } from "@/components/job-details";
@@ -420,12 +421,7 @@ function JobPage() {
             ) : null}
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-navy">{job.title}</h1>
-          {official && job.company ? (
-            <p className="mt-3 flex items-center gap-1.5 text-muted">
-              <Building2 className="size-4" />
-              {job.company}
-            </p>
-          ) : null}
+          {official ? <CompanyLink ownerId={job.user_id} fallbackName={job.company} /> : null}
           <p className="mt-3 flex items-center gap-1.5 text-muted">
             <MapPin className="size-4" />
             {job.locality}, {job.raion}
