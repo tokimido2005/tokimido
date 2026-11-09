@@ -52,11 +52,6 @@ function notifyUsers(userIds: string[], payload: PushPayload, except?: string) {
     .catch((err) => console.error("[push]", err));
 }
 
-function notifyNewJobInRaion(opts: { raion: string; title: string; jobId: number; exceptUserId: string; category?: string }) {
-  void import("./push.server")
-    .then((m) => m.notifyNewJobInRaion(opts))
-    .catch((err) => console.error("[push]", err));
-}
 
 
 export type Job = {
@@ -625,6 +620,7 @@ async function cleanupOldLogs() {
 async function expireDueJobsNow() {
   const sql = await getSql();
   void cleanupOldLogs();
+  void import("./alerts.server").then((m) => m.maybeSendDigests()).catch(() => {});
   await ensurePushTables();
   const newly = await sql.query<{ id: number; user_id: string; title: string }>(
     `update jobs
@@ -1292,13 +1288,22 @@ export const createJob = createServerFn({ method: "POST" })
       ],
     );
     const jobId = rows[0].id;
-    void notifyNewJobInRaion({
-      raion: data.raion,
-      title: data.title,
-      jobId,
-      exceptUserId: context.userId,
-      category: data.category,
-    });
+    void import("./alerts.server")
+      .then((m) =>
+        m.dispatchJobAlert({
+          jobId,
+          title: data.title,
+          raion: data.raion,
+          locality: data.locality,
+          category: data.category,
+          kind,
+          payment: data.payment_mdl,
+          adultsOnly:
+            kind === "oficial" || (data.adults_only ?? (HEAVY_CATEGORIES as readonly string[]).includes(data.category)),
+          exceptUserId: context.userId,
+        }),
+      )
+      .catch((err) => console.error("[alerts]", err));
     return { id: jobId };
   });
 

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AlerteRouteImport } from './routes/alerte'
 import { Route as AngajareRouteImport } from './routes/angajare'
 import { Route as AplicatiiRouteImport } from './routes/aplicatii'
 import { Route as CompleteRouteImport } from './routes/complete'
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlerteRoute = AlerteRouteImport.update({
+  id: '/alerte',
+  path: '/alerte',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AngajareRoute = AngajareRouteImport.update({
@@ -182,6 +188,7 @@ const JobsIdAplicatRoute = JobsIdAplicatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alerte': typeof AlerteRoute
   '/angajare': typeof AngajareRoute
   '/aplicatii': typeof AplicatiiRoute
   '/complete': typeof CompleteRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alerte': typeof AlerteRoute
   '/angajare': typeof AngajareRoute
   '/aplicatii': typeof AplicatiiRoute
   '/complete': typeof CompleteRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/alerte': typeof AlerteRoute
   '/angajare': typeof AngajareRoute
   '/aplicatii': typeof AplicatiiRoute
   '/complete': typeof CompleteRoute
@@ -274,6 +283,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/alerte'
     | '/angajare'
     | '/aplicatii'
     | '/complete'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/alerte'
     | '/angajare'
     | '/aplicatii'
     | '/complete'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/alerte'
     | '/angajare'
     | '/aplicatii'
     | '/complete'
@@ -364,6 +376,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AlerteRoute: typeof AlerteRoute
   AngajareRoute: typeof AngajareRoute
   AplicatiiRoute: typeof AplicatiiRoute
   CompleteRoute: typeof CompleteRoute
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alerte': {
+      id: '/alerte'
+      path: '/alerte'
+      fullPath: '/alerte'
+      preLoaderRoute: typeof AlerteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/angajare': {
@@ -607,6 +627,7 @@ const JobsIdRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AlerteRoute: AlerteRoute,
   AngajareRoute: AngajareRoute,
   AplicatiiRoute: AplicatiiRoute,
   CompleteRoute: CompleteRoute,
