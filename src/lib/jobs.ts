@@ -18,6 +18,7 @@ import { assertCaptcha, captchaSchema } from "@/lib/captcha";
 import { assertNotBlocked, blockedSetFor, ensureSafetyTables } from "@/lib/safety";
 import { assertProfileActive, ensureProfilesTable } from "@/lib/profile";
 import { normalizeJobGeo } from "@/lib/geo";
+import { cvIsUsable, jobDetailsSchema, normalizeCv, normalizeJobDetails, type CvData, type JobDetails } from "@/lib/cv-shared";
 import { once } from "@/lib/once";
 
 async function accountContactPhone(userId: string) {
@@ -87,6 +88,7 @@ export type Job = {
   salary_period: string;
   boost_tier: string;
   boost_until: string | null;
+  details?: JobDetails;
 };
 
 export type Application = {
@@ -102,9 +104,17 @@ export type Application = {
   created_at: string;
   applicant_rating_avg?: number;
   applicant_rating_count?: number;
+  cv_kind?: string;
+  cv_snapshot?: CvData | null;
+  cv_file_id?: number | null;
+  email?: string;
+  viewed_at?: string | null;
+  interview_at?: string | null;
+  interview_note?: string;
+  employer_note?: string;
 };
 
-export type AppStatus = "pending" | "contacted" | "selected" | "declined" | "withdrawn";
+export type AppStatus = "pending" | "contacted" | "interview" | "selected" | "declined" | "withdrawn";
 
 const SEED_USER = "seed-jobpeloc";
 
@@ -995,6 +1005,7 @@ const JOB_SELECT = `j.id, j.user_id, j.title, j.description, j.category, j.raion
   coalesce(j.salary_period, 'spot') as salary_period,
   coalesce(j.boost_tier, '') as boost_tier,
   j.boost_until,
+  coalesce(j.details, '{}'::jsonb) as details,
   (select count(*)::int from applications a where a.job_id = j.id) as application_count,
   (select count(*)::int from applications a where a.job_id = j.id and a.status = 'selected') as selected_count,
   coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}), 0) as poster_rating_avg,
@@ -1174,6 +1185,7 @@ const createJobSchema = z.object({
   contract_type: z.string().trim().max(40).optional().default(""),
   schedule: z.string().trim().max(40).optional().default(""),
   salary_period: z.enum(["spot", "month", "hour"]).optional().default("spot"),
+  details: jobDetailsSchema.optional(),
 });
 
 export const createJob = createServerFn({ method: "POST" })
@@ -1227,8 +1239,8 @@ export const createJob = createServerFn({ method: "POST" })
       `insert into jobs (
         user_id, title, description, category, raion, locality,
         payment_mdl, duration_minutes, people_needed, contact_phone, poster_name, starts_at,
-        geo_lat, geo_lng, kind, company, contract_type, schedule, salary_period
-      ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) returning id`,
+        geo_lat, geo_lng, kind, company, contract_type, schedule, salary_period, details
+      ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb) returning id`,
       [
         context.userId,
         data.title,
@@ -1249,6 +1261,7 @@ export const createJob = createServerFn({ method: "POST" })
         kind === "oficial" ? data.contract_type : "",
         kind === "oficial" ? data.schedule : "",
         kind === "oficial" ? "month" : "spot",
+        JSON.stringify(kind === "oficial" ? normalizeJobDetails(data.details) : {}),
       ],
     );
     const jobId = rows[0].id;
@@ -1268,6 +1281,10 @@ const applySchema = z.object({
   contact_phone: z.string().trim().max(20).optional().default(""),
   first_name: z.string().trim().max(40).optional().default(""),
   last_name: z.string().trim().max(40).optional().default(""),
+  cv_kind: z.enum(["", "site", "file"]).optional().default(""),
+  cv_file_id: z.number().int().nullable().optional(),
+  email: z.string().trim().max(120).optional().default(""),
+  consent: z.boolean().optional().default(false),
 });
 
 const DEFAULT_APPLY_MESSAGE =
@@ -1319,6 +1336,36 @@ export const applyToJob = createServerFn({ method: "POST" })
       throw new Error("Completează prenumele și numele în profil pentru a aplica.");
     }
     const note = data.message.trim().length >= 8 ? data.message.trim() : DEFAULT_APPLY_MESSAGE;
+    // "Angajare" jobs need a CV: the one built on the site, or an uploaded file.
+    let cvKind = "";
+    let cvSnapshot: string | null = null;
+    let cvPhoto: string | null = null;
+    let cvFileId: number | null = null;
+    const email = data.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email) ? data.email : "";
+    if (jobKind(job.kind) === "oficial") {
+      if (!data.consent) throw new Error("cv.errConsent");
+      if (data.cv_kind === "site") {
+        const cvRows = await sql.query<{ data: unknown; photo: string | null }>(
+          "select data, photo from cvs where user_id = $1",
+          [context.userId],
+        );
+        const cv = cvRows[0] ? normalizeCv(cvRows[0].data) : null;
+        if (!cv || !cvIsUsable(cv)) throw new Error("cv.errNoCv");
+        cvKind = "site";
+        cvSnapshot = JSON.stringify(cv);
+        cvPhoto = cvRows[0]?.photo ?? null;
+      } else if (data.cv_kind === "file" && data.cv_file_id) {
+        const f = await sql.query<{ id: number }>("select id from cv_files where id = $1 and user_id = $2", [
+          data.cv_file_id,
+          context.userId,
+        ]);
+        if (!f[0]) throw new Error("cv.errNotFound");
+        cvKind = "file";
+        cvFileId = f[0].id;
+      } else {
+        throw new Error("cv.errNoCv");
+      }
+    }
     const existing = await sql.query<{ id: number; status: string }>(
       "select id, status from applications where job_id = $1 and user_id = $2",
       [data.jobId, context.userId],
@@ -1329,9 +1376,11 @@ export const applyToJob = createServerFn({ method: "POST" })
       await sql.query(
         `update applications
          set applicant_name = $1, first_name = $2, last_name = $3, message = $4,
-             contact_phone = $5, status = 'pending', created_at = now()
+             contact_phone = $5, status = 'pending', created_at = now(),
+             cv_kind = $7, cv_snapshot = $8::jsonb, cv_photo = $9, cv_file_id = $10, email = $11,
+             viewed_at = null, interview_at = null, interview_note = ''
          where id = $6`,
-        [fullName, firstName, lastName, note, contactPhone, existing[0].id],
+        [fullName, firstName, lastName, note, contactPhone, existing[0].id, cvKind, cvSnapshot, cvPhoto, cvFileId, email],
       );
       void notifyUser(job.user_id, {
         title: "Aplicație nouă",
@@ -1342,8 +1391,9 @@ export const applyToJob = createServerFn({ method: "POST" })
       return { ok: true as const };
     }
     await sql.query(
-      `insert into applications (job_id, user_id, applicant_name, first_name, last_name, message, contact_phone)
-       values ($1,$2,$3,$4,$5,$6,$7)`,
+      `insert into applications (job_id, user_id, applicant_name, first_name, last_name, message, contact_phone,
+                                 cv_kind, cv_snapshot, cv_photo, cv_file_id, email)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12)`,
       [
         data.jobId,
         context.userId,
@@ -1352,6 +1402,11 @@ export const applyToJob = createServerFn({ method: "POST" })
         lastName,
         note,
         contactPhone,
+        cvKind,
+        cvSnapshot,
+        cvPhoto,
+        cvFileId,
+        email,
       ],
     );
     void notifyUser(job.user_id, {
@@ -1401,6 +1456,8 @@ export type MyApplication = Application & {
   job_people_needed: number;
   job_selected_count: number;
   job_has_geo: boolean;
+  job_kind?: string;
+  job_company?: string;
 };
 
 export const listMyApplications = createServerFn({ method: "GET" })
@@ -1410,7 +1467,8 @@ export const listMyApplications = createServerFn({ method: "GET" })
     const sql = await getSql();
     return sql.query<MyApplication>(
       `select a.id, a.job_id, a.user_id, a.applicant_name, a.first_name, a.last_name,
-              a.message, a.contact_phone, a.status, a.created_at,
+              a.message, a.contact_phone, a.status, a.created_at, a.viewed_at, a.interview_at, a.interview_note, a.cv_kind,
+              coalesce(j.kind, 'rapid') as job_kind, coalesce(j.company, '') as job_company,
               j.title as job_title, j.locality as job_locality, j.raion as job_raion,
               j.payment_mdl as job_payment_mdl, j.status as job_status, j.starts_at as job_starts_at,
               j.user_id as job_user_id, j.poster_name as poster_name,
@@ -1486,7 +1544,9 @@ export const listPosterInbox = createServerFn({ method: "GET" })
     const placeholders = ids.map((_, i) => `$${i + 1}`).join(",");
     await ensureRatingsTable();
     const apps = await sql.query<Application>(
-      `select a.*,
+      `select a.id, a.job_id, a.user_id, a.applicant_name, a.first_name, a.last_name, a.message,
+              a.contact_phone, a.status, a.created_at, a.cv_kind, a.cv_snapshot, a.cv_file_id, a.email,
+              a.viewed_at, a.interview_at, a.interview_note, a.employer_note,
               coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = a.user_id and ${VISIBLE_RATING_SQL("r")}), 0) as applicant_rating_avg,
               (select count(*)::int from ratings r where r.to_user_id = a.user_id and ${VISIBLE_RATING_SQL("r")}) as applicant_rating_count
        from applications a where a.job_id in (${placeholders}) order by a.created_at desc`,
@@ -1524,8 +1584,11 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
       people_needed: number;
       selected_count: number;
       starts_at: string | null;
+      kind: string;
+      company: string;
     }>(
       `select a.user_id, a.status, j.title, j.id as job_id, j.people_needed, j.starts_at,
+              coalesce(j.kind, 'rapid') as kind, coalesce(j.company, '') as company,
               (j.geo_lat is not null and j.geo_lng is not null) as has_geo,
               (select count(*)::int from applications s where s.job_id = j.id and s.status = 'selected') as selected_count
        from applications a join jobs j on j.id = a.job_id
@@ -1544,7 +1607,19 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
       data.status,
       data.applicationId,
     ]);
-    if (data.status === "selected" || data.status === "declined") {
+    const official = row.kind === "oficial";
+    if (official && (data.status === "selected" || data.status === "declined")) {
+      const who = row.company ? `${row.company}` : "Angajatorul";
+      void notifyUser(row.user_id, {
+        title: data.status === "selected" ? "Felicitări! Ai fost angajat 🎉" : "Răspuns la CV-ul tău",
+        body:
+          data.status === "selected"
+            ? `${who} te-a ales pentru postul „${row.title}”. Vezi detaliile și contactul pe anunț.`
+            : `${who} îți mulțumește pentru interes față de postul „${row.title}”. De data aceasta a ales alt candidat. Îți dorim succes!`,
+        url: `/jobs/${row.job_id}`,
+        telegram: true,
+      }, context.userId);
+    } else if (data.status === "selected" || data.status === "declined") {
       const when = row.starts_at ? ` (${formatStartsAtRo(row.starts_at)})` : "";
       const selectedBody = row.has_geo
         ? `Ai fost selectat la „${row.title}”${when}. Adresa exactă și harta sunt acum pe anunț.`
@@ -1589,9 +1664,13 @@ export const getMyApplicationForJob = createServerFn({ method: "POST" })
       status: string;
       poster_id: string;
       poster_phone: string | null;
+      viewed_at: string | null;
+      interview_at: string | null;
+      interview_note: string;
+      cv_kind: string;
     }>(
-      `select a.id, a.status, j.user_id as poster_id,
-              case when a.status = 'selected' then coalesce(nullif(p.phone, ''), nullif(j.contact_phone, '')) else null end as poster_phone
+      `select a.id, a.status, j.user_id as poster_id, a.viewed_at, a.interview_at, a.interview_note, a.cv_kind,
+              case when a.status in ('selected', 'interview') then coalesce(nullif(p.phone, ''), nullif(j.contact_phone, '')) else null end as poster_phone
        from applications a
        join jobs j on j.id = a.job_id
        left join profiles p on p.user_id = j.user_id
@@ -1601,7 +1680,15 @@ export const getMyApplicationForJob = createServerFn({ method: "POST" })
     );
     const r = rows[0];
     if (!r) return null;
-    return { id: r.id, status: r.status as AppStatus, posterPhone: r.poster_phone };
+    return {
+      id: r.id,
+      status: r.status as AppStatus,
+      posterPhone: r.poster_phone,
+      viewedAt: r.viewed_at,
+      interviewAt: r.interview_at,
+      interviewNote: r.interview_note,
+      cvKind: r.cv_kind,
+    };
   });
 
 /** Small counters for the menu badge and the "you were selected" banner. */
@@ -1615,10 +1702,10 @@ export const getAppsSummary = createServerFn({ method: "GET" })
        where j.user_id = $1 and a.status = 'pending' and j.status = 'open'`,
       [context.userId],
     );
-    const selected = await sql.query<{ id: number; job_id: number; title: string; starts_at: string | null }>(
-      `select a.id, a.job_id, j.title, j.starts_at
+    const selected = await sql.query<{ id: number; job_id: number; title: string; starts_at: string | null; status: string }>(
+      `select a.id, a.job_id, j.title, j.starts_at, a.status
        from applications a join jobs j on j.id = a.job_id
-       where a.user_id = $1 and a.status = 'selected'
+       where a.user_id = $1 and a.status in ('selected', 'interview')
          and j.status not in ('cancelled', 'completed')
          and (j.starts_at is null or j.starts_at > now() - interval '12 hours')
        order by j.starts_at nulls last
@@ -1756,7 +1843,7 @@ export const cancelApplication = createServerFn({ method: "POST" })
     );
     if (!rows[0]) throw new Error("Nu poți anula această aplicație");
     const b = before[0];
-    if (b && b.status === "selected") {
+    if (b && (b.status === "selected" || b.status === "interview")) {
       void notifyUser(b.poster_id, {
         title: "Un om nu mai poate veni",
         body: `${b.name} a anunțat că nu mai poate veni la „${b.title}”. Locul s-a eliberat.`,

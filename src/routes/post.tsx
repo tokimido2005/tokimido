@@ -27,6 +27,7 @@ import { seoHead } from "@/lib/seo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { combineDateTime, tomorrowDateInput } from "@/lib/utils";
 import { useT } from "@/lib/locale";
+import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE } from "@/lib/cv-shared";
 
 type Search = { kind?: JobKind };
 
@@ -84,6 +85,15 @@ function PostJob() {
   const [contract, setContract] = useState<(typeof CONTRACT_TYPES)[number]>("nedeterminat");
   const [schedule, setSchedule] = useState<(typeof SCHEDULES)[number]>("full");
   const [phone, setPhone] = useState("");
+  const [duties, setDuties] = useState("");
+  const [requirements, setRequirements] = useState("");
+  const [offer, setOffer] = useState("");
+  const [expNeeded, setExpNeeded] = useState<(typeof JOB_EXPERIENCE)[number] | "">("");
+  const [eduNeeded, setEduNeeded] = useState<(typeof JOB_EDUCATION)[number] | "">("");
+  const [langsNeeded, setLangsNeeded] = useState<Array<(typeof CV_LANGS)[number]>>([]);
+  const [salaryMax, setSalaryMax] = useState("");
+  const [address, setAddress] = useState("");
+  const [hrName, setHrName] = useState("");
   const [captcha, setCaptcha] = useState<CaptchaValue | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -188,6 +198,17 @@ function PostJob() {
             contract_type: contract,
             schedule,
             salary_period: "month",
+            details: {
+              responsibilities: duties.trim(),
+              requirements: requirements.trim(),
+              offer: offer.trim(),
+              experience: expNeeded,
+              education: eduNeeded,
+              languages: langsNeeded,
+              salary_max: negotiable ? 0 : Math.max(0, Number(salaryMax) || 0),
+              address: address.trim(),
+              hr_name: hrName.trim(),
+            },
           },
         });
         toast.success(t("toast.posted"));
@@ -344,15 +365,56 @@ function PostJob() {
                       placeholder={t("post.phOficialTitle")}
                     />
                   </Field>
-                  <Field label={t("post.description")} required>
+                  <Field label={t("jd.shortAbout")} required>
                     <textarea
-                      className="field min-h-32 py-3"
+                      className="field min-h-24 py-3"
                       required
                       minLength={20}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t("post.oficialDescHint")}
                     />
+                  </Field>
+                  <p className="rounded-2xl bg-navy/5 px-4 py-3 text-sm text-navy">{t("jd.linesHint")}</p>
+                  <Field label={t("jd.responsibilities")}>
+                    <textarea className="field min-h-28 py-3" maxLength={2000} value={duties} onChange={(e) => setDuties(e.target.value)} placeholder={t("jd.phResponsibilities")} data-testid="jd-duties" />
+                  </Field>
+                  <Field label={t("jd.requirements")}>
+                    <textarea className="field min-h-28 py-3" maxLength={2000} value={requirements} onChange={(e) => setRequirements(e.target.value)} placeholder={t("jd.phRequirements")} data-testid="jd-requirements" />
+                  </Field>
+                  <Field label={t("jd.offer")}>
+                    <textarea className="field min-h-28 py-3" maxLength={2000} value={offer} onChange={(e) => setOffer(e.target.value)} placeholder={t("jd.phOffer")} data-testid="jd-offer" />
+                  </Field>
+                  <Field label={t("jd.experience")}>
+                    <div className="flex flex-wrap gap-2">
+                      {JOB_EXPERIENCE.map((x) => (
+                        <PickBtn key={x} active={expNeeded === x} onClick={() => setExpNeeded(expNeeded === x ? "" : x)}>
+                          {t(`jd.exp.${x}`)}
+                        </PickBtn>
+                      ))}
+                    </div>
+                  </Field>
+                  <Field label={t("jd.education")}>
+                    <div className="flex flex-wrap gap-2">
+                      {JOB_EDUCATION.map((x) => (
+                        <PickBtn key={x} active={eduNeeded === x} onClick={() => setEduNeeded(eduNeeded === x ? "" : x)}>
+                          {t(`jd.edu.${x}`)}
+                        </PickBtn>
+                      ))}
+                    </div>
+                  </Field>
+                  <Field label={t("jd.languages")}>
+                    <div className="flex flex-wrap gap-2">
+                      {CV_LANGS.slice(0, 6).map((x) => (
+                        <PickBtn
+                          key={x}
+                          active={langsNeeded.includes(x)}
+                          onClick={() => setLangsNeeded(langsNeeded.includes(x) ? langsNeeded.filter((l) => l !== x) : [...langsNeeded, x])}
+                        >
+                          {t(`cv.lang.${x}`)}
+                        </PickBtn>
+                      ))}
+                    </div>
                   </Field>
                   <Field label={t("post.category")}>
                     <div className="flex flex-wrap gap-2">
@@ -487,8 +549,10 @@ function PostJob() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label={t("kind.salary")}>
-                    <div className="flex items-center gap-2">
-                      <input className="field" type="number" min={0} value={salary} onChange={(e) => setSalary(e.target.value)} disabled={negotiable} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input className="field w-28 flex-1" type="number" min={0} value={salary} onChange={(e) => setSalary(e.target.value)} disabled={negotiable} aria-label={t("jd.salaryFrom")} />
+                      <span className="text-sm text-muted">–</span>
+                      <input className="field w-28 flex-1" type="number" min={0} value={salaryMax} onChange={(e) => setSalaryMax(e.target.value)} disabled={negotiable} placeholder={t("jd.salaryTo")} aria-label={t("jd.salaryTo")} data-testid="jd-salary-max" />
                       <label className="flex items-center gap-1 text-sm">
                         <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} />
                         {t("kind.salaryNegotiable")}
@@ -497,6 +561,12 @@ function PostJob() {
                   </Field>
                   <Field label={t("kind.openings")}>
                     <input className="field" type="number" min={1} value={openings} onChange={(e) => setOpenings(e.target.value)} />
+                  </Field>
+                  <Field label={t("jd.address")}>
+                    <input className="field" maxLength={160} value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t("jd.phAddress")} />
+                  </Field>
+                  <Field label={t("jd.hr")}>
+                    <input className="field" maxLength={80} value={hrName} onChange={(e) => setHrName(e.target.value)} placeholder={t("jd.phHr")} />
                   </Field>
                 </div>
               )}
@@ -564,5 +634,22 @@ function Field({
       </span>
       {children}
     </label>
+  );
+}
+
+function PickBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        active
+          ? "h-11 rounded-full bg-brand px-4 text-sm font-semibold text-white"
+          : "h-11 rounded-full bg-white/50 px-4 text-sm font-medium text-navy ring-1 ring-navy/8 dark:bg-white/10"
+      }
+    >
+      {children}
+    </button>
   );
 }

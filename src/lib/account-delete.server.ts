@@ -63,7 +63,8 @@ export async function deleteUserData(userId: string) {
   // Their applications: anonymize on completed jobs, delete the rest.
   await run(
     `update applications a
-     set user_id = $2, applicant_name = $3, first_name = '', last_name = '', message = '', contact_phone = null
+     set user_id = $2, applicant_name = $3, first_name = '', last_name = '', message = '', contact_phone = null,
+         email = '', cv_snapshot = null, cv_photo = null, cv_file_id = null, employer_note = ''
      from jobs j
      where a.job_id = j.id and a.user_id = $1 and j.status = 'completed'`,
     [userId, ghost, deletedName],
@@ -94,6 +95,8 @@ export async function deleteUserData(userId: string) {
     ["rating_skips", "to_user_id"],
     ["rating_prompts", "user_id"],
     ["rating_prompts", "to_user_id"],
+    ["cvs", "user_id"],
+    ["cv_files", "user_id"],
   ] as const) {
     await run(`delete from ${table} where ${column} = $1`, [userId]);
   }

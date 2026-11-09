@@ -21,6 +21,10 @@ import { JobWhen } from "@/components/job-when";
 import { RateForm } from "@/components/rate-form";
 import { RatingBadge } from "@/components/stars";
 import { MyApplications } from "@/components/my-applications";
+import { CandidateSheet } from "@/components/candidate-sheet";
+import { isOficial } from "@/lib/job-kinds";
+import { normalizeCv, totalExperienceYears } from "@/lib/cv-shared";
+import { yearsLabel } from "@/components/cv-document";
 import {
   cancelJob,
   completeJob,
@@ -276,7 +280,21 @@ function ReceivedView({ onJobs }: { onJobs: (j: InboxJob[]) => void }) {
           onReactivate={(d, tm) => void onReactivate(job.id, d, tm)}
         />
       ))}
-      {sheetJob && sheetApp ? (
+      {sheetJob && sheetApp && isOficial(sheetJob) ? (
+        <CandidateSheet
+          job={sheetJob}
+          app={sheetApp}
+          busy={busyId === sheetApp.id}
+          ratable={ratable.has(`${sheetJob.id}:${sheetApp.user_id}`)}
+          alreadyRated={given.some((g) => g.job_id === sheetJob.id && g.to_user_id === sheetApp.user_id)}
+          onStatus={(st) => setStatus(sheetApp.id, st)}
+          onChanged={() => {
+            void reload();
+            void refreshAppsSummary(true);
+          }}
+          onClose={() => setOpenApp(null)}
+        />
+      ) : sheetJob && sheetApp ? (
         <ApplicantSheet
           job={sheetJob}
           app={sheetApp}
@@ -303,7 +321,7 @@ function ReceivedView({ onJobs }: { onJobs: (j: InboxJob[]) => void }) {
   );
 }
 
-const ORDER: Record<string, number> = { pending: 0, contacted: 0, selected: 1, declined: 2, withdrawn: 2 };
+const ORDER: Record<string, number> = { pending: 0, contacted: 0, interview: 1, selected: 1, declined: 2, withdrawn: 2 };
 
 function JobInboxCard({
   job,
@@ -325,9 +343,28 @@ function JobInboxCard({
   const { t } = useT();
   const [manage, setManage] = useState(false);
   const [showOld, setShowOld] = useState(false);
+  const official = isOficial(job);
+  const [filter, setFilter] = useState<"all" | "new" | "interview" | "hired" | "declined">("all");
   const sorted = [...job.applicants].sort((a, b) => (ORDER[a.status] ?? 3) - (ORDER[b.status] ?? 3));
-  const active = sorted.filter((a) => (ORDER[a.status] ?? 3) < 2);
-  const old = sorted.filter((a) => (ORDER[a.status] ?? 3) >= 2);
+  const matches = (a: Application) =>
+    filter === "new"
+      ? a.status === "pending" || a.status === "contacted"
+      : filter === "interview"
+        ? a.status === "interview"
+        : filter === "hired"
+          ? a.status === "selected"
+          : filter === "declined"
+            ? a.status === "declined" || a.status === "withdrawn"
+            : true;
+  const active = filter === "all" ? sorted.filter((a) => (ORDER[a.status] ?? 3) < 2) : sorted.filter(matches);
+  const old = filter === "all" ? sorted.filter((a) => (ORDER[a.status] ?? 3) >= 2) : [];
+  const counts = {
+    all: job.applicants.length,
+    new: job.applicants.filter((a) => a.status === "pending" || a.status === "contacted").length,
+    interview: job.applicants.filter((a) => a.status === "interview").length,
+    hired: job.applicants.filter((a) => a.status === "selected").length,
+    declined: job.applicants.filter((a) => a.status === "declined" || a.status === "withdrawn").length,
+  };
   const full = remainingSlots(job) === 0;
   const people = Math.max(1, job.people_needed);
 
@@ -362,12 +399,33 @@ function JobInboxCard({
         <ReactivatePanel job={job} busy={busy} onSubmit={onReactivate} />
       ) : null}
 
+      {official && job.applicants.length > 0 ? (
+        <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" data-testid="cand-filters">
+          {(["all", "new", "interview", "hired", "declined"] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              role="tab"
+              aria-selected={filter === f}
+              onClick={() => setFilter(f)}
+              className={cn(
+                "h-10 shrink-0 rounded-full px-4 text-sm font-semibold",
+                filter === f ? "bg-brand text-white" : "bg-white/60 text-navy ring-1 ring-navy/10 dark:bg-white/10",
+              )}
+            >
+              {t(`cand.filter.${f}`)} ({counts[f]})
+            </button>
+          ))}
+        </div>
+      ) : null}
       {job.applicants.length === 0 ? (
         <p className="mt-4 text-base text-muted">{t("apps.none")}</p>
+      ) : active.length === 0 && old.length === 0 ? (
+        <p className="mt-4 text-base text-muted">{t("cand.filterEmpty")}</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {active.map((a) => (
-            <ApplicantRow key={a.id} app={a} onOpen={() => onOpen(a.id)} />
+            <ApplicantRow key={a.id} app={a} official={official} onOpen={() => onOpen(a.id)} />
           ))}
           {old.length > 0 ? (
             <li>
@@ -382,7 +440,7 @@ function JobInboxCard({
               </button>
             </li>
           ) : null}
-          {showOld ? old.map((a) => <ApplicantRow key={a.id} app={a} onOpen={() => onOpen(a.id)} />) : null}
+          {showOld ? old.map((a) => <ApplicantRow key={a.id} app={a} official={official} onOpen={() => onOpen(a.id)} />) : null}
         </ul>
       )}
 
@@ -451,12 +509,13 @@ function initials(name: string) {
     .join("");
 }
 
-function StatusPill({ status }: { status: string }) {
+function StatusPill({ status, official }: { status: string; official?: boolean }) {
   const { t } = useT();
   const map: Record<string, { cls: string; key: string }> = {
     pending: { cls: "bg-orange text-white", key: "inb.stNew" },
     contacted: { cls: "bg-orange/15 text-orange-deep", key: "inb.stCalled" },
-    selected: { cls: "bg-emerald-600 text-white", key: "inb.stSelected" },
+    interview: { cls: "bg-[#1d6fd8] text-white", key: "inb.stInterview" },
+    selected: { cls: "bg-emerald-600 text-white", key: official ? "inb.stHired" : "inb.stSelected" },
     declined: { cls: "bg-navy/8 text-muted", key: "inb.stDeclined" },
     withdrawn: { cls: "bg-navy/8 text-muted", key: "inb.stWithdrawn" },
   };
@@ -468,9 +527,10 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function ApplicantRow({ app, onOpen }: { app: Application; onOpen: () => void }) {
+function ApplicantRow({ app, onOpen, official }: { app: Application; onOpen: () => void; official?: boolean }) {
   const { t } = useT();
   const name = appName(app);
+  const cv = official && app.cv_snapshot ? normalizeCv(app.cv_snapshot) : null;
   const dim = app.status === "declined" || app.status === "withdrawn";
   return (
     <li>
@@ -488,13 +548,18 @@ function ApplicantRow({ app, onOpen }: { app: Application; onOpen: () => void })
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-base font-semibold text-navy">{name}</span>
+          {official ? (
+            <span className="block truncate text-sm text-navy/80" data-testid="applicant-cv-line">
+              {cv ? `${cv.title} · ${yearsLabel(t, totalExperienceYears(cv))}` : app.cv_kind === "file" ? t("cand.fileCv") : t("cv.noCvSent")}
+            </span>
+          ) : null}
           {(app.applicant_rating_count ?? 0) > 0 ? (
             <RatingBadge compact average={app.applicant_rating_avg ?? 0} count={app.applicant_rating_count ?? 0} />
           ) : (
             <span className="text-sm text-muted">{t("inb.noReviews")}</span>
           )}
         </span>
-        <StatusPill status={app.status} />
+        <StatusPill status={app.status} official={official} />
         <ChevronRight className="size-5 shrink-0 text-muted" />
       </button>
     </li>

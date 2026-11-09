@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, CheckCircle2, Clock3, MapPin, Navigation, Phone, Wallet } from "lucide-react";
+import { CalendarClock, Check, CheckCircle2, Clock3, FileText, MapPin, Navigation, Phone, Wallet } from "lucide-react";
+import { isOficial } from "@/lib/job-kinds";
+import { formatJobDate, formatJobTime } from "@/lib/utils";
 import { toast } from "sonner";
 import { cancelApplication, getJobExactLocation, type AppStatus, type Job } from "@/lib/jobs";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -11,7 +13,15 @@ import { formatMdl } from "@/lib/utils";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { refreshAppsSummary } from "@/lib/apps-summary";
 
-export type MyAppInfo = { id: number; status: AppStatus; posterPhone: string | null };
+export type MyAppInfo = {
+  id: number;
+  status: AppStatus;
+  posterPhone: string | null;
+  viewedAt?: string | null;
+  interviewAt?: string | null;
+  interviewNote?: string;
+  cvKind?: string;
+};
 
 function directionsUrl(lat: number, lng: number) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -57,8 +67,8 @@ export function SelectedPanel({ job, app, onChanged }: { job: Job; app: MyAppInf
       <div className="flex items-center gap-3 bg-emerald-600 px-5 py-4 text-white">
         <CheckCircle2 className="size-8 shrink-0" />
         <div>
-          <h2 className="text-xl font-bold">{t("sel.title")}</h2>
-          <p className="text-sm text-white/90">{t("sel.lead")}</p>
+          <h2 className="text-xl font-bold">{t(isOficial(job) ? "sel.hiredTitle" : "sel.title")}</h2>
+          <p className="text-sm text-white/90">{t(isOficial(job) ? "sel.hiredLead" : "sel.lead")}</p>
         </div>
       </div>
       <div className="p-5 sm:p-6">
@@ -154,6 +164,55 @@ export function AppliedStatus({ job, app, onChanged }: { job: Job; app: MyAppInf
     }
   }
 
+  if (app.status === "interview") {
+    return (
+      <section className="mt-5 overflow-hidden rounded-[28px] ring-2 ring-[#1d6fd8]/50 glass" data-testid="apply-interview">
+        <div className="flex items-center gap-3 bg-[#1d6fd8] px-5 py-4 text-white">
+          <CalendarClock className="size-8 shrink-0" />
+          <div>
+            <h2 className="text-xl font-bold">{t("my.stInterview")}</h2>
+            <p className="text-sm text-white/90">{t("my.interviewLead")}</p>
+          </div>
+        </div>
+        <div className="p-5 sm:p-6">
+          {app.interviewAt ? (
+            <p className="text-lg font-bold text-navy" data-testid="interview-when">
+              {formatJobDate(app.interviewAt)} · {formatJobTime(app.interviewAt)}
+            </p>
+          ) : null}
+          {app.interviewNote ? <p className="mt-2 whitespace-pre-wrap text-base text-navy">{app.interviewNote}</p> : null}
+          {app.posterPhone ? (
+            <a
+              href={`tel:${app.posterPhone}`}
+              className="mt-4 flex h-14 items-center justify-center gap-2 rounded-full bg-[#1d6fd8] text-lg font-bold text-white"
+            >
+              <Phone className="size-5" />
+              {t("sel.callPoster")}
+            </a>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setConfirm(true)}
+            className="mx-auto mt-3 flex h-11 items-center justify-center rounded-full px-4 text-base font-medium text-danger hover:bg-danger/8"
+          >
+            {t("my.cantCome")}
+          </button>
+        </div>
+        <ConfirmDialog
+          open={confirm}
+          title={t("my.cantComeTitle")}
+          body={t("my.cantComeBody", { job: job.title })}
+          confirmLabel={t("my.cantComeYes")}
+          cancelLabel={t("confirm.no")}
+          danger
+          busy={busy}
+          onConfirm={() => void cancel()}
+          onClose={() => setConfirm(false)}
+        />
+      </section>
+    );
+  }
+
   if (app.status === "declined") {
     return (
       <section className="mt-5 rounded-[28px] p-6 text-center glass" data-testid="apply-declined">
@@ -173,7 +232,18 @@ export function AppliedStatus({ job, app, onChanged }: { job: Job; app: MyAppInf
         {t("my.stWaiting")}
       </div>
       <div className="p-6 text-center">
-        <p className="text-base leading-relaxed text-muted">{t("my.waitingHint")}</p>
+        {isOficial(job) ? <OfficialProgress app={app} /> : null}
+        <p className="text-base leading-relaxed text-muted">{t(isOficial(job) ? "my.waitingHintOficial" : "my.waitingHint")}</p>
+        {isOficial(job) ? (
+          <Link
+            to="/cv/a/$id"
+            params={{ id: String(app.id) }}
+            className="mt-3 inline-flex h-11 items-center gap-2 rounded-full px-4 text-base font-medium text-[#1d6fd8] hover:bg-[#1d6fd8]/8"
+          >
+            <FileText className="size-4" />
+            {t("my.seeSentCv")}
+          </Link>
+        ) : null}
         <Link
           to="/aplicatii"
           search={{ tab: "trimise" }}
@@ -202,5 +272,34 @@ export function AppliedStatus({ job, app, onChanged }: { job: Job; app: MyAppInf
         onClose={() => setConfirm(false)}
       />
     </section>
+  );
+}
+
+/** Sent → Seen → Interview → Answer, for "angajare" applications. */
+export function OfficialProgress({ app }: { app: Pick<MyAppInfo, "status" | "viewedAt"> }) {
+  const { t } = useT();
+  const steps = [
+    { key: "sent", done: true },
+    { key: "seen", done: Boolean(app.viewedAt) || app.status !== "pending" },
+    { key: "interview", done: app.status === "interview" || app.status === "selected" },
+    { key: "answer", done: app.status === "selected" || app.status === "declined" },
+  ];
+  return (
+    <ol className="mb-4 grid grid-cols-4 gap-1 text-left" data-testid="official-progress">
+      {steps.map((s, i) => (
+        <li key={s.key} className="flex flex-col items-center gap-1.5 text-center">
+          <span
+            className={
+              s.done
+                ? "grid size-9 place-items-center rounded-full bg-emerald-600 text-white"
+                : "grid size-9 place-items-center rounded-full bg-navy/8 text-sm font-bold text-muted"
+            }
+          >
+            {s.done ? <Check className="size-5" /> : i + 1}
+          </span>
+          <span className={s.done ? "text-xs font-semibold text-navy" : "text-xs text-muted"}>{t(`my.prog.${s.key}`)}</span>
+        </li>
+      ))}
+    </ol>
   );
 }

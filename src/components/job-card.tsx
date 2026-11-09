@@ -24,7 +24,13 @@ export function JobCard({
   const salary =
     job.payment_mdl > 0
       ? official
-        ? t("kind.salaryMonth", { n: formatMdl(job.payment_mdl).replace(" MDL", "") })
+        ? t("kind.salaryMonth", {
+            n:
+              formatMdl(job.payment_mdl).replace(" MDL", "") +
+              ((job.details?.salary_max ?? 0) > job.payment_mdl
+                ? ` – ${formatMdl(job.details!.salary_max).replace(" MDL", "")}`
+                : ""),
+          })
         : formatMdl(job.payment_mdl)
       : t("kind.salaryNegotiable");
   const duration = official
