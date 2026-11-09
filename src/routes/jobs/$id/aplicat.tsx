@@ -55,7 +55,8 @@ function Applied() {
               {t("job.back")}
             </Link>
             <Link
-              to="/cont"
+              to="/aplicatii"
+              search={{ tab: "trimise" }}
               className="inline-flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold text-navy"
             >
               {t("account.apps")}

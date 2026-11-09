@@ -11,6 +11,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isAdminEmail } from "@/lib/admin-public";
 import { getAdminSession } from "@/lib/admin";
 import { useMoneyMode } from "@/lib/money-mode";
+import { useAppsSummary } from "@/lib/apps-summary";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -19,6 +20,7 @@ export function Header() {
   const { user } = useCurrentUserState();
   const [isAdmin, setIsAdmin] = useState(false);
   const { showPro } = useMoneyMode();
+  const { badge } = useAppsSummary();
 
   useEffect(() => {
     if (!user) {
@@ -76,6 +78,7 @@ export function Header() {
                 )}
               >
                 {item.label}
+                {item.id === "apps" && badge > 0 ? <NavBadge n={badge} /> : null}
               </Link>
             );
           })}
@@ -130,6 +133,7 @@ export function Header() {
                 className="rounded-2xl px-4 py-3 text-base font-medium text-navy hover:bg-navy/6"
               >
                 {item.label}
+                {item.id === "apps" && badge > 0 ? <NavBadge n={badge} /> : null}
               </Link>
             ))}
             {isAdmin ? (
@@ -166,5 +170,19 @@ export function Header() {
         </div>
       ) : null}
     </header>
+  );
+}
+
+export function NavBadge({ n, className }: { n: number; className?: string }) {
+  return (
+    <span
+      data-testid="apps-badge"
+      className={cn(
+        "ml-1.5 inline-grid min-w-5 place-items-center rounded-full bg-orange px-1.5 text-[11px] leading-5 font-bold text-white tabular-nums",
+        className,
+      )}
+    >
+      {n > 9 ? "9+" : n}
+    </span>
   );
 }

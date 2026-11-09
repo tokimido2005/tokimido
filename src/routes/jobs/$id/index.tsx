@@ -11,7 +11,8 @@ import { RatingBadge } from "@/components/stars";
 import { ShareJob } from "@/components/share-job";
 import { ReportButton } from "@/components/report-dialog";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
-import { applyToJob, getJob, hasApplied, listJobs, recordJobView, type Job } from "@/lib/jobs";
+import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
+import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";
 import { getMyProfile, getProfileGate } from "@/lib/profile";
 import { getMyAccess, type MonetizationAccess } from "@/lib/monetization";
 import { useMoneyMode } from "@/lib/money-mode";
@@ -134,6 +135,8 @@ function JobPage() {
   const [related, setRelated] = useState<Job[]>([]);
   const [nearby, setNearby] = useState<Job[]>([]);
   const [applied, setApplied] = useState(false);
+  const [myApp, setMyApp] = useState<MyAppInfo | null>(null);
+  const [appTick, setAppTick] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [message, setMessage] = useState("");
@@ -227,15 +230,17 @@ function JobPage() {
     if (!user || !job) return;
     if (user.id === job.user_id) return;
     let cancelled = false;
-    hasApplied({ data: job.id })
+    getMyApplicationForJob({ data: job.id })
       .then((v) => {
-        if (!cancelled) setApplied(v);
+        if (cancelled) return;
+        setMyApp(v);
+        setApplied(Boolean(v && v.status !== "withdrawn"));
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [user, job]);
+  }, [user, job, appTick]);
 
   if (job === undefined) {
     return (
@@ -375,6 +380,10 @@ function JobPage() {
           </div>
         </div>
 
+        {myApp?.status === "selected" && !isOwner ? (
+          <SelectedPanel job={job} app={myApp} onChanged={() => setAppTick((n) => n + 1)} />
+        ) : null}
+
         <article className="mt-4 rounded-[32px] p-5 glass sm:p-8">
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -441,7 +450,7 @@ function JobPage() {
               </>
             )}
           </div>
-          {open && !isOwner ? (
+          {open && !isOwner && !applied ? (
             <button
               type="button"
               data-testid="apply-btn-top"
@@ -494,18 +503,8 @@ function JobPage() {
               {t("job.inbox")}
             </Link>
           </section>
-        ) : applied ? (
-          <section className="mt-5 rounded-[28px] p-6 text-center glass" data-testid="apply-done">
-            <p className="text-base font-semibold text-navy">{t("apply.done")}</p>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{t("apply.successBody")}</p>
-            <Link
-              to="/jobs/$id/aplicat"
-              params={{ id: String(job.id) }}
-              className="mt-3 inline-block text-sm font-medium text-orange"
-            >
-              {t("job.seeConfirm")}
-            </Link>
-          </section>
+        ) : myApp?.status === "selected" ? null : applied && myApp ? (
+          <AppliedStatus job={job} app={myApp} onChanged={() => setAppTick((n) => n + 1)} />
         ) : open ? (
           <section id="aplica" className="mt-5 rounded-[28px] p-5 glass sm:p-7" data-testid="apply-section">
             <h2 className="text-lg font-semibold text-navy">{t("job.apply")}</h2>

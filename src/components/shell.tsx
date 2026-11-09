@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer";
 import { Onboarding } from "@/components/onboarding";
 import { Chatbot } from "@/components/chatbot";
 import { TabBar } from "@/components/tab-bar";
+import { SelectedBanner } from "@/components/selected-banner";
 
 export function Shell({ children }: { children: ReactNode }) {
   const [chat, setChat] = useState(false);
@@ -28,6 +29,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="relative min-h-dvh pb-[5.8rem] lg:pb-0">
       <Ambient />
       <Header />
+      <SelectedBanner />
       {children}
       <Footer />
       <Onboarding />

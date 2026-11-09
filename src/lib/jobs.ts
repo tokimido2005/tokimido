@@ -30,7 +30,7 @@ async function accountContactPhone(userId: string) {
   return phone;
 }
 
-type PushPayload = { title: string; body: string; url: string };
+type PushPayload = { title: string; body: string; url: string; telegram?: boolean };
 
 async function ensurePushTables() {
   const m = await import("./push.server");
@@ -99,6 +99,8 @@ export type Application = {
   contact_phone: string | null;
   status: string;
   created_at: string;
+  applicant_rating_avg?: number;
+  applicant_rating_count?: number;
 };
 
 export type AppStatus = "pending" | "contacted" | "selected" | "declined" | "withdrawn";
@@ -1316,6 +1318,7 @@ export const applyToJob = createServerFn({ method: "POST" })
         title: "Aplicație nouă",
         body: `${fullName} a aplicat la „${job.title}”.`,
         url: "/aplicatii",
+        telegram: true,
       }, context.userId);
       return { ok: true as const };
     }
@@ -1336,6 +1339,7 @@ export const applyToJob = createServerFn({ method: "POST" })
       title: "Aplicație nouă",
       body: `${fullName} a aplicat la „${job.title}”.`,
       url: "/aplicatii",
+      telegram: true,
     }, context.userId);
     return { ok: true as const };
   });
@@ -1461,8 +1465,12 @@ export const listPosterInbox = createServerFn({ method: "GET" })
     if (jobs.length === 0) return [] as InboxJob[];
     const ids = jobs.map((j) => j.id);
     const placeholders = ids.map((_, i) => `$${i + 1}`).join(",");
+    await ensureRatingsTable();
     const apps = await sql.query<Application>(
-      `select * from applications where job_id in (${placeholders}) order by created_at desc`,
+      `select a.*,
+              coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = a.user_id and ${VISIBLE_RATING_SQL("r")}), 0) as applicant_rating_avg,
+              (select count(*)::int from ratings r where r.to_user_id = a.user_id and ${VISIBLE_RATING_SQL("r")}) as applicant_rating_count
+       from applications a where a.job_id in (${placeholders}) order by a.created_at desc`,
       ids,
     );
     return jobs.map((job) => ({
@@ -1493,32 +1501,112 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
       title: string;
       job_id: number;
       has_geo: boolean;
+      status: string;
+      people_needed: number;
+      selected_count: number;
+      starts_at: string | null;
     }>(
-      `select a.user_id, j.title, j.id as job_id,
-              (j.geo_lat is not null and j.geo_lng is not null) as has_geo
+      `select a.user_id, a.status, j.title, j.id as job_id, j.people_needed, j.starts_at,
+              (j.geo_lat is not null and j.geo_lng is not null) as has_geo,
+              (select count(*)::int from applications s where s.job_id = j.id and s.status = 'selected') as selected_count
        from applications a join jobs j on j.id = a.job_id
        where a.id = $1`,
       [data.applicationId],
     );
+    const row = info[0];
+    if (!row) throw new Error("Nu poți actualiza această aplicație");
+    if (row.status === data.status) return { ok: true as const };
+    // "Contacted" is set automatically by the Call button: never downgrade a decision.
+    if (data.status === "contacted" && row.status !== "pending") return { ok: true as const };
+    if (data.status === "selected" && row.selected_count >= Math.max(1, row.people_needed || 1)) {
+      throw new Error("Toate locurile sunt deja ocupate");
+    }
     await sql.query(`update applications set status = $1 where id = $2`, [
       data.status,
       data.applicationId,
     ]);
-    const row = info[0];
-    if (row && (data.status === "selected" || data.status === "declined")) {
+    if (data.status === "selected" || data.status === "declined") {
+      const when = row.starts_at ? ` (${formatStartsAtRo(row.starts_at)})` : "";
       const selectedBody = row.has_geo
-        ? `Ai fost selectat la „${row.title}”. Locația exactă e acum vizibilă pe anunț.`
-        : `Ai fost selectat la „${row.title}”.`;
+        ? `Ai fost selectat la „${row.title}”${when}. Adresa exactă și harta sunt acum pe anunț.`
+        : `Ai fost selectat la „${row.title}”${when}. Vezi toate detaliile pe anunț.`;
       void notifyUser(row.user_id, {
-        title: data.status === "selected" ? "Ai fost selectat" : "Aplicație refuzată",
+        title: data.status === "selected" ? "Ai fost selectat ✅" : "Nu ai fost ales",
         body:
           data.status === "selected"
             ? selectedBody
-            : `Aplicația ta la „${row.title}” a fost refuzată.`,
+            : `De data asta nu ai fost ales la „${row.title}”. Mai sunt multe lucruri pe Rabotaem.md.`,
         url: `/jobs/${row.job_id}`,
+        telegram: true,
       }, context.userId);
     }
     return { ok: true as const };
+  });
+
+function formatStartsAtRo(iso: string) {
+  try {
+    return new Intl.DateTimeFormat("ro-MD", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Chisinau",
+    }).format(new Date(iso));
+  } catch {
+    return "";
+  }
+}
+
+/** The signed-in user's application to one job, with what they need once selected. */
+export const getMyApplicationForJob = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((jobId: number) => z.number().int().parse(jobId))
+  .handler(async ({ context, data: jobId }) => {
+    const sql = await getSql();
+    await ensureProfilesTable();
+    const rows = await sql.query<{
+      id: number;
+      status: string;
+      poster_id: string;
+      poster_phone: string | null;
+    }>(
+      `select a.id, a.status, j.user_id as poster_id,
+              case when a.status = 'selected' then coalesce(nullif(p.phone, ''), nullif(j.contact_phone, '')) else null end as poster_phone
+       from applications a
+       join jobs j on j.id = a.job_id
+       left join profiles p on p.user_id = j.user_id
+       where a.job_id = $1 and a.user_id = $2
+       limit 1`,
+      [jobId, context.userId],
+    );
+    const r = rows[0];
+    if (!r) return null;
+    return { id: r.id, status: r.status as AppStatus, posterPhone: r.poster_phone };
+  });
+
+/** Small counters for the menu badge and the "you were selected" banner. */
+export const getAppsSummary = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const fresh = await sql.query<{ n: number }>(
+      `select count(*)::int as n
+       from applications a join jobs j on j.id = a.job_id
+       where j.user_id = $1 and a.status = 'pending' and j.status = 'open'`,
+      [context.userId],
+    );
+    const selected = await sql.query<{ id: number; job_id: number; title: string; starts_at: string | null }>(
+      `select a.id, a.job_id, j.title, j.starts_at
+       from applications a join jobs j on j.id = a.job_id
+       where a.user_id = $1 and a.status = 'selected'
+         and j.status not in ('cancelled', 'completed')
+         and (j.starts_at is null or j.starts_at > now() - interval '12 hours')
+       order by j.starts_at nulls last
+       limit 10`,
+      [context.userId],
+    );
+    return { newApplicants: fresh[0]?.n ?? 0, selected };
   });
 
 export const completeJob = createServerFn({ method: "POST" })
@@ -1635,6 +1723,12 @@ export const cancelApplication = createServerFn({ method: "POST" })
   .validator((applicationId: number) => applicationId)
   .handler(async ({ context, data: applicationId }) => {
     const sql = await getSql();
+    const before = await sql.query<{ status: string; poster_id: string; title: string; name: string }>(
+      `select a.status, j.user_id as poster_id, j.title, a.applicant_name as name
+       from applications a join jobs j on j.id = a.job_id
+       where a.id = $1 and a.user_id = $2`,
+      [applicationId, context.userId],
+    );
     const rows = await sql.query<{ id: number }>(
       `update applications set status = 'withdrawn'
        where id = $1 and user_id = $2 and status <> 'withdrawn'
@@ -1642,6 +1736,15 @@ export const cancelApplication = createServerFn({ method: "POST" })
       [applicationId, context.userId],
     );
     if (!rows[0]) throw new Error("Nu poți anula această aplicație");
+    const b = before[0];
+    if (b && b.status === "selected") {
+      void notifyUser(b.poster_id, {
+        title: "Un om nu mai poate veni",
+        body: `${b.name} a anunțat că nu mai poate veni la „${b.title}”. Locul s-a eliberat.`,
+        url: "/aplicatii",
+        telegram: true,
+      }, context.userId);
+    }
     return { ok: true as const };
   });
 
