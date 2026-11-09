@@ -703,3 +703,48 @@ export const listSmsLog = createServerFn({ method: "POST" })
       params,
     );
   });
+
+/** How many accounts and listings a "delete all but admin" would remove. */
+export const adminWipePreview = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const { wipePreview } = await import("./admin-wipe.server");
+    return wipePreview();
+  });
+
+/** JSON backup (no passwords, sessions or photos) to download before the wipe. */
+export const adminWipeBackup = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireAdmin, logAdminAction } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const { wipeBackup } = await import("./admin-wipe.server");
+    const backup = await wipeBackup();
+    await logAdminAction(context.userId, "users.backup", "system", "all", `${backup.users.length} users`);
+    return JSON.stringify(backup, null, 2);
+  });
+
+export const WIPE_CONFIRM = "ȘTERGE TOT";
+
+/** Delete every account except the admin(s). Irreversible. */
+export const adminWipeUsers = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((d: unknown) => z.object({ confirm: z.string().max(40) }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { requireAdmin, logAdminAction } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const typed = data.confirm.trim().toUpperCase();
+    if (typed !== WIPE_CONFIRM && typed !== "STERGE TOT") throw new Error("Scrie exact: ȘTERGE TOT");
+    const { wipeAllButAdmin } = await import("./admin-wipe.server");
+    const result = await wipeAllButAdmin();
+    await logAdminAction(
+      context.userId,
+      "users.wipe",
+      "system",
+      "all",
+      `Șterse ${result.deletedUsers} conturi (toate în afară de admin)`,
+    );
+    return result;
+  });
