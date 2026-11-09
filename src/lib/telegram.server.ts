@@ -417,3 +417,84 @@ export async function notifyTelegram(userIds: string[], payload: { title: string
     console.error("[telegram] notify", err);
   }
 }
+
+/* ---------------- Password reset through the bot ---------------- */
+
+const RESET_TTL_MIN = 15;
+
+function hashResetToken(token: string) {
+  return createHash("sha256").update(`rabotaem-tg-reset:${token}`).digest("hex");
+}
+
+/**
+ * Send a one-time reset link to the Telegram chat linked to this phone.
+ * Always resolves the same way, so nobody can learn which numbers have accounts.
+ */
+export async function requestTelegramReset(rawPhone: string) {
+  if (!telegramEnabled()) return;
+  const { findUserIdByPhone } = await import("./sms.server");
+  const phone = normalizePhone(rawPhone);
+  const userId = await findUserIdByPhone(phone);
+  if (!userId) return;
+  await ensureTelegramTables();
+  const sql = await getSql();
+  const link = await sql.query<{ chat_id: string }>(`select chat_id from telegram_links where user_id = $1`, [userId]);
+  if (!link[0]) return;
+  const recent = await sql.query<{ n: number }>(
+    `select count(*)::int as n from telegram_reset_tokens where user_id = $1 and created_at > now() - interval '1 hour'`,
+    [userId],
+  );
+  if ((recent[0]?.n ?? 0) >= 3) return;
+  const token = randomBytes(24).toString("base64url");
+  await sql.query(
+    `insert into telegram_reset_tokens (token_hash, user_id, expires_at)
+     values ($1, $2, now() + make_interval(mins => $3))`,
+    [hashResetToken(token), userId, RESET_TTL_MIN],
+  );
+  const url = `${siteUrl()}/reset?tg=${token}`;
+  const https = url.startsWith("https://");
+  await tgApi("sendMessage", {
+    chat_id: Number(link[0].chat_id),
+    text:
+      `🔑 Resetare parolă Rabotaem.md\n\nApasă butonul ca să pui o parolă nouă. Linkul merge o singură dată, ${RESET_TTL_MIN} minute.\n\n` +
+      `Dacă nu ai cerut tu, ignoră acest mesaj — parola ta rămâne aceeași.` +
+      (https ? "" : `\n\n${url}`),
+    disable_web_page_preview: true,
+    ...(https ? { reply_markup: { inline_keyboard: [[{ text: "🔑 Pune o parolă nouă", url }]] } } : {}),
+  });
+  await sql.query(
+    `insert into sms_log (phone, user_id, ip, purpose, event, detail) values ($1, $2, 'telegram', 'reset', 'tg_reset', '')`,
+    [phone, userId],
+  );
+}
+
+async function resetTokenRow(token: string) {
+  await ensureTelegramTables();
+  const sql = await getSql();
+  const rows = await sql.query<{ user_id: string; valid: boolean }>(
+    `select user_id, (used_at is null and expires_at > now()) as valid
+     from telegram_reset_tokens where token_hash = $1`,
+    [hashResetToken(token)],
+  );
+  return rows[0] ?? null;
+}
+
+export async function telegramResetValid(token: string) {
+  const row = await resetTokenRow(token);
+  return Boolean(row?.valid);
+}
+
+export async function consumeTelegramReset(token: string, password: string) {
+  const row = await resetTokenRow(token);
+  if (!row?.valid) throw new Error("tg.resetExpired");
+  const sql = await getSql();
+  const used = await sql.query<{ user_id: string }>(
+    `update telegram_reset_tokens set used_at = now() where token_hash = $1 and used_at is null returning user_id`,
+    [hashResetToken(token)],
+  );
+  if (!used[0]) throw new Error("tg.resetExpired");
+  const { applyNewPassword } = await import("./sms.server");
+  await applyNewPassword(row.user_id, password);
+  // Other links for this account stop working too.
+  await sql.query(`update telegram_reset_tokens set used_at = now() where user_id = $1 and used_at is null`, [row.user_id]);
+}
