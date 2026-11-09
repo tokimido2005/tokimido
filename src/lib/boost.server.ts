@@ -13,8 +13,13 @@ export async function applyBoost(userId: string, jobId: number, tier: BoostTier)
     raion: string;
     category: string;
     status: string;
+    kind: string;
+    payment_mdl: number;
+    locality: string;
+    adults_only: boolean;
   }>(
-    `select id, user_id, title, raion, category, status from jobs
+    `select id, user_id, title, raion, category, status, coalesce(kind, 'rapid') as kind, payment_mdl, locality,
+            (coalesce(adults_only, false) or coalesce(kind, 'rapid') = 'oficial') as adults_only from jobs
      where id = $1 and coalesce(hidden, false) = false`,
     [jobId],
   );
@@ -43,13 +48,17 @@ export async function applyBoost(userId: string, jobId: number, tier: BoostTier)
   );
 
   if (pack.id === "rapid" || pack.id === "urgent") {
-    const { notifyNewJobInRaion } = await import("./push.server");
-    await notifyNewJobInRaion({
-      raion: job.raion,
-      title: job.title,
+    const { dispatchJobAlert } = await import("./alerts.server");
+    await dispatchJobAlert({
       jobId,
-      exceptUserId: userId,
+      title: job.title,
+      raion: job.raion,
+      locality: job.locality,
       category: job.category,
+      kind: job.kind === "oficial" ? "oficial" : "rapid",
+      payment: job.payment_mdl,
+      adultsOnly: job.adults_only,
+      exceptUserId: userId,
       headline: pack.id === "urgent" ? `Urgent: ${job.title}` : `Anunț promovat: ${job.title}`,
       priority: pack.id === "urgent",
     });

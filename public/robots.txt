@@ -6,6 +6,7 @@ Disallow: /aplicatii
 Disallow: /complete
 Disallow: /verify
 Disallow: /reset
+Disallow: /alerte
 Disallow: /login
 Disallow: /api/
 Disallow: /_serverFn/

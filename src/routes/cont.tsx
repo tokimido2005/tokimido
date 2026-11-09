@@ -1,10 +1,9 @@
 import { errorText } from "@/lib/i18n";
 import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Camera } from "lucide-react";
+import { Bell, Camera, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
-import { Combobox } from "@/components/combobox";
 import { JobCard } from "@/components/job-card";
 import { RateForm } from "@/components/rate-form";
 import { RatingTagList } from "@/components/rating-tags-list";
@@ -19,14 +18,10 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { compressPhotoFile, formatJobDate, formatJobTime } from "@/lib/utils";
 import { countHiddenRatings, getPublicProfile, listPendingRatings, type PendingRating, type RatingSummary } from "@/lib/ratings";
 import { getMyProfile, saveMyBio, saveMyPhoto, type Profile } from "@/lib/profile";
-import { updatePushPrefs } from "@/lib/push";
-import { subscribePush } from "@/components/push-prompt";
 import { InviteCard } from "@/components/invite-card";
 import { PhoneLocked } from "@/components/phone-verify";
 import { PhoneVerifyChoice } from "@/components/phone-verify-choice";
 import { TrustBadges, computeTrust } from "@/components/trust-badges";
-import { CATEGORIES } from "@/lib/categories";
-import { RAION_NAMES } from "@/lib/moldova";
 import { listMyReports, type Report } from "@/lib/community";
 import { listMyInbox, markInboxRead, type InboxMessage } from "@/lib/admin";
 import { getMyAccess, type MonetizationAccess } from "@/lib/monetization";
@@ -267,7 +262,20 @@ function Account() {
           <BioBox initial={me?.bio ?? ""} onSaved={reload} />
         </section>
 
-        <NotifySettings me={me} onSaved={reload} />
+        <Link
+          to="/alerte"
+          data-testid="account-alerts"
+          className="mt-4 flex items-center gap-4 rounded-[28px] p-5 glass hover:bg-white/70 sm:p-6"
+        >
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-orange/15 text-orange-deep">
+            <Bell className="size-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-navy">{t("al.title")}</span>
+            <span className="block text-sm text-muted">{t("al.cardHint")}</span>
+          </span>
+          <ChevronRight className="size-5 text-muted" />
+        </Link>
         <InviteCard />
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -689,138 +697,6 @@ function BioBox({ initial, onSaved }: { initial: string; onSaved: () => Promise<
     </div>
   );
 }
-
-function NotifySettings({ me, onSaved }: { me: Profile | null; onSaved: () => Promise<void> }) {
-  const { t } = useT();
-  const [raion, setRaion] = useState(me?.notify_raion || "Chișinău");
-  const [enabled, setEnabled] = useState(Boolean(me?.notify_push && me?.fcm_token));
-  const [busy, setBusy] = useState(false);
-  const [emailOn, setEmailOn] = useState(me?.notify_email !== false);
-  const [category, setCategory] = useState(me?.notify_category || "");
-
-  useEffect(() => {
-    if (me?.notify_raion) setRaion(me.notify_raion);
-    setEnabled(Boolean(me?.notify_push !== false && me?.fcm_token));
-    setEmailOn(me?.notify_email !== false);
-    setCategory(me?.notify_category || "");
-  }, [me]);
-
-  async function toggle() {
-    setBusy(true);
-    try {
-      if (!enabled) {
-        const ok = await subscribePush();
-        if (!ok) {
-          toast.error(t("push.denied"));
-          return;
-        }
-        await updatePushPrefs({ data: { notify_push: true, notify_raion: raion } });
-        toast.success(t("push.enabled"));
-        setEnabled(true);
-      } else {
-        await updatePushPrefs({ data: { notify_push: false } });
-        setEnabled(false);
-      }
-      await onSaved();
-    } catch (err) {
-      toast.error(errorText(err, t, t("push.denied")));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveRaion(next: string) {
-    setRaion(next);
-    try {
-      await updatePushPrefs({ data: { notify_raion: next } });
-    } catch {
-      /* ignore */
-    }
-  }
-
-  return (
-    <section className="mt-4 rounded-[28px] p-5 glass sm:p-6">
-      <h2 className="text-base font-semibold text-navy">{t("push.settings")}</h2>
-      <p className="mt-1 text-sm text-muted">{t("push.body")}</p>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void toggle()}
-          className={
-            enabled
-              ? "h-11 rounded-full px-4 text-sm font-semibold glass-orange"
-              : "h-11 rounded-full bg-brand px-4 text-sm font-semibold text-white"
-          }
-        >
-          {enabled ? t("push.toggleOn") : t("push.enable")}
-        </button>
-      </div>
-      <label className="mt-4 block text-sm font-medium text-navy">{t("push.raionLabel")}</label>
-      <p className="mt-1 text-xs text-muted">{t("push.raionHint")}</p>
-      <div className="mt-2 max-w-sm">
-        <Combobox value={raion} onChange={(v) => void saveRaion(v)} options={RAION_NAMES} placeholder={t("search.pickRaion")} />
-      </div>
-      <label className="mt-4 block text-sm font-medium text-navy">{t("push.categoryLabel")}</label>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            setCategory("");
-            void updatePushPrefs({ data: { notify_category: "" } });
-          }}
-          className={
-            !category
-              ? "h-9 rounded-full bg-brand px-3 text-sm font-semibold text-white"
-              : "h-9 rounded-full bg-white/45 px-3 text-sm font-medium text-navy ring-1 ring-navy/8 dark:bg-white/8"
-          }
-        >
-          {t("search.all")}
-        </button>
-        {CATEGORIES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => {
-              setCategory(c.id);
-              void updatePushPrefs({ data: { notify_category: c.id } });
-            }}
-            className={
-              category === c.id
-                ? "h-9 rounded-full bg-brand px-3 text-sm font-semibold text-white"
-                : "h-9 rounded-full bg-white/45 px-3 text-sm font-medium text-navy ring-1 ring-navy/8 dark:bg-white/8"
-            }
-          >
-            {t(`cat.${c.id}`)}
-          </button>
-        ))}
-      </div>
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={emailOn}
-        onClick={() => {
-          const next = !emailOn;
-          setEmailOn(next);
-          void updatePushPrefs({ data: { notify_email: next } });
-        }}
-        className="mt-4 flex w-full items-center gap-3 text-left"
-      >
-        <span
-          className={
-            emailOn
-              ? "grid size-5 place-items-center rounded bg-orange text-[10px] font-bold text-white"
-              : "grid size-5 place-items-center rounded bg-white/70 ring-1 ring-navy/20 dark:bg-white/10"
-          }
-        >
-          {emailOn ? "✓" : ""}
-        </span>
-        <span className="text-sm text-navy">{t("push.emailLabel")}</span>
-      </button>
-    </section>
-  );
-}
-
 
 function PhoneChange({ mePhone, onDone }: { mePhone: string; onDone: () => void }) {
   const { t } = useT();
