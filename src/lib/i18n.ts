@@ -8,6 +8,31 @@ export const LOCALES: Array<{ id: Locale; label: string }> = [
 
 export const messages: Record<Locale, Record<string, string>> = {
   ro: {
+    "sms.event.tg_verify": "Verificat prin Telegram",
+    "admin.statsDays": "Ultimele {n} zile",
+    "admin.tgShare": "{p}% prin Telegram",
+    "admin.smsSent": "{n} SMS trimise",
+    "tg.newLink": "Generează un link nou",
+    "tg.openHere": "Am Telegram pe calculator: deschide aici",
+    "tg.option": "Prin Telegram",
+    "tg.optionSub": "Un buton în aplicație, fără cod de copiat",
+    "tg.recommended": "Recomandat",
+    "sms.option": "Prin SMS",
+    "sms.optionSub": "Primești un cod de 6 cifre",
+    "tg.howTo": "Se deschide botul Rabotaem în Telegram. Apeși „Trimite numărul meu” și revii aici, verificarea se face singură.",
+    "tg.open": "Deschide Telegram",
+    "tg.scan": "Scanează codul cu camera telefonului și apasă „Trimite numărul meu” în bot.",
+    "tg.waiting": "Așteptăm confirmarea din Telegram…",
+    "tg.done": "Gata, telefonul e verificat.",
+    "tg.mismatch": "În Telegram ai numărul {t}, iar în cont e {s}.",
+    "tg.useNumber": "Folosește {t} pentru cont",
+    "tg.foreign": "Acceptăm doar numere din Moldova (+373). Verifică-te prin SMS.",
+    "tg.taken": "Numărul din Telegram e deja folosit de alt cont.",
+    "tg.expired": "Linkul a expirat. Generează unul nou.",
+    "tg.startFail": "Nu am putut porni verificarea prin Telegram. Încearcă prin SMS.",
+    "tg.useSms": "Nu ai Telegram sau nu merge? Primește SMS",
+    "tg.unavailable": "Verificarea prin Telegram nu e disponibilă acum. Folosește SMS.",
+    "srv.phoneTaken": "Acest număr de telefon este deja folosit",
     "review.hiddenCountOne": "Ai o evaluare nouă, ascunsă până îl evaluezi și tu pe cel care ți-a dat-o.",
     "review.star1": "Rău",
     "review.star2": "Slab",
@@ -979,6 +1004,7 @@ export function translate(locale: Locale, key: string, vars?: Record<string, str
  * their own language; unknown messages are shown as they are.
  */
 const SERVER_ERROR_KEYS: Record<string, string> = {
+  "Acest număr de telefon este deja folosit": "srv.phoneTaken",
   "Ai evaluat deja această colaborare": "srv.alreadyRated",
   "Data sau ora este invalidă": "srv.dateInvalid",
   "Anunțul nu există": "srv.jobMissing",
@@ -1059,12 +1085,14 @@ export function errorText(
   if (!message) return fallback;
   const rate = /^rate\.limit\|(\d+)$/.exec(message);
   if (rate) return t("error.rateLimit", { m: rate[1] });
+  const smsErr = /^(sms\.err\w+)(?:\|(\d+))?$/.exec(message);
+  if (smsErr) return t(smsErr[1], smsErr[2] ? { n: smsErr[2] } : undefined);
   const known = SERVER_ERROR_KEYS[message];
   if (known) return t(known);
   const banned = /^Contul este blocat: (.+)$/s.exec(message);
   if (banned) return t("srv.bannedReason", { r: banned[1] });
   // Coded keys thrown by newer server code (account.*, srv.*, error.*).
-  if (/^(account|srv|error)\.[A-Za-z0-9_.]+$/.test(message)) return t(message);
+  if (/^(account|srv|error|tg)\.[A-Za-z0-9_.]+$/.test(message)) return t(message);
   // Raw schema-validation output (JSON issue list) is not for humans.
   if (message.startsWith("[") && message.includes('"code"')) return t("error.invalidInput");
   return message;

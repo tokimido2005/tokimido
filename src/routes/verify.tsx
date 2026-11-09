@@ -4,7 +4,7 @@ import { getProfileGate } from "@/lib/profile";
 import { seoHead } from "@/lib/seo";
 import { Shell } from "@/components/shell";
 import { Logo } from "@/components/logo";
-import { PhoneVerifyPanel } from "@/components/phone-verify";
+import { PhoneVerifyChoice } from "@/components/phone-verify-choice";
 import { safeNextPath } from "@/components/social-auth";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -94,7 +94,7 @@ function VerifyPhone() {
           <p className="mt-2 text-sm leading-relaxed text-muted">{t("verify.blurb")}</p>
           <p className="mt-2 text-xs text-subtle">{t("verify.changeHint")}</p>
           <div className="mt-6">
-            <PhoneVerifyPanel
+            <PhoneVerifyChoice
               phone={gate.phone}
               onVerified={() => {
                 window.location.href = next ?? "/";
