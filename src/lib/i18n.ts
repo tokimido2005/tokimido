@@ -8,6 +8,9 @@ export const LOCALES: Array<{ id: Locale; label: string }> = [
 
 export const messages: Record<Locale, Record<string, string>> = {
   ro: {
+    "post.minChars": "Minim {min} caractere (ai scris {n})",
+    "post.errTitleShort": "Titlul trebuie să aibă cel puțin 3 caractere.",
+    "post.errDescShort": "Descrierea trebuie să aibă cel puțin 20 de caractere.",
     "angajare.myCv": "Fă-ți CV-ul / CV-ul meu",
     "cv.builderTitle": "Fă-ți CV-ul",
     "cv.builderLead": "Răspunde la câteva întrebări simple. Durează cam 5 minute, iar CV-ul îl poți folosi la toate angajările.",
@@ -1378,7 +1381,20 @@ export function errorText(
   // Coded keys thrown by newer server code (account.*, srv.*, error.*).
   if (/^(account|srv|error|tg|cv)\.[A-Za-z0-9_.]+$/.test(message)) return t(message);
   // Raw schema-validation output (JSON issue list) is not for humans.
-  if (message.startsWith("[") && message.includes('"code"')) return t("error.invalidInput");
+  if (message.startsWith("[") && message.includes('"code"')) {
+    // Validation issues may carry a translation key as their message.
+    try {
+      const issues = JSON.parse(message) as Array<{ message?: string }>;
+      const coded = issues.find((i) => i.message && /^[a-z]+\.[A-Za-z0-9_.]+$/.test(i.message));
+      if (coded?.message) {
+        const text = t(coded.message);
+        if (text !== coded.message) return text;
+      }
+    } catch {
+      /* fall through */
+    }
+    return t("error.invalidInput");
+  }
   return message;
 }
 

@@ -1,5 +1,8 @@
 /** EN strings — loaded on demand when the visitor picks this language. */
 const messages: Record<string, string> = {
+  "post.minChars": "At least {min} characters (you have {n})",
+  "post.errTitleShort": "The title needs at least 3 characters.",
+  "post.errDescShort": "The description needs at least 20 characters.",
   "angajare.myCv": "Make your CV / My CV",
   "cv.builderTitle": "Make your CV",
   "cv.builderLead": "Answer a few simple questions. It takes about 5 minutes and you can use the CV for every job.",
