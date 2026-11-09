@@ -51,6 +51,7 @@ import {
   listAdminReports,
   listAdminUsers,
   listSmsLog,
+  adminVerifyStats,
   listSupportMessages,
   type AdminJob,
   type AdminLog,
@@ -59,6 +60,7 @@ import {
   type AdminUser,
   type AdminUserDetail,
   type SmsLogRow,
+  type VerifyStats,
   type SupportRow,
   adminWipeBackup,
   adminWipePreview,
@@ -1835,6 +1837,13 @@ function SmsPane() {
   const { t } = useT();
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<SmsLogRow[] | null>(null);
+  const [stats, setStats] = useState<VerifyStats | null>(null);
+
+  useEffect(() => {
+    adminVerifyStats()
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, []);
 
   useEffect(() => {
     const handle = window.setTimeout(() => {
@@ -1852,6 +1861,25 @@ function SmsPane() {
     <div>
       <h1 className="text-2xl font-semibold tracking-tight text-navy">{t("admin.sms")}</h1>
       <p className="mt-2 text-sm text-muted">{t("admin.smsLead")}</p>
+      {stats ? (
+        <div className="mt-4 grid grid-cols-2 gap-2" data-testid="verify-stats">
+          {stats.map((s) => {
+            const total = s.telegram + s.sms;
+            const share = total ? Math.round((s.telegram / total) * 100) : 0;
+            return (
+              <div key={s.days} className="rounded-[22px] p-4 glass">
+                <p className="text-xs font-semibold text-muted">{t("admin.statsDays", { n: String(s.days) })}</p>
+                <p className="mt-2 text-sm text-navy">
+                  Telegram: <b className="tabular-nums">{s.telegram}</b> · SMS: <b className="tabular-nums">{s.sms}</b>
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {t("admin.tgShare", { p: String(share) })} · {t("admin.smsSent", { n: String(s.smsSent) })}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
       <label className="relative mt-4 block">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
         <input className="field pl-10" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.search")} />

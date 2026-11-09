@@ -31,6 +31,7 @@ import { Route as JobsIdRouteImport } from './routes/jobs/$id'
 import { Route as RRaionRouteImport } from './routes/r/$raion'
 import { Route as UUserIdRouteImport } from './routes/u/$userId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiTelegramWebhookRouteImport } from './routes/api/telegram/webhook'
 import { Route as JobsIdIndexRouteImport } from './routes/jobs/$id/index'
 import { Route as JobsIdAplicatRouteImport } from './routes/jobs/$id/aplicat'
 
@@ -144,6 +145,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTelegramWebhookRoute = ApiTelegramWebhookRouteImport.update({
+  id: '/api/telegram/webhook',
+  path: '/api/telegram/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JobsIdIndexRoute = JobsIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
 }
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
   '/jobs/$id': typeof JobsIdIndexRoute
 }
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
 }
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/r/$raion'
     | '/u/$userId'
     | '/api/auth/$'
+    | '/api/telegram/webhook'
     | '/jobs/$id/aplicat'
     | '/jobs/$id/'
   fileRoutesByTo: FileRoutesByTo
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/r/$raion'
     | '/u/$userId'
     | '/api/auth/$'
+    | '/api/telegram/webhook'
     | '/jobs/$id/aplicat'
     | '/jobs/$id'
   id:
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/r/$raion'
     | '/u/$userId'
     | '/api/auth/$'
+    | '/api/telegram/webhook'
     | '/jobs/$id/aplicat'
     | '/jobs/$id/'
   fileRoutesById: FileRoutesById
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   RRaionRoute: typeof RRaionRoute
   UUserIdRoute: typeof UUserIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiTelegramWebhookRoute: typeof ApiTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -494,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/telegram/webhook': {
+      id: '/api/telegram/webhook'
+      path: '/api/telegram/webhook'
+      fullPath: '/api/telegram/webhook'
+      preLoaderRoute: typeof ApiTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jobs/$id/': {
       id: '/jobs/$id/'
       path: '/'
@@ -547,6 +567,7 @@ const rootRouteChildren: RootRouteChildren = {
   RRaionRoute: RRaionRoute,
   UUserIdRoute: UUserIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiTelegramWebhookRoute: ApiTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

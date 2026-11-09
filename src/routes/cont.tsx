@@ -27,7 +27,8 @@ import { getMyProfile, saveMyBio, saveMyPhoto, type Profile } from "@/lib/profil
 import { updatePushPrefs } from "@/lib/push";
 import { subscribePush } from "@/components/push-prompt";
 import { InviteCard } from "@/components/invite-card";
-import { PhoneLocked, PhoneVerifyPanel } from "@/components/phone-verify";
+import { PhoneLocked } from "@/components/phone-verify";
+import { PhoneVerifyChoice } from "@/components/phone-verify-choice";
 import { TrustBadges, computeTrust } from "@/components/trust-badges";
 import { CATEGORIES } from "@/lib/categories";
 import { RAION_NAMES } from "@/lib/moldova";
@@ -277,7 +278,7 @@ function Account() {
           </div>
           {me && !me.phone_verified_at && me.phone ? (
             <div className="mt-5">
-              <PhoneVerifyPanel phone={me.phone} onVerified={() => void reload()} />
+              <PhoneVerifyChoice phone={me.phone} onVerified={() => void reload()} />
             </div>
           ) : me?.phone_verified_at ? (
             <div className="mt-5">
@@ -956,11 +957,11 @@ function PhoneChange({ mePhone, onDone }: { mePhone: string; onDone: () => void 
             onChange={(e) => setNextPhone(e.target.value)}
           />
           {ready ? (
-            <PhoneVerifyPanel
+            <PhoneVerifyChoice
               key={nextPhone}
               phone={nextPhone}
               purpose="change"
-              autoSend={false}
+              autoSendSms={false}
               onVerified={onDone}
             />
           ) : null}

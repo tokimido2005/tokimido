@@ -704,6 +704,32 @@ export const listSmsLog = createServerFn({ method: "POST" })
     );
   });
 
+export type VerifyStats = { days: number; telegram: number; sms: number; smsSent: number }[];
+
+/** Telegram vs SMS verifications and SMS sent (cost), last 7 and 30 days. */
+export const adminVerifyStats = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<VerifyStats> => {
+    const { requireAdmin } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const { ensureSmsTables } = await import("./sms.server");
+    await ensureSmsTables();
+    const sql = await getSql();
+    const out: VerifyStats = [];
+    for (const days of [7, 30]) {
+      const rows = await sql.query<{ telegram: number; sms: number; sent: number }>(
+        `select count(*) filter (where event = 'tg_verify')::int as telegram,
+                count(*) filter (where event = 'verify_ok')::int as sms,
+                count(*) filter (where event = 'send')::int as sent
+         from sms_log where created_at > now() - make_interval(days => $1)`,
+        [days],
+      );
+      const r = rows[0] ?? { telegram: 0, sms: 0, sent: 0 };
+      out.push({ days, telegram: r.telegram, sms: r.sms, smsSent: r.sent });
+    }
+    return out;
+  });
+
 /** How many accounts and listings a "delete all but admin" would remove. */
 export const adminWipePreview = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
