@@ -8,22 +8,45 @@ export const Route = createFileRoute("/confidentialitate")({
   component: PrivacyPage,
 });
 
+export const PRIVACY_UPDATED = "10.11.2026";
+const SECTIONS = ["operator", "data", "why", "who", "providers", "keep", "rights", "minors", "security", "changes"] as const;
+
+/** Renders "• item" lines as a list and other lines as paragraphs. */
+function Rich({ text }: { text: string }) {
+  const blocks: Array<{ type: "p"; text: string } | { type: "ul"; items: string[] }> = [];
+  for (const line of text.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    if (line.startsWith("• ")) {
+      const last = blocks[blocks.length - 1];
+      if (last?.type === "ul") last.items.push(line.slice(2));
+      else blocks.push({ type: "ul", items: [line.slice(2)] });
+    } else blocks.push({ type: "p", text: line });
+  }
+  return (
+    <>
+      {blocks.map((b, i) =>
+        b.type === "p" ? (
+          <p key={i}>{b.text}</p>
+        ) : (
+          <ul key={i} className="list-disc space-y-1 pl-5">
+            {b.items.map((it, j) => (
+              <li key={j}>{it}</li>
+            ))}
+          </ul>
+        ),
+      )}
+    </>
+  );
+}
+
 function PrivacyPage() {
   const { t } = useT();
   return (
-    <LegalPage title={t("legal.privacyTitle")} lead={t("legal.privacyLead")}>
-      <LegalBlock title={t("legal.p1t")}>
-        <p>{t("legal.p1")}</p>
-      </LegalBlock>
-      <LegalBlock title={t("legal.p2t")}>
-        <p>{t("legal.p2")}</p>
-      </LegalBlock>
-      <LegalBlock title={t("legal.p3t")}>
-        <p>{t("legal.p3")}</p>
-      </LegalBlock>
-      <LegalBlock title={t("legal.p4t")}>
-        <p>{t("legal.p4")}</p>
-      </LegalBlock>
+    <LegalPage title={t("legal.privacyTitle")} lead={t("priv.lead", { d: PRIVACY_UPDATED })}>
+      {SECTIONS.map((s, i) => (
+        <LegalBlock key={s} title={`${i + 1}. ${t(`priv.${s}.t`)}`}>
+          <Rich text={t(`priv.${s}.b`)} />
+        </LegalBlock>
+      ))}
     </LegalPage>
   );
 }

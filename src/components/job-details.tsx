@@ -1,5 +1,5 @@
 import { CheckCircle2, ClipboardList, Gift, GraduationCap, Languages, MapPin, Timer, UserRound } from "lucide-react";
-import { bulletLines, type JobDetails } from "@/lib/cv-shared";
+import { bulletLines, normalizeJobDetails, type JobDetails } from "@/lib/cv-shared";
 import { useT } from "@/lib/locale";
 
 function hasAny(d: JobDetails) {
@@ -9,9 +9,11 @@ function hasAny(d: JobDetails) {
 }
 
 /** Structured "angajare" listing: what you'll do, what's needed, what's offered. */
-export function JobDetailsBlock({ details }: { details: JobDetails | undefined }) {
+export function JobDetailsBlock({ details: raw }: { details: JobDetails | undefined }) {
   const { t } = useT();
-  if (!details || !hasAny(details)) return null;
+  // Older listings store "{}" (or partial objects): normalize before reading.
+  const details = normalizeJobDetails(raw);
+  if (!hasAny(details)) return null;
   const facts: Array<{ icon: typeof Timer; label: string; value: string }> = [];
   if (details.experience) facts.push({ icon: Timer, label: t("jd.experience"), value: t(`jd.exp.${details.experience}`) });
   if (details.education) facts.push({ icon: GraduationCap, label: t("jd.education"), value: t(`jd.edu.${details.education}`) });

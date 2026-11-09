@@ -14,6 +14,8 @@ import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
 import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";
 import { OfficialApply } from "@/components/official-apply";
+import { BirthYearAsk } from "@/components/birth-year-ask";
+import { ADULT_AGE, ageFromYear } from "@/lib/age";
 import { JobDetailsBlock } from "@/components/job-details";
 import { getMyProfile, getProfileGate } from "@/lib/profile";
 import { getMyAccess, type MonetizationAccess } from "@/lib/monetization";
@@ -144,7 +146,7 @@ function JobPage() {
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
-  const [gate, setGate] = useState<{ complete: boolean; verified: boolean } | null>(null);
+  const [gate, setGate] = useState<{ complete: boolean; verified: boolean; birthYear?: number | null } | null>(null);
   const [access, setAccess] = useState<MonetizationAccess | null>(null);
   const { ids: savedIds, setSaved } = useSavedIds();
   const { showPro, mode } = useMoneyMode();
@@ -213,7 +215,7 @@ function JobPage() {
     Promise.all([getProfileGate(), getMyProfile().catch(() => null), getMyAccess({ data: { t: Date.now() } }).catch(() => null)])
       .then(([g, profile, money]) => {
         if (cancelled) return;
-        setGate({ complete: g.complete, verified: g.verified });
+        setGate({ complete: g.complete, verified: g.verified, birthYear: g.birthYear ?? null });
         if (profile?.phone) setPhone(profile.phone);
         else if (g.phone) setPhone(g.phone);
         if (profile?.first_name) setFirstName(profile.first_name);
@@ -285,7 +287,7 @@ function JobPage() {
       if (!g) {
         try {
           const fresh = await getProfileGate();
-          g = { complete: fresh.complete, verified: fresh.verified };
+          g = { complete: fresh.complete, verified: fresh.verified, birthYear: fresh.birthYear ?? null };
           setGate(g);
           if (fresh.phone) setPhone(fresh.phone);
         } catch {
@@ -295,6 +297,11 @@ function JobPage() {
       }
       if (!g.complete) {
         await navigate({ to: "/complete", search: { next: `/jobs/${listing.id}` } });
+        return;
+      }
+      if (g.birthYear == null || (listing.adults_only && (ageFromYear(g.birthYear) ?? 0) < ADULT_AGE)) {
+        document.getElementById("aplica")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        setBusy(false);
         return;
       }
       if (!g.verified) {
@@ -406,6 +413,11 @@ function JobPage() {
               {t(official ? `ocat.${job.category}` : `cat.${job.category}`)}
             </span>
             <StatusBadge job={job} />
+            {job.adults_only ? (
+              <span className="rounded-full bg-navy px-3 py-1 text-xs font-bold text-white dark:bg-white/20" data-testid="badge-18">
+                {t("age.badge")}
+              </span>
+            ) : null}
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-navy">{job.title}</h1>
           {official && job.company ? (
@@ -529,6 +541,12 @@ function JobPage() {
               <p className="mt-3 text-sm leading-relaxed text-muted">{t("complete.blurb")}</p>
             ) : user && gate && !gate.verified ? (
               <p className="mt-3 text-sm leading-relaxed text-muted">{t("sms.need")}</p>
+            ) : user && gate && gate.birthYear == null ? (
+              <BirthYearAsk onSaved={(y) => setGate((g) => (g ? { ...g, birthYear: y } : g))} />
+            ) : user && gate && job.adults_only && (ageFromYear(gate.birthYear) ?? 0) < ADULT_AGE ? (
+              <p className="mt-4 rounded-2xl bg-navy/6 p-4 text-base font-medium text-navy" data-testid="adults-only-msg">
+                {t(official ? "age.oficialOnly18" : "age.heavyOnly18")}
+              </p>
             ) : user && applyBlocked ? (
               <div className="mt-5">
                 <PaywallCard access={access!} action="apply" />
@@ -570,7 +588,10 @@ function JobPage() {
             ) : (
               <p className="mt-3 text-sm text-muted">{t("apply.loginHint")}</p>
             )}
-            {applyBlocked || (user && official && gate?.complete && gate.verified) ? null : (
+            {applyBlocked ||
+            (user && official && gate?.complete && gate.verified) ||
+            (user && gate && gate.birthYear == null) ||
+            (user && gate && job.adults_only && (ageFromYear(gate.birthYear) ?? 0) < ADULT_AGE) ? null : (
               <button
                 type="button"
                 data-testid="apply-btn"
