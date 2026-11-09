@@ -31,6 +31,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useT } from "@/lib/locale";
 import { track } from "@/lib/analytics";
 import { jsonLdHtml, setClientSeo } from "@/lib/seo";
+import { jobPostingJsonLd } from "@/lib/job-jsonld";
 
 const SITE_URL = "https://rabotaem.md";
 
@@ -62,56 +63,7 @@ function jobHead(job: Job | null, id: string) {
   const pay = job.payment_mdl ? ` · ${job.payment_mdl} MDL` : "";
   const title = `${job.title}${place ? ` — ${place}` : ""}${pay} · Rabotaem.md`;
   const description = job.description.replace(/\s+/g, " ").trim().slice(0, 155);
-  const official = isOficial(job);
-  const posted = new Date(job.created_at);
-  const validThrough = job.starts_at
-    ? new Date(job.starts_at)
-    : new Date(posted.getTime() + 30 * 24 * 3600 * 1000);
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "JobPosting",
-    title: job.title,
-    description: job.description,
-    datePosted: posted.toISOString(),
-    validThrough: validThrough.toISOString(),
-    employmentType: !official
-      ? "TEMPORARY"
-      : job.contract_type === "intern"
-        ? "INTERN"
-        : job.contract_type === "prestari"
-          ? "CONTRACTOR"
-          : job.schedule === "part"
-            ? "PART_TIME"
-            : "FULL_TIME",
-    hiringOrganization: {
-      "@type": official && job.company ? "Organization" : "Person",
-      name: (official && job.company) || job.poster_name || "Rabotaem.md",
-    },
-    jobLocation: {
-      "@type": "Place",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: job.locality || job.raion,
-        addressRegion: job.raion,
-        addressCountry: "MD",
-      },
-    },
-    ...(job.payment_mdl
-      ? {
-          baseSalary: {
-            "@type": "MonetaryAmount",
-            currency: "MDL",
-            value: {
-              "@type": "QuantitativeValue",
-              value: job.payment_mdl,
-              ...(official && job.salary_period === "month" ? { unitText: "MONTH" } : {}),
-            },
-          },
-        }
-      : {}),
-    directApply: true,
-    url,
-  };
+  const jsonLd = jobPostingJsonLd(job, url);
   const open = job.status === "open";
   return {
     meta: [
