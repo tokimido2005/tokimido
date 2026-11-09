@@ -60,6 +60,10 @@ import {
   type AdminUserDetail,
   type SmsLogRow,
   type SupportRow,
+  adminWipeBackup,
+  adminWipePreview,
+  adminWipeUsers,
+  WIPE_CONFIRM,
 } from "@/lib/admin";
 import {
   adminGrantPro,
@@ -144,7 +148,12 @@ function AdminPage() {
       {tab === "overview" ? <OverviewPane /> : null}
       {tab === "money" ? <MoneyPane /> : null}
       {tab === "jobs" ? <JobsPane /> : null}
-      {tab === "users" ? <UsersPane /> : null}
+      {tab === "users" ? (
+        <>
+          <UsersPane />
+          <WipeAllUsers />
+        </>
+      ) : null}
       {tab === "reports" ? <ReportsPane /> : null}
       {tab === "messages" ? <MessagesPane /> : null}
       {tab === "log" ? <LogPane /> : null}
@@ -1915,4 +1924,145 @@ function isBanned(u: Pick<AdminUser, "banned_at" | "banned_until">) {
   if (!u.banned_at) return false;
   if (!u.banned_until) return true;
   return new Date(u.banned_until).getTime() > Date.now();
+}
+
+/** Danger zone: delete every account except the admin, after a backup. Admin-only, Romanian. */
+function WipeAllUsers() {
+  const [open, setOpen] = useState(false);
+  const [preview, setPreview] = useState<Awaited<ReturnType<typeof adminWipePreview>> | null>(null);
+  const [backedUp, setBackedUp] = useState(false);
+  const [word, setWord] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<number | null>(null);
+
+  async function start() {
+    setOpen(true);
+    try {
+      setPreview(await adminWipePreview());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Nu am putut număra conturile");
+    }
+  }
+
+  async function backup() {
+    setBusy(true);
+    try {
+      const json = await adminWipeBackup();
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rabotaem-backup-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setBackedUp(true);
+      toast.success("Copia de rezervă a fost descărcată");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Nu am putut face copia de rezervă");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function wipe() {
+    setBusy(true);
+    try {
+      const res = await adminWipeUsers({ data: { confirm: word } });
+      setDone(res.deletedUsers);
+      setPreview(await adminWipePreview().catch(() => null));
+      toast.success(`Au fost șterse ${res.deletedUsers} conturi`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Ștergerea a eșuat");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const ready = backedUp && word.trim().toUpperCase().replace("STERGE", "ȘTERGE") === WIPE_CONFIRM;
+
+  return (
+    <section className="mt-10 rounded-[28px] p-5 ring-1 ring-danger/30 sm:p-6" data-testid="wipe-users">
+      <h2 className="text-lg font-semibold text-danger">Zonă periculoasă: șterge toate conturile</h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-muted">
+        Șterge definitiv toți utilizatorii, în afară de admin, împreună cu anunțurile, aplicațiile, evaluările,
+        salvările, notificările și datele SMS ale lor. Oamenii vor trebui să-și facă cont nou, cu verificare SMS.
+        Acțiunea nu poate fi anulată.
+      </p>
+      {done !== null ? (
+        <p className="mt-4 rounded-2xl bg-navy/6 px-4 py-3 text-sm font-medium text-navy" data-testid="wipe-done">
+          Gata: au fost șterse {done} conturi. Au rămas doar conturile de admin.
+        </p>
+      ) : null}
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => void start()}
+          className="mt-4 h-11 rounded-full px-4 text-sm font-semibold text-danger ring-1 ring-danger/40 hover:bg-danger/8"
+          data-testid="wipe-open"
+        >
+          Pregătește ștergerea
+        </button>
+      ) : (
+        <div className="mt-4 space-y-4">
+          <div className="rounded-2xl bg-navy/5 p-4 text-sm text-navy" data-testid="wipe-preview">
+            {preview ? (
+              <>
+                Se vor șterge <b>{preview.users}</b> conturi, <b>{preview.jobs}</b> anunțuri, <b>{preview.applications}</b>{" "}
+                aplicații și <b>{preview.ratings}</b> evaluări. Rămân {preview.admins} cont(uri) de admin.
+              </>
+            ) : (
+              "Se numără…"
+            )}
+          </div>
+          <div>
+            <p className="text-sm font-medium text-navy">1. Descarcă o copie de rezervă (fără parole sau poze)</p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void backup()}
+              data-testid="wipe-backup"
+              className="mt-2 h-10 rounded-full px-4 text-sm font-semibold text-navy ring-1 ring-navy/20 hover:bg-navy/5 disabled:opacity-50"
+            >
+              {backedUp ? "Descarcă din nou" : "Descarcă copia de rezervă"}
+            </button>
+          </div>
+          <label className="block text-sm font-medium text-navy">
+            2. Scrie <span className="font-semibold">{WIPE_CONFIRM}</span> ca să confirmi
+            <input
+              className="field mt-1.5"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              disabled={!backedUp}
+              autoComplete="off"
+              data-testid="wipe-confirm"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy || !ready}
+              onClick={() => void wipe()}
+              data-testid="wipe-submit"
+              className="h-11 rounded-full bg-danger px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {busy ? "Se șterge…" : "Șterge toate conturile"}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setOpen(false);
+                setWord("");
+              }}
+              className="h-11 rounded-full px-4 text-sm font-medium text-muted hover:bg-navy/6"
+            >
+              Renunță
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
