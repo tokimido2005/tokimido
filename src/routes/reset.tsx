@@ -1,19 +1,28 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { sendResetCode, setPasswordWithSms, verifyResetCode, formatPhoneDisplay, formatSmsError } from "@/lib/phone";
+import { checkTelegramReset, requestTelegramResetFn, setPasswordWithTelegram, telegramAvailable } from "@/lib/telegram";
+import { errorText } from "@/lib/i18n";
+import { MessageSquare, Send } from "lucide-react";
 import { seoHead } from "@/lib/seo";
 import { Shell } from "@/components/shell";
 import { Logo } from "@/components/logo";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/reset")({
-  head: () => seoHead("Parolă uitată", "Resetează parola contului Rabotaem.md prin SMS."),
+  head: () => seoHead("Parolă uitată", "Resetează parola contului Rabotaem.md prin Telegram sau SMS."),
+  validateSearch: (s: Record<string, unknown>): { tg?: string } => ({
+    tg: typeof s.tg === "string" && /^[\w-]{20,80}$/.test(s.tg) ? s.tg : undefined,
+  }),
   component: ResetPassword,
 });
 
 function ResetPassword() {
   const { t } = useT();
-  const [step, setStep] = useState<"phone" | "code" | "password" | "done">("phone");
+  const { tg } = Route.useSearch();
+  const [step, setStep] = useState<"choose" | "phone" | "code" | "password" | "tgPhone" | "tgSent" | "tgPassword" | "tgBad" | "done">(
+    tg ? "tgPassword" : "phone",
+  );
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [ticket, setTicket] = useState("");
@@ -23,6 +32,61 @@ function ResetPassword() {
   const [wait, setWait] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Offer Telegram first when the bot is configured.
+  useEffect(() => {
+    if (tg) return;
+    telegramAvailable()
+      .then((ok) => {
+        if (ok) setStep((s) => (s === "phone" ? "choose" : s));
+      })
+      .catch(() => {});
+  }, [tg]);
+
+  // Opened from the bot's link: check it is still valid.
+  useEffect(() => {
+    if (!tg) return;
+    checkTelegramReset({ data: { token: tg } })
+      .then((r) => {
+        if (!r.valid) setStep("tgBad");
+      })
+      .catch(() => setStep("tgBad"));
+  }, [tg]);
+
+  async function sendTelegram(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      await requestTelegramResetFn({ data: { phone: phone.trim() } });
+      setStep("tgSent");
+    } catch (err) {
+      setError(errorText(err, t, t("reset.submit")));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onTelegramPassword(e: FormEvent) {
+    e.preventDefault();
+    if (!tg) return;
+    if (password !== confirm) {
+      setError(t("reset.mismatch"));
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await setPasswordWithTelegram({ data: { token: tg, password } });
+      setStep("done");
+    } catch (err) {
+      const msg = errorText(err, t, t("reset.submit"));
+      if (/tg\.resetExpired/.test(err instanceof Error ? err.message : "")) setStep("tgBad");
+      setError(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (wait <= 0) return;
@@ -95,6 +159,127 @@ function ResetPassword() {
           <p className="mt-2 text-sm leading-relaxed text-muted">
             {step === "done" ? t("reset.ok") : t("reset.blurb")}
           </p>
+
+          {step === "choose" ? (
+            <div className="mt-6 space-y-3" data-testid="reset-choose">
+              <button
+                type="button"
+                onClick={() => setStep("tgPhone")}
+                data-testid="reset-tg"
+                className="flex min-h-16 w-full items-center gap-3 rounded-2xl p-3 text-left ring-2 ring-[#229ED9]/60 hover:bg-[#229ED9]/8"
+              >
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#229ED9] text-white">
+                  <Send className="size-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold text-navy">{t("reset.viaTg")}</span>
+                  <span className="block text-sm text-muted">{t("reset.viaTgSub")}</span>
+                </span>
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  {t("tg.recommended")}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep("phone")}
+                data-testid="reset-sms"
+                className="flex min-h-16 w-full items-center gap-3 rounded-2xl p-3 text-left ring-1 ring-navy/15 hover:bg-navy/5"
+              >
+                <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-navy/8 text-navy">
+                  <MessageSquare className="size-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold text-navy">{t("reset.viaSms")}</span>
+                  <span className="block text-sm text-muted">{t("reset.viaSmsSub")}</span>
+                </span>
+              </button>
+            </div>
+          ) : null}
+
+          {step === "tgPhone" ? (
+            <form onSubmit={(e) => void sendTelegram(e)} className="mt-6 space-y-3">
+              <p className="text-sm text-navy">{t("reset.tgPhoneHint")}</p>
+              <input
+                className="field"
+                required
+                minLength={8}
+                inputMode="tel"
+                autoComplete="tel"
+                data-testid="reset-tg-phone"
+                placeholder={t("reset.phone")}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              {error ? <p className="text-sm text-danger">{error}</p> : null}
+              <button
+                type="submit"
+                disabled={busy || phone.replace(/\D/g, "").length < 8}
+                data-testid="reset-tg-send"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#229ED9] text-sm font-semibold text-white disabled:opacity-45"
+              >
+                <Send className="size-4" />
+                {busy ? t("login.busy") : t("reset.tgSend")}
+              </button>
+              <button type="button" onClick={() => setStep("choose")} className="w-full text-center text-sm font-medium text-muted hover:text-navy">
+                {t("cv.back")}
+              </button>
+            </form>
+          ) : null}
+
+          {step === "tgSent" ? (
+            <div className="mt-6 space-y-3" data-testid="reset-tg-sent">
+              <p className="rounded-2xl bg-[#229ED9]/10 p-4 text-base text-navy">{t("reset.tgSent")}</p>
+              <button
+                type="button"
+                onClick={() => setStep("phone")}
+                className="flex h-12 w-full items-center justify-center rounded-full text-sm font-semibold text-navy ring-1 ring-navy/20"
+              >
+                {t("reset.tgUseSms")}
+              </button>
+            </div>
+          ) : null}
+
+          {step === "tgBad" ? (
+            <div className="mt-6 space-y-3" data-testid="reset-tg-bad">
+              <p className="rounded-2xl bg-danger/10 p-4 text-base text-danger">{t("tg.resetExpired")}</p>
+              <Link to="/reset" search={{}} className="flex h-12 w-full items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
+                {t("reset.again")}
+              </Link>
+            </div>
+          ) : null}
+
+          {step === "tgPassword" ? (
+            <form onSubmit={(e) => void onTelegramPassword(e)} className="mt-6 space-y-3" data-testid="reset-tg-password">
+              <input
+                className="field"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder={t("reset.password")}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <input
+                className="field"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder={t("reset.confirm")}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+              />
+              {error ? <p className="text-sm text-danger">{error}</p> : null}
+              <button
+                type="submit"
+                disabled={busy || password.length < 8}
+                className="sheen flex h-12 w-full items-center justify-center rounded-full glass-orange text-sm font-semibold disabled:opacity-45"
+              >
+                {busy ? t("login.busy") : t("reset.submit")}
+              </button>
+            </form>
+          ) : null}
 
           {step === "phone" ? (
             <form onSubmit={(e) => void send(e)} className="mt-6 space-y-3">

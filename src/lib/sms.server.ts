@@ -422,12 +422,30 @@ export async function consumeResetTicket(opts: { phone: string; ticket: string; 
   const user = users[0];
   if (!user) throw new Error("sms.errNoAccount");
 
+  await applyNewPassword(user.user_id, password);
+  await sql.query(`delete from sms_codes where id = $1`, [row.id]);
+  await logSms({
+    phone,
+    user_id: user.user_id,
+    ip,
+    purpose: "reset",
+    event: "password_set",
+    detail: "",
+  });
+  return { ok: true as const };
+}
+
+/** Set (or create) the email/password credential and sign out every other session. */
+export async function applyNewPassword(userId: string, password: string) {
+  if (password.length < 8) throw new Error("sms.errPassword");
+  if (password.length > 80) throw new Error("sms.errPasswordLong");
+  const sql = await getSql();
   const { hashPassword } = await import("better-auth/crypto");
   const hashed = await hashPassword(password);
   const now = new Date().toISOString();
   const acc = await sql.query<{ id: string }>(
     `select id from account where "userId" = $1 and "providerId" = 'credential'`,
-    [user.user_id],
+    [userId],
   );
   if (acc[0]) {
     await sql.query(`update account set password = $1, "updatedAt" = $2::timestamptz where id = $3`, [
@@ -440,19 +458,11 @@ export async function consumeResetTicket(opts: { phone: string; ticket: string; 
       `insert into account (
          id, "accountId", "providerId", "userId", password, "createdAt", "updatedAt"
        ) values ($1, $2, 'credential', $3, $4, $5::timestamptz, $5::timestamptz)`,
-      [`acc-sms-${user.user_id}`, user.user_id, user.user_id, hashed, now],
+      [`acc-sms-${userId}`, userId, userId, hashed, now],
     );
   }
-  await sql.query(`delete from sms_codes where id = $1`, [row.id]);
-  await logSms({
-    phone,
-    user_id: user.user_id,
-    ip,
-    purpose: "reset",
-    event: "password_set",
-    detail: "",
-  });
-  return { ok: true as const };
+  // Whoever knew the old password is signed out everywhere.
+  await sql.query(`delete from session where "userId" = $1`, [userId]);
 }
 
 export async function findUserIdByPhone(phone: string) {

@@ -61,3 +61,37 @@ export const acceptTelegramPhone = createServerFn({ method: "POST" })
     if (result !== "done") throw new Error(result === "taken" ? "tg.taken" : "tg.expired");
     return { ok: true as const };
   });
+
+/** Ask the bot to send a password-reset link. Same answer whether or not the number exists. */
+export const requestTelegramResetFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => z.object({ phone: z.string().trim().min(8).max(20) }).parse(d))
+  .handler(async ({ data }) => {
+    const { assertSameSiteRequest } = await import("./auth/isolation.server");
+    assertSameSiteRequest();
+    const { assertRateLimit } = await import("./rate-limit.server");
+    await assertRateLimit("tg_reset", 5, 60);
+    const { requestTelegramReset } = await import("./telegram.server");
+    await requestTelegramReset(data.phone).catch((err) => console.error("[telegram] reset", err));
+    return { ok: true as const };
+  });
+
+export const checkTelegramReset = createServerFn({ method: "POST" })
+  .validator((d: unknown) => z.object({ token: z.string().min(20).max(80) }).parse(d))
+  .handler(async ({ data }) => {
+    const { telegramResetValid } = await import("./telegram.server");
+    return { valid: await telegramResetValid(data.token) };
+  });
+
+export const setPasswordWithTelegram = createServerFn({ method: "POST" })
+  .validator((d: unknown) =>
+    z.object({ token: z.string().min(20).max(80), password: z.string().min(8).max(80) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { assertSameSiteRequest } = await import("./auth/isolation.server");
+    assertSameSiteRequest();
+    const { assertRateLimit } = await import("./rate-limit.server");
+    await assertRateLimit("tg_reset_set", 10, 60);
+    const { consumeTelegramReset } = await import("./telegram.server");
+    await consumeTelegramReset(data.token, data.password);
+    return { ok: true as const };
+  });
