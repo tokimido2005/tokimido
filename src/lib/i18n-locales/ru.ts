@@ -1,5 +1,8 @@
 /** RU strings — loaded on demand when the visitor picks this language. */
 const messages: Record<string, string> = {
+  "post.minChars": "Минимум {min} символов (сейчас {n})",
+  "post.errTitleShort": "Название должно содержать не менее 3 символов.",
+  "post.errDescShort": "Описание должно содержать не менее 20 символов.",
   "angajare.myCv": "Создать резюме / Моё резюме",
   "cv.builderTitle": "Создайте резюме",
   "cv.builderLead": "Ответьте на несколько простых вопросов. Это займёт около 5 минут, а резюме можно отправлять на все вакансии.",

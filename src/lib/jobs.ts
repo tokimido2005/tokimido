@@ -1167,8 +1167,8 @@ export const getJobExactLocation = createServerFn({ method: "POST" })
 
 const createJobSchema = z.object({
   kind: z.enum(["rapid", "oficial"]).optional().default("rapid"),
-  title: z.string().trim().min(6).max(120),
-  description: z.string().trim().min(20).max(2000),
+  title: z.string().trim().min(3, "post.errTitleShort").max(120),
+  description: z.string().trim().min(20, "post.errDescShort").max(2000),
   category: z.string(),
   raion: z.string(),
   locality: z.string().trim().min(2).max(80),

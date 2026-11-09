@@ -359,7 +359,7 @@ function PostJob() {
                     <input
                       className="field"
                       required
-                      minLength={6}
+                      minLength={3}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder={t("post.phOficialTitle")}
@@ -374,6 +374,7 @@ function PostJob() {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t("post.oficialDescHint")}
                     />
+                    <MinHint value={description} min={20} />
                   </Field>
                   <p className="rounded-2xl bg-navy/5 px-4 py-3 text-sm text-navy">{t("jd.linesHint")}</p>
                   <Field label={t("jd.responsibilities")}>
@@ -441,7 +442,7 @@ function PostJob() {
                     <input
                       className="field"
                       required
-                      minLength={6}
+                      minLength={3}
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                       placeholder="Ex: Mutare canapea la etajul 3"
@@ -456,6 +457,7 @@ function PostJob() {
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t("post.phRapidDesc")}
                     />
+                    <MinHint value={description} min={20} />
                   </Field>
                   <Field label={t("post.category")}>
                     <div className="flex flex-wrap gap-2">
@@ -651,5 +653,17 @@ function PickBtn({ active, onClick, children }: { active: boolean; onClick: () =
     >
       {children}
     </button>
+  );
+}
+
+/** "At least N characters (you have X)" under a field, so nobody is stuck guessing. */
+function MinHint({ value, min }: { value: string; min: number }) {
+  const { t } = useT();
+  const n = value.trim().length;
+  if (n >= min) return null;
+  return (
+    <span className="mt-1 block text-sm text-muted" data-testid="min-hint">
+      {t("post.minChars", { min, n })}
+    </span>
   );
 }
