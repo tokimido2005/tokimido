@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 import { hashPassword } from "better-auth/crypto";
 import { getSql } from "@/lib/db";
 import { ADMIN_EMAIL, ADMIN_USERNAME } from "@/lib/admin-public";
+import { once } from "@/lib/once";
 
 export { ADMIN_EMAIL, ADMIN_USERNAME };
 export const ADMIN_USER_ID = "admin-tokimido";
@@ -92,7 +93,9 @@ async function createAdminTables() {
 
 let seeded = false;
 
-export async function ensureAdminUser() {
+export const ensureAdminUser = once(ensureAdminUserImpl);
+
+async function ensureAdminUserImpl() {
   await ensureAdminTables();
   if (seeded) return;
   const sql = await getSql();

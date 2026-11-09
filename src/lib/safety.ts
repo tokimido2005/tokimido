@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { once } from "@/lib/once";
 
 export function normalizePhone(phone: string) {
   let n = phone.replace(/[^\d+]/g, "").replace(/^00/, "+").trim();
@@ -10,7 +11,9 @@ export function normalizePhone(phone: string) {
   return n;
 }
 
-export async function ensureSafetyTables() {
+export const ensureSafetyTables = once(ensureSafetyTablesImpl);
+
+async function ensureSafetyTablesImpl() {
   const sql = await getSql();
   await sql.query("alter table jobs add column if not exists views_count integer not null default 0");
   await sql.query(`

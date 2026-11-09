@@ -3,8 +3,11 @@ import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ensureProfilesTable } from "@/lib/profile";
+import { once } from "@/lib/once";
 
-export async function ensureInviteTables() {
+export const ensureInviteTables = once(ensureInviteTablesImpl);
+
+async function ensureInviteTablesImpl() {
   const sql = await getSql();
   await sql.query(`alter table profiles add column if not exists invite_code text`);
   await sql.query(`alter table profiles add column if not exists invited_by text`);

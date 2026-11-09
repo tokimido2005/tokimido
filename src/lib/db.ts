@@ -68,7 +68,26 @@ const identity = (v: string) => v;
 type Run = <T>(text: string, params: unknown[]) => Promise<T[]>;
 
 /** Wrap a query runner in the tagged-template + `.query()` `Sql` surface. */
-function toSql(run: Run): Sql {
+const SLOW_MS = Number(process.env.SQL_SLOW_MS ?? 400);
+const TRACE = process.env.SQL_TRACE === "1";
+
+/** Log slow queries (and every query with SQL_TRACE=1) so lag shows up in the server logs. */
+function timed(run: Run): Run {
+  return async <T>(text: string, params: unknown[]) => {
+    const started = Date.now();
+    try {
+      return await run<T>(text, params);
+    } finally {
+      const ms = Date.now() - started;
+      if (TRACE || ms >= SLOW_MS) {
+        console.log(`[sql${ms >= SLOW_MS ? " slow" : ""}] ${ms}ms ${text.replace(/\s+/g, " ").trim().slice(0, 140)}`);
+      }
+    }
+  };
+}
+
+function toSql(rawRun: Run): Sql {
+  const run = timed(rawRun);
   const sql = (async <T = Record<string, unknown>>(
     strings: TemplateStringsArray,
     ...values: unknown[]
@@ -91,7 +110,14 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_INT8, Number);
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
-    const pool = new Pool({ connectionString: databaseUrl });
+    // Keep connections warm: opening a new one costs more than most queries.
+    const pool = new Pool({
+      connectionString: databaseUrl,
+      max: Number(process.env.PG_POOL_MAX ?? 10),
+      idleTimeoutMillis: 5 * 60_000,
+      keepAlive: true,
+    });
+    pool.on("error", (err) => console.error("[db] idle client error", err.message));
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];

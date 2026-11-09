@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { assertPhoneFree, normalizePhone } from "@/lib/safety";
+import { once } from "@/lib/once";
 
 export type Profile = {
   user_id: string;
@@ -20,7 +21,9 @@ export type Profile = {
   notify_category: string;
 };
 
-export async function ensureProfilesTable() {
+export const ensureProfilesTable = once(ensureProfilesTableImpl);
+
+async function ensureProfilesTableImpl() {
   const sql = await getSql();
   await sql.query(`
     create table if not exists profiles (

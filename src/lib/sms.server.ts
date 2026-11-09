@@ -2,6 +2,7 @@ import "@tanstack/react-start/server-only";
 import { getRequest } from "@tanstack/react-start/server";
 import { getSql } from "@/lib/db";
 import { assertPhoneFree, normalizePhone } from "@/lib/safety";
+import { once } from "@/lib/once";
 
 export type SmsPurpose = "verify" | "change" | "reset";
 
@@ -14,7 +15,9 @@ const LOCK_MS = 15 * 60_000;
 const CODE_TTL_MS = 10 * 60_000;
 const TICKET_TTL_MS = 10 * 60_000;
 
-export async function ensureSmsTables() {
+export const ensureSmsTables = once(ensureSmsTablesImpl);
+
+async function ensureSmsTablesImpl() {
   const sql = await getSql();
   await sql.query(`
     create table if not exists sms_codes (
