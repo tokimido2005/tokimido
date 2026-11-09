@@ -90,6 +90,10 @@ export async function deleteUserData(userId: string) {
     ["admin_messages", "user_id"],
     ["reports", "reporter_id"],
     ["support_messages", "user_id"],
+    ["rating_skips", "from_user_id"],
+    ["rating_skips", "to_user_id"],
+    ["rating_prompts", "user_id"],
+    ["rating_prompts", "to_user_id"],
   ] as const) {
     await run(`delete from ${table} where ${column} = $1`, [userId]);
   }

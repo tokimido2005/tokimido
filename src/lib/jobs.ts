@@ -12,7 +12,7 @@ import {
   jobKind,
   type JobKind,
 } from "@/lib/job-kinds";
-import { ensureRatingsTable } from "@/lib/ratings";
+import { ensureRatingsTable, maybeSendRatingReminders, VISIBLE_RATING_SQL } from "@/lib/ratings";
 import { ensureCommunityTables } from "@/lib/community";
 import { assertCaptcha, captchaSchema } from "@/lib/captcha";
 import { assertNotBlocked, blockedSetFor, ensureSafetyTables } from "@/lib/safety";
@@ -976,8 +976,8 @@ const JOB_SELECT = `j.id, j.user_id, j.title, j.description, j.category, j.raion
   j.boost_until,
   (select count(*)::int from applications a where a.job_id = j.id) as application_count,
   (select count(*)::int from applications a where a.job_id = j.id and a.status = 'selected') as selected_count,
-  coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = j.user_id), 0) as poster_rating_avg,
-  (select count(*)::int from ratings r where r.to_user_id = j.user_id) as poster_rating_count,
+  coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}), 0) as poster_rating_avg,
+  (select count(*)::int from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}) as poster_rating_count,
   coalesce((select p.phone_verified_at is not null from profiles p where p.user_id = j.user_id), false) as poster_phone_verified`;
 
 const filtersSchema = z.object({
@@ -998,6 +998,7 @@ export const listJobs = createServerFn({ method: "POST" })
   .validator((d: unknown) => filtersSchema.parse(d ?? {}))
   .handler(async ({ data, context }) => {
     await seedIfEmpty();
+    void maybeSendRatingReminders();
     const sql = await getSql();
     const conditions = [
       "j.status = 'open'",
@@ -1527,8 +1528,8 @@ export const completeJob = createServerFn({ method: "POST" })
     await seedIfEmpty();
     const sql = await getSql();
     const rows = await sql.query<{ id: number; title: string }>(
-      `update jobs set status = 'completed'
-       where id = $1 and user_id = $2 and status in ('open', 'expired')
+      `update jobs set status = 'completed', completed_at = now()
+       where id = $1 and user_id = $2 and status in ('open', 'expired', 'closed')
        returning id, title`,
       [jobId, context.userId],
     );

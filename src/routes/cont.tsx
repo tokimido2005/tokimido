@@ -8,6 +8,7 @@ import { Combobox } from "@/components/combobox";
 import { JobCard } from "@/components/job-card";
 import { JobWhen } from "@/components/job-when";
 import { RateForm } from "@/components/rate-form";
+import { RatingTagList } from "@/components/rating-tags-list";
 import { RatingBadge, Stars } from "@/components/stars";
 import { StatusBadge } from "@/components/status-badge";
 import { useSavedIds } from "@/components/favorite-button";
@@ -21,7 +22,7 @@ import {
 } from "@/lib/jobs";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { compressPhotoFile, formatJobDate, formatJobTime, formatMdl } from "@/lib/utils";
-import { getPublicProfile, listPendingRatings, type PendingRating, type RatingSummary } from "@/lib/ratings";
+import { countHiddenRatings, getPublicProfile, listPendingRatings, type PendingRating, type RatingSummary } from "@/lib/ratings";
 import { getMyProfile, saveMyBio, saveMyPhoto, type Profile } from "@/lib/profile";
 import { updatePushPrefs } from "@/lib/push";
 import { subscribePush } from "@/components/push-prompt";
@@ -72,6 +73,7 @@ function Account() {
   const [saved, setSavedJobs] = useState<Job[] | null>(null);
   const [pending, setPending] = useState<PendingRating[]>([]);
   const [summary, setSummary] = useState<RatingSummary | null>(null);
+  const [hiddenRatings, setHiddenRatings] = useState(0);
   const [me, setMe] = useState<Profile | null>(null);
   const [reports, setReports] = useState<Report[] | null>(null);
   const [inbox, setInbox] = useState<InboxMessage[] | null>(null);
@@ -96,7 +98,9 @@ function Account() {
       getMyProfile().catch(() => null),
       listMyReports().catch(() => [] as Report[]),
       listMyInbox().catch(() => [] as InboxMessage[]),
-    ]).then(([j, a, f, p, s, profile, r, inboxRows]) => {
+      countHiddenRatings().catch(() => 0),
+    ]).then(([j, a, f, p, s, profile, r, inboxRows, hidden]) => {
+      setHiddenRatings(hidden);
       setJobs(j);
       setApps(a);
       setSavedJobs(f);
@@ -518,6 +522,11 @@ function Account() {
               </section>
             ) : null}
 
+            {hiddenRatings > 0 ? (
+              <p className="rounded-2xl bg-orange/10 px-4 py-3 text-sm text-navy" data-testid="hidden-ratings">
+                {hiddenRatings === 1 ? t("review.hiddenCountOne") : t("review.hiddenCount", { n: hiddenRatings })}
+              </p>
+            ) : null}
             <section>
               <h2 className="text-lg font-semibold text-navy">{t("account.toRate")}</h2>
               {pending.length === 0 ? (
@@ -552,6 +561,7 @@ function Account() {
                     <li key={r.id} className="rounded-[24px] p-5 glass">
                       <Stars value={r.stars} size="sm" />
                       <p className="mt-2 text-sm font-semibold text-navy">{r.from_name}</p>
+                      {r.tags?.length ? <RatingTagList tags={r.tags} className="mt-2" /> : null}
                       {r.comment ? <p className="mt-2 text-sm text-navy/80">{r.comment}</p> : null}
                       <Link
                         to="/jobs/$id"
