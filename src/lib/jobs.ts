@@ -1465,6 +1465,15 @@ export const applyToJob = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** How many listings this user has ever posted (for first-time tips). */
+export const countMyJobs = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql.query<{ n: number }>(`select count(*)::int as n from jobs where user_id = $1`, [context.userId]);
+    return rows[0]?.n ?? 0;
+  });
+
 export const listMyJobs = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
