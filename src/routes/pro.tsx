@@ -85,7 +85,7 @@ function ProPage() {
   return (
     <Shell>
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-        <p className="text-sm font-semibold tracking-[0.18em] text-orange uppercase">{t("pro.kicker")}</p>
+        <p className="text-sm font-semibold tracking-[0.18em] text-orange-deep uppercase">{t("pro.kicker")}</p>
         <h1 className="mt-3 flex items-center gap-2 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">
           <Crown className="size-8 text-orange" />
           {t("pro.title")}

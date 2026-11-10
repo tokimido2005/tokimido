@@ -192,7 +192,7 @@ function AdminChrome({
       <Ambient />
       <header className="sticky top-0 z-40 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5">
         <div className="mx-auto flex max-w-7xl items-center gap-2 rounded-[28px] px-2.5 py-1.5 glass-strong sm:gap-3 sm:px-4 sm:py-2">
-          <Logo size="md" />
+          <Logo size="md" priority />
           <span className="hidden items-center gap-1.5 rounded-full bg-orange/15 px-2.5 py-1 text-xs font-semibold tracking-wide text-orange-deep uppercase sm:inline-flex">
             <Shield className="size-3.5" />
             {t("admin.panel")}

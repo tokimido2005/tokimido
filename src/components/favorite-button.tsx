@@ -98,7 +98,7 @@ export function FavoriteButton({
       onClick={(e) => void toggle(e)}
       aria-label={on ? t("job.saved") : t("job.save")}
       className={cn(
-        "grid size-10 place-items-center rounded-full bg-white/80 text-navy ring-1 ring-navy/10 hover:bg-white dark:bg-white/12 dark:hover:bg-white/16",
+        "grid size-11 place-items-center rounded-full bg-white/80 text-navy ring-1 ring-navy/10 hover:bg-white dark:bg-white/12 dark:hover:bg-white/16",
         className,
       )}
     >

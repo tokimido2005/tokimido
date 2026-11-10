@@ -1,8 +1,12 @@
-import { useMemo, useState, useRef, useEffect } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { Command } from "cmdk";
+import { lazy, Suspense, useMemo, useState, useRef, useEffect } from "react";
+import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/locale";
+
+// The searchable list (cmdk) is only downloaded when someone opens a field,
+// not with every page. Hovering or focusing the field starts the download.
+const loadList = () => import("@/components/combobox-list");
+const ComboboxList = lazy(() => loadList().then((m) => ({ default: m.ComboboxList })));
 
 export function Combobox({
   value,
@@ -61,6 +65,8 @@ export function Combobox({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
+        onPointerEnter={() => void loadList()}
+        onFocus={() => void loadList()}
         className={cn(
           "field flex items-center justify-between gap-2 text-left",
           !value && "text-subtle",
@@ -71,43 +77,20 @@ export function Combobox({
         <ChevronsUpDown className="size-4 shrink-0 text-muted" />
       </button>
       {open ? (
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl glass-strong">
-          <Command shouldFilter={false} className="text-navy">
-            <Command.Input
-              value={query}
-              onValueChange={setQuery}
-              placeholder={searchPlaceholder ?? t("combo.search")}
-              className="h-11 w-full border-b border-navy/10 bg-transparent px-3 text-sm outline-none"
-            />
-            <Command.List className="max-h-64 overflow-y-auto p-1">
-              {filtered.map((opt) => (
-                <Command.Item
-                  key={opt}
-                  value={opt}
-                  onSelect={() => select(opt)}
-                  className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm data-[selected=true]:bg-navy/8"
-                >
-                  {opt}
-                  {value === opt ? <Check className="size-4 text-orange" /> : null}
-                </Command.Item>
-              ))}
-              {filtered.length === 0 ? (
-                <Command.Empty className="px-3 py-3 text-sm text-muted">
-                  {emptyText ?? t("combo.empty")}
-                </Command.Empty>
-              ) : null}
-              {allowCustom && query.trim() && !options.some((o) => o.toLowerCase() === query.trim().toLowerCase()) ? (
-                <Command.Item
-                  value={query.trim()}
-                  onSelect={() => select(query.trim())}
-                  className="cursor-pointer rounded-xl px-3 py-2 text-sm text-orange data-[selected=true]:bg-orange/10"
-                >
-                  {t("combo.use", { q: query.trim() })}
-                </Command.Item>
-              ) : null}
-            </Command.List>
-          </Command>
-        </div>
+        <Suspense fallback={<div className="absolute z-50 mt-2 h-24 w-full animate-pulse rounded-2xl glass-strong" />}>
+          <ComboboxList
+            value={value}
+            options={options}
+            filtered={filtered}
+            query={query}
+            setQuery={setQuery}
+            select={select}
+            allowCustom={allowCustom}
+            searchPlaceholder={searchPlaceholder ?? t("combo.search")}
+            emptyText={emptyText ?? t("combo.empty")}
+            customLabel={(q) => t("combo.use", { q })}
+          />
+        </Suspense>
       ) : null}
     </div>
   );

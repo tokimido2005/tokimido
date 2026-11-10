@@ -49,7 +49,7 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-navy/6 hover:text-navy"
+        className="inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-navy/6 hover:text-navy"
       >
         <Flag className="size-3.5" />
         {t("job.report")}
@@ -83,14 +83,14 @@ export function ReportButton({
               type="button"
               disabled={busy}
               onClick={() => void onSend()}
-              className="sheen h-10 flex-1 rounded-full text-sm font-semibold glass-orange disabled:opacity-50"
+              className="sheen h-11 flex-1 rounded-full text-sm font-semibold glass-orange disabled:opacity-50"
             >
               {t("report.send")}
             </button>
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="h-10 rounded-full px-3 text-sm font-medium text-muted"
+              className="h-11 rounded-full px-3 text-sm font-medium text-muted"
             >
               ×
             </button>

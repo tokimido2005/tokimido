@@ -17,6 +17,14 @@ const TAG = {
 
 type LogoSize = keyof typeof SIZE;
 
+/** Rendered width of the logo, so phones pick the small file. */
+const SIZES: Record<LogoSize, string> = {
+  sm: "160px",
+  md: "(min-width: 640px) 200px, 176px",
+  lg: "(min-width: 640px) 220px, 192px",
+  hero: "(min-width: 768px) 430px, (min-width: 640px) 370px, 290px",
+};
+
 const LOGO_W = 1200;
 const LOGO_H = 301;
 const SLOGAN = "lucru pe loc. bani pe loc.";
@@ -24,9 +32,11 @@ const SLOGAN = "lucru pe loc. bani pe loc.";
 function LogoImg({
   size,
   glow,
+  priority,
 }: {
   size: LogoSize;
   glow: boolean;
+  priority: boolean;
 }) {
   const cls = cn(
     "max-w-none object-contain object-left",
@@ -35,22 +45,29 @@ function LogoImg({
   );
   return (
     <>
+      {/* The header logo is the first thing on screen: load it right away (not
+          lazily) and in a phone-sized file; the 900px file is for big screens. */}
       <img
-        src="/logo-900.webp?v=r5"
+        src="/logo-600.webp?v=r6"
+        srcSet="/logo-600.webp?v=r6 600w, /logo-900.webp?v=r5 900w"
+        sizes={SIZES[size]}
         alt="Rabotaem.md"
         width={LOGO_W}
         height={LOGO_H}
-        decoding="async"
-        loading="lazy"
+        decoding={priority ? "sync" : "async"}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
         className={cn(cls, "dark:hidden")}
       />
       <img
-        src="/logo-dark-900.webp?v=r5"
+        src="/logo-dark-600.webp?v=r6"
+        srcSet="/logo-dark-600.webp?v=r6 600w, /logo-dark-900.webp?v=r5 900w"
+        sizes={SIZES[size]}
         alt=""
         width={LOGO_W}
         height={LOGO_H}
         decoding="async"
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
         className={cn(cls, "hidden dark:block")}
         aria-hidden="true"
       />
@@ -72,17 +89,20 @@ export function Logo({
   size,
   glow = true,
   linked = true,
+  priority = false,
 }: {
   className?: string;
   compact?: boolean;
   size?: LogoSize;
   glow?: boolean;
   linked?: boolean;
+  /** Above the fold (header): load immediately. */
+  priority?: boolean;
 }) {
   const resolved: LogoSize = size ?? (compact ? "sm" : "md");
   const inner = (
     <span className="logo-lockup">
-      <LogoImg size={resolved} glow={glow} />
+      <LogoImg size={resolved} glow={glow} priority={priority} />
       <Slogan size={resolved} />
     </span>
   );

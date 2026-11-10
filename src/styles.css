@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* Outfit served from our own site (no Google Fonts request blocking the page). */
+@import "@fontsource/outfit/400.css";
+@import "@fontsource/outfit/500.css";
+@import "@fontsource/outfit/600.css";
+@import "@fontsource/outfit/700.css";
 @import "tw-animate-css";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -10,12 +15,12 @@
   --color-brand: #0b2548;
   --color-orange: #f15a22;
   --color-orange-bright: #ff6b2c;
-  --color-orange-deep: #d24714;
+  --color-orange-deep: #ad3a0c; /* text on light backgrounds: contrast ≥ 4.5 */
   --color-canvas: #dce6f0;
   --color-canvas-deep: #c9d6e4;
   --color-ink: #0b2548;
-  --color-muted: #5a6e86;
-  --color-subtle: #7b8ea3;
+  --color-muted: #485b72;
+  --color-subtle: #52657c;
   --color-glass: rgba(255, 255, 255, 0.52);
   --color-glass-strong: rgba(255, 255, 255, 0.72);
   --color-line: rgba(11, 37, 72, 0.1);
@@ -197,7 +202,7 @@ html.dark {
   }
 
   .tab-bar-item-active {
-    color: var(--color-orange);
+    color: var(--color-orange-deep);
     background: color-mix(in srgb, var(--color-orange) 14%, transparent);
   }
 
@@ -882,4 +887,15 @@ html.dark {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+}
+
+/* "Text mare" (a11y): everything sized in rem grows ~15%. */
+html.text-large {
+  font-size: 115%;
+}
+
+/* Clear outline on whatever has keyboard focus. */
+:where(a, button, input, select, textarea, [role="switch"], [tabindex]):focus-visible {
+  outline: 3px solid var(--color-orange);
+  outline-offset: 2px;
 }

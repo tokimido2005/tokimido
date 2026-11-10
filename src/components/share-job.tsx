@@ -142,16 +142,28 @@ export function ShareJob({ job }: { job: ShareJobInfo }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         data-testid="share-open"
-        className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white/70 px-3 text-sm font-medium text-navy ring-1 ring-navy/10 dark:bg-white/10"
+        className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white/70 px-3 text-sm font-medium text-navy ring-1 ring-navy/10 dark:bg-white/10"
       >
         <Share2 className="size-3.5" />
         {t("job.share")}
       </button>
       {open ? (
-        <div className="absolute right-0 z-30 mt-2 w-[19rem] rounded-2xl p-3 glass-strong">
-          <p className="mb-2 px-1 text-sm font-semibold text-navy">{t("share.title")}</p>
-          <ShareButtons job={job} onDone={() => setOpen(false)} />
-        </div>
+        <>
+          {/* Phones: a full-width panel above the bottom bar, so nothing leaves the screen. */}
+          <button
+            type="button"
+            aria-label={t("inb.close")}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-40 bg-navy-deep/40 sm:hidden"
+          />
+          <div
+            data-testid="share-menu"
+            className="fixed inset-x-3 bottom-[calc(6rem+env(safe-area-inset-bottom))] z-50 rounded-[24px] p-4 glass-strong sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:z-30 sm:mt-2 sm:w-[19rem] sm:rounded-2xl sm:p-3"
+          >
+            <p className="mb-3 px-1 text-base font-semibold text-navy sm:mb-2 sm:text-sm">{t("share.title")}</p>
+            <ShareButtons job={job} onDone={() => setOpen(false)} large />
+          </div>
+        </>
       ) : null}
     </div>
   );

@@ -1073,6 +1073,7 @@ export const messages: Record<Locale, Record<string, string>> = {
     "seo.catDesc": "{c}: kalîmuri și lucru pe zi în toată Moldova. Plata pe loc, fără comision.",
     "footer.seoCats": "Categorii",
     "footer.seoPlaces": "Raioane",
+    "a11y.bigText": "Text mare",
     "tpl.pick": "Alege un șablon (opțional)",
     "tpl.hint": "Completează titlul și descrierea. Suma și locul le scrii tu.",
     "tpl.applied": "Șablon aplicat. Verifică textul și pune suma.",

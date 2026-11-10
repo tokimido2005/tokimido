@@ -42,10 +42,10 @@ export function SeoListing({
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }} />
         <WorkKindTabs active="rapid" />
-        <p className="mt-8 text-sm font-semibold tracking-[0.16em] text-orange uppercase">{t("home.kindKicker")}</p>
+        <p className="mt-8 text-sm font-semibold tracking-[0.16em] text-orange-deep uppercase">{t("home.kindKicker")}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-navy sm:text-4xl">{title}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{lead}</p>
-        <p className="mt-4 text-sm text-muted">{t("home.activeCount", { n: jobs.length })}</p>
+        <h2 className="mt-4 text-sm font-normal text-muted">{t("home.activeCount", { n: jobs.length })}</h2>
         <div className="mt-6">
           {jobs.length === 0 ? (
             <EmptyState

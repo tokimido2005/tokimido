@@ -42,7 +42,7 @@ export function Onboarding() {
     <div className="fixed inset-0 z-50 grid place-items-center px-4">
       <div className="absolute inset-0 bg-navy-deep/50 backdrop-blur-sm" />
       <div role="dialog" aria-modal="true" className="relative w-full max-w-md rounded-[32px] p-6 glass-strong sm:p-8">
-        <p className="text-xs font-semibold tracking-[0.18em] text-orange uppercase">
+        <p className="text-xs font-semibold tracking-[0.18em] text-orange-deep uppercase">
           {t("onboard.kicker")} · {step + 1}/3
         </p>
         <h2 className="mt-3 text-2xl font-semibold tracking-tight text-navy">{current.title}</h2>
