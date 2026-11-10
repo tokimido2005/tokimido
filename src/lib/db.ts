@@ -79,6 +79,7 @@ function timed(run: Run): Run {
       return await run<T>(text, params);
     } finally {
       const ms = Date.now() - started;
+      if (ms >= 3000) void import("./monitor").then((m) => m.recordQueryTime(ms)).catch(() => {});
       if (TRACE || ms >= SLOW_MS) {
         console.log(`[sql${ms >= SLOW_MS ? " slow" : ""}] ${ms}ms ${text.replace(/\s+/g, " ").trim().slice(0, 140)}`);
       }
@@ -334,6 +335,7 @@ async function createSql(): Promise<Sql> {
  * both backends — define tables there, never inline in server functions.
  */
 export function getSql(): Promise<Sql> {
+  if (!sqlPromise) void import("./monitor").then((m) => m.installErrorMonitor()).catch(() => {});
   sqlPromise ??= createSql().catch((err) => {
     sqlPromise = null; // don't memoize failures — let the next call retry
     throw err;
