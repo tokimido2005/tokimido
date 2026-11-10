@@ -149,7 +149,7 @@ function Login() {
     <Shell>
       <main className="mx-auto flex max-w-lg flex-col px-4 py-12 pb-24 sm:px-6">
         <div className="rounded-[32px] p-6 glass-strong sm:p-8">
-          <Logo size="lg" />
+          <Logo size="lg" priority />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-navy">
             {mode === "in" ? t("login.titleIn") : t("login.titleUp")}
           </h1>

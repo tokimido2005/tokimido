@@ -1064,6 +1064,7 @@ const messages: Record<string, string> = {
   "seo.catDesc": "{c}: quick jobs and day work across Moldova. Paid on the spot, no commission.",
   "footer.seoCats": "Categories",
   "footer.seoPlaces": "Districts",
+  "a11y.bigText": "Large text",
   "tpl.pick": "Pick a template (optional)",
   "tpl.hint": "Fills in the title and description. You add the pay and place.",
   "tpl.applied": "Template applied. Check the text and set the pay.",

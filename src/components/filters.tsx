@@ -141,7 +141,7 @@ export function Filters({
           <button
             type="button"
             onClick={() => onChange({ q: "", raion: "", locality: "", category: "", when: "" })}
-            className="ml-auto inline-flex h-10 items-center gap-1 rounded-full px-3 text-sm font-medium text-muted hover:text-navy"
+            className="ml-auto inline-flex h-11 items-center gap-1 rounded-full px-3 text-sm font-medium text-muted hover:text-navy"
           >
             <X className="size-3.5" />
             {t("search.reset")}
@@ -167,8 +167,8 @@ function Chip({
       onClick={onClick}
       className={
         active
-          ? "h-10 rounded-full bg-brand px-3.5 text-sm font-semibold text-white"
-          : "h-10 rounded-full bg-white/45 px-3.5 text-sm font-medium text-navy/80 ring-1 ring-navy/8 hover:bg-white/70 dark:bg-white/8 dark:hover:bg-white/14"
+          ? "h-11 rounded-full bg-brand px-3.5 text-sm font-semibold text-white"
+          : "h-11 rounded-full bg-white/45 px-3.5 text-sm font-medium text-navy/80 ring-1 ring-navy/8 hover:bg-white/70 dark:bg-white/8 dark:hover:bg-white/14"
       }
     >
       {label}

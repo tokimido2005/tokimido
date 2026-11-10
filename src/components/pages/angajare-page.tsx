@@ -94,7 +94,7 @@ export function AngajarePage({ loaded }: { loaded: AngajareData }) {
     <Shell>
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <WorkKindTabs active="oficial" />
-        <p className="mt-8 text-sm font-semibold tracking-[0.18em] text-orange uppercase">{t("kind.oficial")}</p>
+        <p className="mt-8 text-sm font-semibold tracking-[0.18em] text-orange-deep uppercase">{t("kind.oficial")}</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-navy sm:text-5xl">{t("angajare.title")}</h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">{t("angajare.lead")}</p>
         <div className="mt-6 flex flex-wrap gap-3">
@@ -117,7 +117,7 @@ export function AngajarePage({ loaded }: { loaded: AngajareData }) {
 
         <section className="mt-10" data-testid="oficial-list">
           <Filters value={filters} onChange={setFilters} variant="oficial" />
-          <p className="mt-4 text-sm text-muted">
+          <h2 className="mt-4 text-sm font-normal text-muted">
             {error
               ? t("home.loadError")
               : jobs === null
@@ -125,7 +125,7 @@ export function AngajarePage({ loaded }: { loaded: AngajareData }) {
                 : hasFilters && jobs
                   ? t("home.filteredCount", { n: jobs.length, total: loaded.jobs.length })
                   : t("home.activeCount", { n: loaded.jobs.length })}
-          </p>
+          </h2>
           <div className="mt-4">
             {error ? (
               <div className="rounded-[24px] p-6 text-sm text-danger glass">{errorMessage}</div>

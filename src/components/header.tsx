@@ -5,6 +5,7 @@ import { Logo } from "@/components/logo";
 import { AuthSlot } from "@/components/auth-slot";
 import { RatingNudge } from "@/components/rating-nudge";
 import { LangSwitcher, useT } from "@/lib/locale";
+import { TextSizeToggle } from "@/components/text-size";
 import { ThemeToggle } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -62,7 +63,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5">
       <div className="mx-auto flex max-w-6xl items-center gap-2 rounded-[28px] px-2.5 py-1.5 glass-strong sm:gap-3 sm:px-4 sm:py-2">
-        <Logo size="md" />
+        <Logo size="md" priority />
         <nav className="ml-2 hidden items-center gap-1 lg:flex">
           {nav.map((item) => {
             const active = isActive(item);
@@ -104,6 +105,7 @@ export function Header() {
           ) : null}
           <LangSwitcher compact />
           <ThemeToggle />
+          <TextSizeToggle />
           <RatingNudge />
           <AuthSlot />
         </div>
@@ -158,6 +160,9 @@ export function Header() {
             ) : null}
           </nav>
           <div className="mt-2 border-t border-navy/10 px-2 py-3">
+            <div className="-mx-2 mb-2">
+              <TextSizeToggle variant="row" />
+            </div>
             <div className="mb-3 flex items-center justify-between gap-2">
               <LangSwitcher />
               <div className="flex items-center gap-1">

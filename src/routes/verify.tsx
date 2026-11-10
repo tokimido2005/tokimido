@@ -89,7 +89,7 @@ function VerifyPhone() {
     <Shell>
       <main className="mx-auto flex max-w-lg flex-col px-4 py-12 pb-24 sm:px-6">
         <div className="rounded-[32px] p-6 glass-strong sm:p-8" data-testid="verify-screen">
-          <Logo size="lg" />
+          <Logo size="lg" priority />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-navy">{t("verify.title")}</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">{t("verify.blurb")}</p>
           <p className="mt-2 text-xs text-subtle">{t("verify.changeHint")}</p>

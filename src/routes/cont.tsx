@@ -29,6 +29,7 @@ import { useMoneyMode } from "@/lib/money-mode";
 import { ProBadge } from "@/components/paywall";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
+import { TextSizeToggle } from "@/components/text-size";
 import { canRepost } from "@/lib/job-templates";
 import { deleteMyAccount, isDeleteConfirmWord } from "@/lib/account-delete";
 import { signOut } from "@/lib/auth/client";
@@ -256,7 +257,7 @@ function Account() {
             </div>
           ) : me?.phone_verified_at ? (
             <div className="mt-5">
-              <p className="mb-2 text-xs font-semibold tracking-wide text-orange uppercase">{t("phone.verified")}</p>
+              <p className="mb-2 text-xs font-semibold tracking-wide text-orange-deep uppercase">{t("phone.verified")}</p>
               <PhoneChange mePhone={me.phone} onDone={() => void reload()} />
             </div>
           ) : null}
@@ -277,6 +278,9 @@ function Account() {
           </span>
           <ChevronRight className="size-5 text-muted" />
         </Link>
+        <div className="mt-4 rounded-[28px] p-2 glass">
+          <TextSizeToggle variant="row" />
+        </div>
         <InviteCard />
 
         <div className="mt-6 flex flex-wrap gap-2">
@@ -637,7 +641,7 @@ function InboxPane({ inbox, highlightId }: { inbox: InboxMessage[] | null; highl
             data-testid={hit ? "inbox-highlight" : undefined}
             className={hit ? "rounded-[24px] p-5 glass inbox-hit ring-2 ring-orange" : "rounded-[24px] p-5 glass"}
           >
-            <p className="text-[11px] font-semibold tracking-[0.16em] text-orange uppercase">{t("inbox.fromAdmin")}</p>
+            <p className="text-[11px] font-semibold tracking-[0.16em] text-orange-deep uppercase">{t("inbox.fromAdmin")}</p>
             <div className="mt-1.5 flex items-start justify-between gap-3">
               <h2 className="text-sm font-semibold text-navy">{m.title}</h2>
               <span className="text-xs text-muted">
