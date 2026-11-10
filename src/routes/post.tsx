@@ -1,7 +1,7 @@
 import { errorText } from "@/lib/i18n";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { Briefcase, Zap } from "lucide-react";
+import { Briefcase, Lightbulb, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Combobox } from "@/components/combobox";
@@ -15,7 +15,7 @@ import {
   type JobKind,
 } from "@/lib/job-kinds";
 import { RAION_NAMES, localitiesFor } from "@/lib/moldova";
-import { createJob, getJob, getJobExactLocation } from "@/lib/jobs";
+import { countMyJobs, createJob, getJob, getJobExactLocation } from "@/lib/jobs";
 import { getProfileGate } from "@/lib/profile";
 import { getMyAccess, getMonetizationPublic, type MonetizationAccess } from "@/lib/monetization";
 import { useMoneyMode } from "@/lib/money-mode";
@@ -66,6 +66,7 @@ function PostJob() {
   const navigate = useNavigate();
   const { kind: kindFromUrl, from: repostFrom } = Route.useSearch();
   const [repostTitle, setRepostTitle] = useState<string | null>(null);
+  const [firstPost, setFirstPost] = useState(false);
   const { showPro, mode } = useMoneyMode();
 
   const [kind, setKind] = useState<JobKind | null>(null);
@@ -120,6 +121,14 @@ function PostJob() {
       })
       .catch(() => setMyCompany(null));
   }, [user, kind, myCompany]);
+  // First listing ever: show three short tips above the form.
+  useEffect(() => {
+    if (!user) return;
+    countMyJobs()
+      .then((n) => setFirstPost(n === 0))
+      .catch(() => setFirstPost(false));
+  }, [user]);
+
   // "Repostează": fill the form from one of the user's old listings.
   useEffect(() => {
     if (!user || !repostFrom) return;
@@ -441,6 +450,22 @@ function PostJob() {
               <p className="mt-4 rounded-2xl bg-brand/10 px-4 py-3 text-sm leading-relaxed text-navy ring-1 ring-brand/20" data-testid="repost-banner">
                 {t("repost.banner", { t: repostTitle })}
               </p>
+            ) : null}
+            {firstPost && kind && !repostTitle ? (
+              <section className="mt-4 rounded-[28px] bg-emerald-600/10 p-4 ring-1 ring-emerald-600/25 sm:p-5" data-testid="first-post-tips">
+                <p className="flex items-center gap-2 text-base font-semibold text-navy">
+                  <Lightbulb className="size-5 text-emerald-700 dark:text-emerald-300" />
+                  {t("tips.title")}
+                </p>
+                <ol className="mt-3 space-y-2.5">
+                  {[t(kind === "oficial" ? "tips.payOficial" : "tips.pay"), t(kind === "oficial" ? "tips.clearOficial" : "tips.clear"), t("tips.share")].map((tip, i) => (
+                    <li key={i} className="flex gap-3 text-sm leading-relaxed text-navy">
+                      <span className="grid size-6 shrink-0 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">{i + 1}</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
             ) : null}
             {kind === "rapid" && !repostTitle ? (
               <section className="mt-4 rounded-[28px] p-4 glass sm:p-5" data-testid="templates">
