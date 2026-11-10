@@ -1574,49 +1574,6 @@ export const listMyApplications = createServerFn({ method: "GET" })
     );
   });
 
-export const listJobApplications = createServerFn({ method: "GET" })
-  .middleware([authMiddleware])
-  .validator((jobId: number) => jobId)
-  .handler(async ({ context, data: jobId }) => {
-    const sql = await getSql();
-    const jobs = await sql.query<{ user_id: string }>(
-      "select user_id from jobs where id = $1",
-      [jobId],
-    );
-    if (!jobs[0] || jobs[0].user_id !== context.userId) {
-      throw new Error("Nu poți vedea aceste aplicații");
-    }
-    return sql.query<Application>(
-      "select * from applications where job_id = $1 order by created_at desc",
-      [jobId],
-    );
-  });
-
-export const closeJob = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator((jobId: number) => jobId)
-  .handler(async ({ context, data: jobId }) => {
-    const sql = await getSql();
-    const rows = await sql.query<{ id: number }>(
-      "update jobs set status = 'closed' where id = $1 and user_id = $2 returning id",
-      [jobId, context.userId],
-    );
-    if (!rows[0]) throw new Error("Nu poți închide acest anunț");
-    return { ok: true as const };
-  });
-
-export const hasApplied = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator((jobId: number) => jobId)
-  .handler(async ({ context, data: jobId }) => {
-    const sql = await getSql();
-    const rows = await sql.query<{ id: number }>(
-      "select id from applications where job_id = $1 and user_id = $2 and status <> 'withdrawn'",
-      [jobId, context.userId],
-    );
-    return Boolean(rows[0]);
-  });
-
 export type InboxJob = Job & {
   applicants: Application[];
 };
