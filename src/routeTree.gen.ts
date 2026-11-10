@@ -45,6 +45,7 @@ import { Route as ApiTelegramWebhookRouteImport } from './routes/api/telegram/we
 import { Route as CvAIdRouteImport } from './routes/cv/a/$id'
 import { Route as JobsIdIndexRouteImport } from './routes/jobs/$id/index'
 import { Route as JobsIdAplicatRouteImport } from './routes/jobs/$id/aplicat'
+import { Route as OgJobIdRouteImport } from './routes/og/job.$id'
 import { Route as RuCCategoryRouteImport } from './routes/ru/c/$category'
 import { Route as RuLucruTemaRouteImport } from './routes/ru/lucru/$tema'
 import { Route as RuRRaionRouteImport } from './routes/ru/r/$raion'
@@ -229,6 +230,11 @@ const JobsIdAplicatRoute = JobsIdAplicatRouteImport.update({
   path: '/aplicat',
   getParentRoute: () => JobsIdRoute,
 } as any)
+const OgJobIdRoute = OgJobIdRouteImport.update({
+  id: '/og/job/$id',
+  path: '/og/job/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RuCCategoryRoute = RuCCategoryRouteImport.update({
   id: '/c/$category',
   path: '/c/$category',
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
+  '/og/job/$id': typeof OgJobIdRoute
   '/ru/c/$category': typeof RuCCategoryRoute
   '/ru/lucru/$tema': typeof RuLucruTemaRoute
   '/ru/r/$raion': typeof RuRRaionRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByTo {
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
+  '/og/job/$id': typeof OgJobIdRoute
   '/ru/c/$category': typeof RuCCategoryRoute
   '/ru/lucru/$tema': typeof RuLucruTemaRoute
   '/ru/r/$raion': typeof RuRRaionRoute
@@ -362,6 +370,7 @@ export interface FileRoutesById {
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
+  '/og/job/$id': typeof OgJobIdRoute
   '/ru/c/$category': typeof RuCCategoryRoute
   '/ru/lucru/$tema': typeof RuLucruTemaRoute
   '/ru/r/$raion': typeof RuRRaionRoute
@@ -405,6 +414,7 @@ export interface FileRouteTypes {
     | '/api/telegram/webhook'
     | '/cv/a/$id'
     | '/jobs/$id/aplicat'
+    | '/og/job/$id'
     | '/ru/c/$category'
     | '/ru/lucru/$tema'
     | '/ru/r/$raion'
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/api/telegram/webhook'
     | '/cv/a/$id'
     | '/jobs/$id/aplicat'
+    | '/og/job/$id'
     | '/ru/c/$category'
     | '/ru/lucru/$tema'
     | '/ru/r/$raion'
@@ -485,6 +496,7 @@ export interface FileRouteTypes {
     | '/api/telegram/webhook'
     | '/cv/a/$id'
     | '/jobs/$id/aplicat'
+    | '/og/job/$id'
     | '/ru/c/$category'
     | '/ru/lucru/$tema'
     | '/ru/r/$raion'
@@ -524,6 +536,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTelegramWebhookRoute: typeof ApiTelegramWebhookRoute
   CvAIdRoute: typeof CvAIdRoute
+  OgJobIdRoute: typeof OgJobIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -780,6 +793,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsIdAplicatRouteImport
       parentRoute: typeof JobsIdRoute
     }
+    '/og/job/$id': {
+      id: '/og/job/$id'
+      path: '/og/job/$id'
+      fullPath: '/og/job/$id'
+      preLoaderRoute: typeof OgJobIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ru/c/$category': {
       id: '/ru/c/$category'
       path: '/c/$category'
@@ -868,6 +888,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTelegramWebhookRoute: ApiTelegramWebhookRoute,
   CvAIdRoute: CvAIdRoute,
+  OgJobIdRoute: OgJobIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

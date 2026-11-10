@@ -8,7 +8,7 @@ import { JobCard } from "@/components/job-card";
 import { StatusBadge } from "@/components/status-badge";
 import { JobWhen } from "@/components/job-when";
 import { RatingBadge } from "@/components/stars";
-import { ShareJob } from "@/components/share-job";
+import { ShareButtons, ShareJob } from "@/components/share-job";
 import { ReportButton } from "@/components/report-dialog";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
@@ -40,6 +40,7 @@ const SITE_URL = "https://rabotaem.md";
 // and link previews (Facebook, Telegram, Viber) see the real job, not the
 // generic site title. The page itself still loads its data client-side.
 export const Route = createFileRoute("/jobs/$id/")({
+  validateSearch: (s: Record<string, unknown>): { nou?: 1 } => (s.nou === 1 || s.nou === "1" ? { nou: 1 } : {}),
   loader: async ({ params }) => {
     const id = Number(params.id);
     if (!Number.isInteger(id) || id <= 0) return { job: null as Job | null };
@@ -73,6 +74,11 @@ function jobHead(job: Job | null, id: string) {
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:url", content: url },
+      { property: "og:image", content: `${SITE_URL}/og/job/${job.id}` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: job.title },
+      { name: "twitter:image", content: `${SITE_URL}/og/job/${job.id}` },
       ...(open ? [] : [{ name: "robots", content: "noindex" }]),
     ],
     links: [{ rel: "canonical", href: url }],
@@ -85,6 +91,7 @@ function jobHead(job: Job | null, id: string) {
 function JobPage() {
   const { t } = useT();
   const { id } = Route.useParams();
+  const justPosted = Route.useSearch().nou === 1;
   const jobId = Number(id);
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -342,10 +349,20 @@ function JobPage() {
               saved={savedIds.has(job.id)}
               onChange={(v) => setSaved(job.id, v)}
             />
-            <ShareJob title={job.title} />
+            <ShareJob job={job} />
             {!isOwner ? <ReportButton targetType="job" targetId={String(job.id)} /> : null}
           </div>
         </div>
+
+        {isOwner && justPosted && job.status === "open" ? (
+          <section className="mt-4 rounded-[28px] p-5 glass-strong sm:p-6" data-testid="share-after-post">
+            <h2 className="text-lg font-semibold tracking-tight text-navy">{t("share.afterPostT")}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">{t("share.afterPostB")}</p>
+            <div className="mt-4">
+              <ShareButtons job={job} large />
+            </div>
+          </section>
+        ) : null}
 
         {myApp?.status === "selected" && !isOwner ? (
           <SelectedPanel job={job} app={myApp} onChanged={() => setAppTick((n) => n + 1)} />

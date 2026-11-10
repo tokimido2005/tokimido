@@ -228,7 +228,7 @@ function PostJob() {
         });
         toast.success(t("toast.posted"));
         track("job_post", { id: res.id });
-        await navigate({ to: "/jobs/$id", params: { id: String(res.id) } });
+        await navigate({ to: "/jobs/$id", params: { id: String(res.id) }, search: { nou: 1 } });
         return;
       }
       const payment_mdl = Number(payment);
@@ -267,7 +267,7 @@ function PostJob() {
       });
       toast.success(t("toast.posted"));
       track("job_post", { id: res.id });
-      await navigate({ to: "/jobs/$id", params: { id: String(res.id) } });
+      await navigate({ to: "/jobs/$id", params: { id: String(res.id) }, search: { nou: 1 } });
     } catch (err) {
       const message = errorText(err, t, t("post.publishFail"));
       setError(message);
