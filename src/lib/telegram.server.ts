@@ -429,28 +429,102 @@ export async function notifyTelegram(userIds: string[], payload: { title: string
   try {
     await ensureTelegramTables();
     const sql = await getSql();
-    const placeholders = userIds.map((_, i) => `$${i + 1}`).join(",");
-    const rows = await sql.query<{ chat_id: string }>(
-      `select chat_id from telegram_links where user_id in (${placeholders})`,
+    const rows = await sql.query<{ chat_id: string }>(`select chat_id from telegram_links where user_id = any($1::text[])`, [
       userIds,
-    );
+    ]);
     const link = `${siteUrl()}${payload.url.startsWith("/") ? payload.url : `/${payload.url}`}`;
     const httpsLink = link.startsWith("https://");
     const text = `🔔 ${payload.title}\n\n${payload.body}${httpsLink ? "" : `\n\n${link}`}`;
-    await Promise.all(
-      rows.map((r) =>
-        tgApi("sendMessage", {
-          chat_id: Number(r.chat_id),
-          text,
-          disable_web_page_preview: true,
-          ...(httpsLink
-            ? { reply_markup: { inline_keyboard: [[{ text: "👉 Vezi detaliile", url: link }]] } }
-            : {}),
-        }),
-      ),
-    );
+    for (const r of rows) {
+      enqueueTelegram({
+        chat_id: Number(r.chat_id),
+        text,
+        disable_web_page_preview: true,
+        ...(httpsLink ? { reply_markup: { inline_keyboard: [[{ text: "👉 Vezi detaliile", url: link }]] } } : {}),
+      });
+    }
   } catch (err) {
     console.error("[telegram] notify", err);
+  }
+}
+
+/*
+ * One outgoing queue for the whole server. Telegram accepts about 30
+ * messages per second from a bot; above that it answers 429 and drops the
+ * extra messages. We send at most PER_SECOND per second and, on 429, wait
+ * the time Telegram asks for and try again (up to 3 times).
+ */
+const PER_SECOND = 25;
+const MAX_QUEUE = 50_000;
+type Outgoing = { body: Record<string, unknown>; tries: number };
+const outbox: Outgoing[] = [];
+let pumping = false;
+let pausedUntil = 0;
+
+function enqueueTelegram(body: Record<string, unknown>) {
+  if (outbox.length >= MAX_QUEUE) {
+    console.warn("[tg-queue] full, message dropped");
+    return;
+  }
+  outbox.push({ body, tries: 0 });
+  void pumpTelegram();
+}
+
+/** Messages still waiting to be sent (for tests and monitoring). */
+export function telegramQueueSize() {
+  return outbox.length;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function sendQueued(m: Outgoing): Promise<number> {
+  try {
+    const res = await fetch(`${apiBase()}/bot${botToken()}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(m.body),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      description?: string;
+      parameters?: { retry_after?: number };
+    };
+    if (data.ok) return 0;
+    if (res.status === 429) return Math.max(1, data.parameters?.retry_after ?? 3);
+    // 403 = the person blocked the bot, 400 = chat gone: nothing to retry.
+    console.warn(`[tg-queue] send failed: ${data.description ?? res.status}`);
+    return 0;
+  } catch (err) {
+    console.warn("[tg-queue] send error", err instanceof Error ? err.message : err);
+    return 0;
+  }
+}
+
+async function pumpTelegram() {
+  if (pumping) return;
+  pumping = true;
+  try {
+    while (outbox.length > 0) {
+      const wait = pausedUntil - Date.now();
+      if (wait > 0) await sleep(wait);
+      const started = Date.now();
+      const batch = outbox.splice(0, PER_SECOND);
+      const results = await Promise.all(batch.map(sendQueued));
+      let retryAfter = 0;
+      results.forEach((secs, i) => {
+        if (secs > 0 && batch[i].tries < 3) {
+          batch[i].tries += 1;
+          outbox.unshift(batch[i]);
+          retryAfter = Math.max(retryAfter, secs);
+        }
+      });
+      if (retryAfter > 0) pausedUntil = Date.now() + retryAfter * 1000;
+      const elapsed = Date.now() - started;
+      if (elapsed < 1000) await sleep(1000 - elapsed);
+    }
+  } finally {
+    pumping = false;
   }
 }
 
