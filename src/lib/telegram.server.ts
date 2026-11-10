@@ -82,6 +82,11 @@ export function ensureTelegramTables(): Promise<void> {
         phone text not null default '',
         linked_at timestamptz not null default now()
       )`);
+    await sql.query(`
+      create table if not exists admin_alert_chats (
+        chat_id bigint primary key,
+        created_at timestamptz not null default now()
+      )`);
   })().catch((err) => {
     tablesReady = null;
     throw err;
@@ -244,6 +249,11 @@ const T: Record<string, Record<TgLang, string>> = {
     ru: "Мы принимаем только номера Молдовы (+373). Подтвердите телефон по SMS на сайте.",
     en: "We only accept Moldovan numbers (+373). Please verify by SMS on the website.",
   },
+  adminOn: {
+    ro: "Gata ✅ Vei primi aici alertele de admin (rapoarte noi).",
+    ru: "Готово ✅ Здесь будут приходить уведомления администратора (новые жалобы).",
+    en: "Done ✅ Admin alerts (new reports) will arrive here.",
+  },
   taken: {
     ro: "Acest număr este deja folosit de alt cont pe Rabotaem.md.",
     ru: "Этот номер уже используется другим аккаунтом на Rabotaem.md.",
@@ -298,14 +308,24 @@ export async function handleUpdate(update: { message?: TgMessage }) {
       await reply(chatId, tr("hello", lang));
       return;
     }
-    const rows = await sql.query<{ token: string }>(
+    const rows = await sql.query<{ token: string; purpose: string }>(
       `update telegram_verify_tokens set chat_id = $2, tg_user_id = $3
        where token = $1 and status = 'pending' and expires_at > now()
-       returning token`,
+       returning token, purpose`,
       [token, chatId, msg.from?.id ?? null],
     );
     if (!rows[0]) {
       await reply(chatId, tr("expired", lang));
+      return;
+    }
+    if (rows[0].purpose === "admin") {
+      // Admin alerts: no phone needed, the one-time link itself is the proof.
+      await sql.query(
+        `insert into admin_alert_chats (chat_id) values ($1) on conflict (chat_id) do nothing`,
+        [chatId],
+      );
+      await setTokenStatus(token, "done");
+      await reply(chatId, tr("adminOn", lang));
       return;
     }
     await reply(chatId, tr("ask", lang), {
@@ -328,7 +348,7 @@ export async function handleUpdate(update: { message?: TgMessage }) {
     }
     const rows = await sql.query<{ token: string; user_id: string; purpose: string; target_phone: string }>(
       `select token, user_id, purpose, target_phone from telegram_verify_tokens
-       where chat_id = $1 and status = 'pending' and expires_at > now()
+       where chat_id = $1 and status = 'pending' and expires_at > now() and purpose <> 'admin'
        order by created_at desc limit 1`,
       [chatId],
     );
@@ -497,4 +517,50 @@ export async function consumeTelegramReset(token: string, password: string) {
   await applyNewPassword(row.user_id, password);
   // Other links for this account stop working too.
   await sql.query(`update telegram_reset_tokens set used_at = now() where user_id = $1 and used_at is null`, [row.user_id]);
+}
+
+/** One-time link that turns on admin alerts in the chat that opens it. */
+export async function createAdminAlertLink(adminId: string) {
+  await ensureTelegramTables();
+  const sql = await getSql();
+  const token = randomBytes(18).toString("base64url");
+  await sql.query(
+    `insert into telegram_verify_tokens (token, user_id, purpose, target_phone, expires_at)
+     values ($1, $2, 'admin', '', now() + make_interval(mins => $3))`,
+    [token, adminId, TOKEN_TTL_MINUTES],
+  );
+  return `https://t.me/${await botUsername()}?start=${token}`;
+}
+
+export async function adminAlertChatCount() {
+  await ensureTelegramTables();
+  const sql = await getSql();
+  const rows = await sql.query<{ n: number }>(`select count(*)::int as n from admin_alert_chats`);
+  return rows[0]?.n ?? 0;
+}
+
+export async function clearAdminAlertChats() {
+  await ensureTelegramTables();
+  const sql = await getSql();
+  await sql.query(`delete from admin_alert_chats`);
+}
+
+/** Message every chat that turned on admin alerts. Never throws. */
+export async function sendAdminAlert(text: string, url: string) {
+  if (!telegramEnabled()) return;
+  try {
+    await ensureTelegramTables();
+    const sql = await getSql();
+    const rows = await sql.query<{ chat_id: string }>(`select chat_id from admin_alert_chats`);
+    const link = `${siteUrl()}${url.startsWith("/") ? url : `/${url}`}`;
+    for (const row of rows) {
+      await tgApi("sendMessage", {
+        chat_id: row.chat_id,
+        text: `${text}\n${link}`,
+        disable_web_page_preview: true,
+      });
+    }
+  } catch (err) {
+    console.error("[telegram] admin alert", err);
+  }
 }

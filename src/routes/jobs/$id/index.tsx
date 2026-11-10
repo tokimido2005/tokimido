@@ -1,7 +1,7 @@
 import { errorText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Building2, Clock, Eye, MapPin, ShieldCheck, Users, Wallet } from "lucide-react";
+import { ArrowLeft, Building2, Clock, Eye, MapPin, ShieldCheck, TriangleAlert, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { JobCard } from "@/components/job-card";
@@ -456,6 +456,15 @@ function JobPage() {
             <RatingBadge compact average={job.poster_rating_avg} count={job.poster_rating_count} />
           </p>
           {user && !isOwner && !official ? <JobReminder jobId={job.id} /> : null}
+          {!isOwner ? (
+            <p
+              className="mt-5 flex items-start gap-2 rounded-2xl bg-orange/10 px-4 py-3 text-sm leading-relaxed text-navy"
+              data-testid="safety-note"
+            >
+              <TriangleAlert className="mt-0.5 size-4 shrink-0 text-orange-deep" />
+              <span>{t(official ? "job.safetyOficial" : "job.safetyRapid")}</span>
+            </p>
+          ) : null}
         </article>
 
         <JobLocationBlock
