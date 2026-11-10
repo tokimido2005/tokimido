@@ -21,6 +21,7 @@ export type GrowthStats = {
   categories: Array<{ category: string; kind: string; jobs: number }>;
   searches: Array<{ q: string; n: number; zero: number }>;
   zeroSearches: Array<{ q: string; n: number }>;
+  notify: { users: number; telegram: number; push: number; any: number };
 };
 
 const TZ = `'Europe/Chisinau'`;
@@ -118,6 +119,16 @@ export const adminGrowthStats = createServerFn({ method: "GET" })
       ),
     ]);
 
+    const notifyRows = await safe<{ users: number; telegram: number; push: number; any: number }>(
+      `select (select count(*)::int from "user") as users,
+              (select count(distinct user_id)::int from telegram_links) as telegram,
+              (select count(distinct user_id)::int from push_devices) as push,
+              (select count(*)::int from "user" u
+                where exists (select 1 from telegram_links t where t.user_id = u.id)
+                   or exists (select 1 from push_devices d where d.user_id = u.id)) as any`,
+    );
+    const notify = notifyRows[0] ?? { users: 0, telegram: 0, push: 0, any: 0 };
+
     const map = new Map<string, DayStats>(
       days.map((day) => [
         day,
@@ -145,5 +156,5 @@ export const adminGrowthStats = createServerFn({ method: "GET" })
         d.visitors += r.visitors;
       }
     }
-    return { days: [...map.values()], sources, pages, raions, categories, searches, zeroSearches: zero };
+    return { days: [...map.values()], sources, pages, raions, categories, searches, zeroSearches: zero, notify };
   });

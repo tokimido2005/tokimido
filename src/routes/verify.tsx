@@ -5,6 +5,7 @@ import { seoHead } from "@/lib/seo";
 import { Shell } from "@/components/shell";
 import { Logo } from "@/components/logo";
 import { PhoneVerifyChoice } from "@/components/phone-verify-choice";
+import { askNotifications } from "@/components/notify-prompt";
 import { safeNextPath } from "@/components/social-auth";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -97,6 +98,7 @@ function VerifyPhone() {
             <PhoneVerifyChoice
               phone={gate.phone}
               onVerified={() => {
+                askNotifications("signup");
                 window.location.href = next ?? "/";
               }}
             />

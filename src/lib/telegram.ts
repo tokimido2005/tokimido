@@ -95,3 +95,15 @@ export const setPasswordWithTelegram = createServerFn({ method: "POST" })
     await consumeTelegramReset(data.token, data.password);
     return { ok: true as const };
   });
+
+/** One-time link to the bot that turns on Telegram notifications (no phone needed). */
+export const startTelegramNotify = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const tg = await import("./telegram.server");
+    if (!tg.telegramEnabled()) throw new Error("tg.unavailable");
+    const { assertRateLimit } = await import("./rate-limit.server");
+    await assertRateLimit("tg_notify", 20, 60);
+    void tg.ensureWebhook();
+    return tg.createNotifyLink(context.userId);
+  });

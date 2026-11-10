@@ -72,6 +72,25 @@ export function GrowthPanel() {
       </div>
       <p className="mt-2 text-xs text-subtle">{t("stats.deltaHint")}</p>
 
+      <div className="mt-4 rounded-[24px] p-5 glass" data-testid="notify-share">
+        <p className="font-semibold text-navy">{t("stats.notifyT")}</p>
+        <p className="mt-1 text-sm text-muted">
+          {t("stats.notifyLine", {
+            any: data.notify.any,
+            users: data.notify.users,
+            pct: data.notify.users ? Math.round((data.notify.any / data.notify.users) * 100) : 0,
+            tg: data.notify.telegram,
+            push: data.notify.push,
+          })}
+        </p>
+        <div className="mt-3 h-2 rounded-full bg-navy/8">
+          <div
+            className="h-full rounded-full bg-emerald-600"
+            style={{ width: `${data.notify.users ? (data.notify.any / data.notify.users) * 100 : 0}%` }}
+          />
+        </div>
+      </div>
+
       <div className="mt-6 rounded-[24px] p-5 glass">
         <div className="flex flex-wrap gap-1.5">
           {METRICS.map((m) => (

@@ -11,6 +11,7 @@ import { RatingBadge } from "@/components/stars";
 import { ShareButtons, ShareJob } from "@/components/share-job";
 import { ReportButton } from "@/components/report-dialog";
 import { canRepost } from "@/lib/job-templates";
+import { askNotifications } from "@/components/notify-prompt";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
 import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";
@@ -289,6 +290,7 @@ function JobPage() {
       track("job_apply", { id: listing.id });
       setApplied(true);
       toast.success(t("toast.applied"));
+      askNotifications("apply");
       await navigate({ to: "/jobs/$id/aplicat", params: { id: String(listing.id) } });
     } catch (err) {
       const msg = errorText(err, t, t("job.applyFail"));
@@ -549,6 +551,7 @@ function JobPage() {
                   setApplied(true);
                   setAppTick((n) => n + 1);
                   toast.success(t("toast.applied"));
+                  askNotifications("apply");
                   void navigate({ to: "/jobs/$id/aplicat", params: { id: String(job.id) } });
                 }}
               />

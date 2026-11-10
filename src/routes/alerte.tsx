@@ -14,6 +14,7 @@ import { updatePushPrefs } from "@/lib/push";
 import { errorText } from "@/lib/i18n";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
+import { askNotifications } from "@/components/notify-prompt";
 import { cn, formatMdl } from "@/lib/utils";
 
 export const Route = createFileRoute("/alerte")({
@@ -38,6 +39,17 @@ function AlertsPage() {
       .then(setMatches)
       .catch(() => setMatches([]));
   }, [user, t]);
+
+  // Telegram linked from the notifications window: show it as on right away.
+  useEffect(() => {
+    const refresh = () => {
+      getMyAlerts()
+        .then((fresh) => setData((d) => (d ? { ...d, telegramLinked: fresh.telegramLinked, pushDevices: fresh.pushDevices, via_telegram: fresh.telegramLinked ? true : d.via_telegram } : fresh)))
+        .catch(() => {});
+    };
+    window.addEventListener("rbt-notify-changed", refresh);
+    return () => window.removeEventListener("rbt-notify-changed", refresh);
+  }, []);
 
   if (isPending) return <Shell><main className="mx-auto max-w-2xl px-4 py-16"><div className="h-64 animate-pulse rounded-[32px] bg-white/40" /></main></Shell>;
   if (!user) return <Navigate to="/login" search={{ next: "/alerte" }} />;
@@ -203,9 +215,13 @@ function AlertsPage() {
                   testId="al-tg"
                 />
                 {!data.telegramLinked ? (
-                  <Link to="/cont" className="ml-1 inline-flex h-10 items-center text-sm font-semibold text-[#1d6fd8]">
-                    {t("al.tgHow")}
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => askNotifications("telegram")}
+                    className="ml-1 inline-flex h-11 items-center rounded-full bg-[#229ed9] px-4 text-sm font-semibold text-white"
+                  >
+                    {t("nt.connectTg")}
+                  </button>
                 ) : null}
                 <Channel
                   icon={<Smartphone className="size-6" />}

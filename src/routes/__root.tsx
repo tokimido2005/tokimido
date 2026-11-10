@@ -8,7 +8,8 @@ import { WelcomeSplash } from "@/components/welcome-splash";
 import { PwaRegister, PushNavigateListener } from "@/components/pwa-register";
 import { RatingPrompt } from "@/components/rating-prompt";
 import { PageTracker } from "@/components/page-tracker";
-import { PushPrompt } from "@/components/push-prompt";
+import { PushForeground } from "@/components/push-prompt";
+import { NotifyPrompt } from "@/components/notify-prompt";
 import { BanGate } from "@/components/ban-screen";
 import { ProfileGate } from "@/components/profile-gate";
 import { MoneyModeProvider } from "@/lib/money-mode";
@@ -99,7 +100,8 @@ function RootDocument() {
                   </div>
                 </ProfileGate>
                 <PwaRegister />
-                <PushPrompt />
+                <PushForeground />
+                <NotifyPrompt />
                 <RatingPrompt />
               </BanGate>
               <ThemedToaster />
