@@ -28,6 +28,7 @@ import { Route as RuRouteImport } from './routes/ru'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiHitRouteImport } from './routes/api/hit'
 import { Route as CCategoryRouteImport } from './routes/c/$category'
 import { Route as CvIndexRouteImport } from './routes/cv/index'
@@ -143,6 +144,11 @@ const TermeniRoute = TermeniRouteImport.update({
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHitRoute = ApiHitRouteImport.update({
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/hit': typeof ApiHitRoute
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
@@ -312,6 +319,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/hit': typeof ApiHitRoute
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
+  '/api/health': typeof ApiHealthRoute
   '/api/hit': typeof ApiHitRoute
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
@@ -398,6 +407,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/termeni'
     | '/verify'
+    | '/api/health'
     | '/api/hit'
     | '/c/$category'
     | '/cv/edit'
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/termeni'
     | '/verify'
+    | '/api/health'
     | '/api/hit'
     | '/c/$category'
     | '/cv/edit'
@@ -480,6 +491,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/termeni'
     | '/verify'
+    | '/api/health'
     | '/api/hit'
     | '/c/$category'
     | '/cv/edit'
@@ -523,6 +535,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermeniRoute: typeof TermeniRoute
   VerifyRoute: typeof VerifyRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ApiHitRoute: typeof ApiHitRoute
   CCategoryRoute: typeof CCategoryRoute
   CvEditRoute: typeof CvEditRoute
@@ -672,6 +685,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/hit': {
@@ -875,6 +895,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermeniRoute: TermeniRoute,
   VerifyRoute: VerifyRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ApiHitRoute: ApiHitRoute,
   CCategoryRoute: CCategoryRoute,
   CvEditRoute: CvEditRoute,

@@ -52,7 +52,7 @@ export const Route = createFileRoute("/api/hit")({
             });
           }
         } catch (err) {
-          console.error("[hit]", err);
+          console.warn("[hit]", err instanceof Error ? err.message : err);
         }
         return done;
       },
