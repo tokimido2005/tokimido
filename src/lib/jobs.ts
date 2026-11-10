@@ -646,12 +646,30 @@ async function expireDueJobsNow() {
   for (const job of [...newly, ...pending]) {
     if (seen.has(job.id)) continue;
     seen.add(job.id);
-    void notifyUser(job.user_id, {
-      title: "Anunțul a expirat",
-      body: `${job.title} nu mai acceptă aplicații.`,
-      url: `/jobs/${job.id}`,
-    });
+    // People were selected: ask whether the work got done (opens reviews).
+    // Nobody selected: offer to post it again.
+    const chosen = await sql.query<{ n: number }>(
+      `select count(*)::int as n from applications where job_id = $1 and status = 'selected'`,
+      [job.id],
+    );
+    void notifyUser(
+      job.user_id,
+      (chosen[0]?.n ?? 0) > 0
+        ? {
+            title: "S-a făcut lucrul? ✅",
+            body: `„${job.title}” a început. După lucru, marchează-l finalizat și lasă o recenzie oamenilor aleși.`,
+            url: "/aplicatii",
+            telegram: true,
+          }
+        : {
+            title: "Anunțul a expirat",
+            body: `„${job.title}” nu mai acceptă aplicații. Îl poți reposta dintr-un clic.`,
+            url: `/jobs/${job.id}`,
+            telegram: true,
+          },
+    );
   }
+  void import("./rating-reminders.server").then((m) => m.maybeSendRatingReminders()).catch((err) => console.warn("[rating-reminders]", err));
 }
 
 async function cleanupPublicListings(sql: Awaited<ReturnType<typeof getSql>>) {
@@ -1801,9 +1819,10 @@ export const completeJob = createServerFn({ method: "POST" })
     void notifyUsers(
       workers.map((w) => w.user_id),
       {
-        title: "Job finalizat",
-        body: `„${rows[0].title}” a fost marcat ca finalizat. Poți lăsa o evaluare.`,
+        title: "Lucrul e finalizat ✅",
+        body: `„${rows[0].title}” a fost marcat ca finalizat. Lasă o recenzie: durează 10 secunde.`,
         url: "/cont?tab=ratings",
+        telegram: true,
       },
       context.userId,
     );
