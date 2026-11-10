@@ -7,6 +7,7 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { WelcomeSplash } from "@/components/welcome-splash";
 import { PwaRegister, PushNavigateListener } from "@/components/pwa-register";
 import { RatingPrompt } from "@/components/rating-prompt";
+import { PageTracker } from "@/components/page-tracker";
 import { PushPrompt } from "@/components/push-prompt";
 import { BanGate } from "@/components/ban-screen";
 import { ProfileGate } from "@/components/profile-gate";
@@ -87,6 +88,7 @@ function RootDocument() {
       <body className="antialiased" suppressHydrationWarning>
         <WelcomeSplash />
         <PreviewHostBridge />
+        <PageTracker />
         <AuthProvider>
           <LocaleProvider>
             <ThemeProvider>

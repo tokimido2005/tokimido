@@ -27,6 +27,7 @@ import { Ambient } from "@/components/ambient";
 import { AdminReportGroups } from "@/components/admin-reports";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Logo } from "@/components/logo";
+import { GrowthPanel } from "@/components/admin-growth";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { LangSwitcher, useT } from "@/lib/locale";
@@ -366,6 +367,7 @@ function OverviewPane() {
           ))}
         </div>
       )}
+      <GrowthPanel />
     </div>
   );
 }

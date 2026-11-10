@@ -8,7 +8,7 @@ import { JobCard } from "@/components/job-card";
 import { EmptyState } from "@/components/confirm-dialog";
 import { useSavedIds } from "@/components/favorite-button";
 import { listJobs, type Job } from "@/lib/jobs";
-import { track } from "@/lib/analytics";
+import { logSearch, track } from "@/lib/analytics";
 import { useT } from "@/lib/locale";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { jsonLdHtml, seoHead, SITE_ORIGIN } from "@/lib/seo";
@@ -105,7 +105,10 @@ export function HomePage({ loaded }: { loaded: HomeData }) {
           if (!cancelled) {
             setJobs(rows);
             setError(null);
-            if (query.q) track("job_search", { q: query.q });
+            if (query.q) {
+              track("job_search", { q: query.q });
+              logSearch(query.q, "rapid", rows.length);
+            }
           }
         })
         .catch((err: unknown) => {
