@@ -1044,6 +1044,8 @@ export const messages: Record<Locale, Record<string, string>> = {
     "footer.seoCats": "Categorii",
     "footer.seoPlaces": "Raioane",
     "home.seoTitle": "Kalîm și lucru pe zi în Moldova — plata în aceeași zi",
+    "seo.angTitle": "Angajare oficială în Moldova — locuri de muncă cu contract",
+    "seo.angDesc": "Locuri de muncă cu contract în Moldova: salariu lunar, program și oraș. Trimite CV-ul dintr-un clic pe Rabotaem.md.",
     "home.seoDesc": "Kalîmuri și lucru temporar în Chișinău, Bălți și toată Moldova: mutări, construcții, curățenie, grădină. Plata pe loc, fără comision, gratuit.",
     "home.seoSub": "Kalîmuri și lucru pe zi în toată Moldova. Plata în aceeași zi, fără comision.",
     "home.seoAboutT": "Ce este un kalîm?",

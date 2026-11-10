@@ -24,6 +24,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PostRouteImport } from './routes/post'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as ResetRouteImport } from './routes/reset'
+import { Route as RuRouteImport } from './routes/ru'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as TermeniRouteImport } from './routes/termeni'
 import { Route as VerifyRouteImport } from './routes/verify'
@@ -35,12 +36,17 @@ import { Route as FirmaSlugRouteImport } from './routes/firma/$slug'
 import { Route as JobsIdRouteImport } from './routes/jobs/$id'
 import { Route as LucruTemaRouteImport } from './routes/lucru/$tema'
 import { Route as RRaionRouteImport } from './routes/r/$raion'
+import { Route as RuIndexRouteImport } from './routes/ru/index'
+import { Route as RuAngajareRouteImport } from './routes/ru/angajare'
 import { Route as UUserIdRouteImport } from './routes/u/$userId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiTelegramWebhookRouteImport } from './routes/api/telegram/webhook'
 import { Route as CvAIdRouteImport } from './routes/cv/a/$id'
 import { Route as JobsIdIndexRouteImport } from './routes/jobs/$id/index'
 import { Route as JobsIdAplicatRouteImport } from './routes/jobs/$id/aplicat'
+import { Route as RuCCategoryRouteImport } from './routes/ru/c/$category'
+import { Route as RuLucruTemaRouteImport } from './routes/ru/lucru/$tema'
+import { Route as RuRRaionRouteImport } from './routes/ru/r/$raion'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -117,6 +123,11 @@ const ResetRoute = ResetRouteImport.update({
   path: '/reset',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RuRoute = RuRouteImport.update({
+  id: '/ru',
+  path: '/ru',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -172,6 +183,16 @@ const RRaionRoute = RRaionRouteImport.update({
   path: '/r/$raion',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RuIndexRoute = RuIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RuRoute,
+} as any)
+const RuAngajareRoute = RuAngajareRouteImport.update({
+  id: '/angajare',
+  path: '/angajare',
+  getParentRoute: () => RuRoute,
+} as any)
 const UUserIdRoute = UUserIdRouteImport.update({
   id: '/u/$userId',
   path: '/u/$userId',
@@ -202,6 +223,21 @@ const JobsIdAplicatRoute = JobsIdAplicatRouteImport.update({
   path: '/aplicat',
   getParentRoute: () => JobsIdRoute,
 } as any)
+const RuCCategoryRoute = RuCCategoryRouteImport.update({
+  id: '/c/$category',
+  path: '/c/$category',
+  getParentRoute: () => RuRoute,
+} as any)
+const RuLucruTemaRoute = RuLucruTemaRouteImport.update({
+  id: '/lucru/$tema',
+  path: '/lucru/$tema',
+  getParentRoute: () => RuRoute,
+} as any)
+const RuRRaionRoute = RuRRaionRouteImport.update({
+  id: '/r/$raion',
+  path: '/r/$raion',
+  getParentRoute: () => RuRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -219,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/post': typeof PostRoute
   '/pro': typeof ProRoute
   '/reset': typeof ResetRoute
+  '/ru': typeof RuRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
@@ -228,13 +265,18 @@ export interface FileRoutesByFullPath {
   '/jobs/$id': typeof JobsIdRouteWithChildren
   '/lucru/$tema': typeof LucruTemaRoute
   '/r/$raion': typeof RRaionRoute
+  '/ru/angajare': typeof RuAngajareRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv/': typeof CvIndexRoute
   '/firma/': typeof FirmaIndexRoute
+  '/ru/': typeof RuIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
+  '/ru/c/$category': typeof RuCCategoryRoute
+  '/ru/lucru/$tema': typeof RuLucruTemaRoute
+  '/ru/r/$raion': typeof RuRRaionRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -261,13 +303,18 @@ export interface FileRoutesByTo {
   '/firma/$slug': typeof FirmaSlugRoute
   '/lucru/$tema': typeof LucruTemaRoute
   '/r/$raion': typeof RRaionRoute
+  '/ru/angajare': typeof RuAngajareRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv': typeof CvIndexRoute
   '/firma': typeof FirmaIndexRoute
+  '/ru': typeof RuIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
+  '/ru/c/$category': typeof RuCCategoryRoute
+  '/ru/lucru/$tema': typeof RuLucruTemaRoute
+  '/ru/r/$raion': typeof RuRRaionRoute
   '/jobs/$id': typeof JobsIdIndexRoute
 }
 export interface FileRoutesById {
@@ -287,6 +334,7 @@ export interface FileRoutesById {
   '/post': typeof PostRoute
   '/pro': typeof ProRoute
   '/reset': typeof ResetRoute
+  '/ru': typeof RuRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/termeni': typeof TermeniRoute
   '/verify': typeof VerifyRoute
@@ -296,13 +344,18 @@ export interface FileRoutesById {
   '/jobs/$id': typeof JobsIdRouteWithChildren
   '/lucru/$tema': typeof LucruTemaRoute
   '/r/$raion': typeof RRaionRoute
+  '/ru/angajare': typeof RuAngajareRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv/': typeof CvIndexRoute
   '/firma/': typeof FirmaIndexRoute
+  '/ru/': typeof RuIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/telegram/webhook': typeof ApiTelegramWebhookRoute
   '/cv/a/$id': typeof CvAIdRoute
   '/jobs/$id/aplicat': typeof JobsIdAplicatRoute
+  '/ru/c/$category': typeof RuCCategoryRoute
+  '/ru/lucru/$tema': typeof RuLucruTemaRoute
+  '/ru/r/$raion': typeof RuRRaionRoute
   '/jobs/$id/': typeof JobsIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -323,6 +376,7 @@ export interface FileRouteTypes {
     | '/post'
     | '/pro'
     | '/reset'
+    | '/ru'
     | '/sitemap.xml'
     | '/termeni'
     | '/verify'
@@ -332,13 +386,18 @@ export interface FileRouteTypes {
     | '/jobs/$id'
     | '/lucru/$tema'
     | '/r/$raion'
+    | '/ru/angajare'
     | '/u/$userId'
     | '/cv/'
     | '/firma/'
+    | '/ru/'
     | '/api/auth/$'
     | '/api/telegram/webhook'
     | '/cv/a/$id'
     | '/jobs/$id/aplicat'
+    | '/ru/c/$category'
+    | '/ru/lucru/$tema'
+    | '/ru/r/$raion'
     | '/jobs/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -365,13 +424,18 @@ export interface FileRouteTypes {
     | '/firma/$slug'
     | '/lucru/$tema'
     | '/r/$raion'
+    | '/ru/angajare'
     | '/u/$userId'
     | '/cv'
     | '/firma'
+    | '/ru'
     | '/api/auth/$'
     | '/api/telegram/webhook'
     | '/cv/a/$id'
     | '/jobs/$id/aplicat'
+    | '/ru/c/$category'
+    | '/ru/lucru/$tema'
+    | '/ru/r/$raion'
     | '/jobs/$id'
   id:
     | '__root__'
@@ -390,6 +454,7 @@ export interface FileRouteTypes {
     | '/post'
     | '/pro'
     | '/reset'
+    | '/ru'
     | '/sitemap.xml'
     | '/termeni'
     | '/verify'
@@ -399,13 +464,18 @@ export interface FileRouteTypes {
     | '/jobs/$id'
     | '/lucru/$tema'
     | '/r/$raion'
+    | '/ru/angajare'
     | '/u/$userId'
     | '/cv/'
     | '/firma/'
+    | '/ru/'
     | '/api/auth/$'
     | '/api/telegram/webhook'
     | '/cv/a/$id'
     | '/jobs/$id/aplicat'
+    | '/ru/c/$category'
+    | '/ru/lucru/$tema'
+    | '/ru/r/$raion'
     | '/jobs/$id/'
   fileRoutesById: FileRoutesById
 }
@@ -425,6 +495,7 @@ export interface RootRouteChildren {
   PostRoute: typeof PostRoute
   ProRoute: typeof ProRoute
   ResetRoute: typeof ResetRoute
+  RuRoute: typeof RuRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermeniRoute: typeof TermeniRoute
   VerifyRoute: typeof VerifyRoute
@@ -549,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ru': {
+      id: '/ru'
+      path: '/ru'
+      fullPath: '/ru'
+      preLoaderRoute: typeof RuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -626,6 +704,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RRaionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ru/': {
+      id: '/ru/'
+      path: '/'
+      fullPath: '/ru/'
+      preLoaderRoute: typeof RuIndexRouteImport
+      parentRoute: typeof RuRoute
+    }
+    '/ru/angajare': {
+      id: '/ru/angajare'
+      path: '/angajare'
+      fullPath: '/ru/angajare'
+      preLoaderRoute: typeof RuAngajareRouteImport
+      parentRoute: typeof RuRoute
+    }
     '/u/$userId': {
       id: '/u/$userId'
       path: '/u/$userId'
@@ -668,8 +760,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsIdAplicatRouteImport
       parentRoute: typeof JobsIdRoute
     }
+    '/ru/c/$category': {
+      id: '/ru/c/$category'
+      path: '/c/$category'
+      fullPath: '/ru/c/$category'
+      preLoaderRoute: typeof RuCCategoryRouteImport
+      parentRoute: typeof RuRoute
+    }
+    '/ru/lucru/$tema': {
+      id: '/ru/lucru/$tema'
+      path: '/lucru/$tema'
+      fullPath: '/ru/lucru/$tema'
+      preLoaderRoute: typeof RuLucruTemaRouteImport
+      parentRoute: typeof RuRoute
+    }
+    '/ru/r/$raion': {
+      id: '/ru/r/$raion'
+      path: '/r/$raion'
+      fullPath: '/ru/r/$raion'
+      preLoaderRoute: typeof RuRRaionRouteImport
+      parentRoute: typeof RuRoute
+    }
   }
 }
+
+interface RuRouteChildren {
+  RuAngajareRoute: typeof RuAngajareRoute
+  RuIndexRoute: typeof RuIndexRoute
+  RuCCategoryRoute: typeof RuCCategoryRoute
+  RuLucruTemaRoute: typeof RuLucruTemaRoute
+  RuRRaionRoute: typeof RuRRaionRoute
+}
+
+const RuRouteChildren: RuRouteChildren = {
+  RuAngajareRoute: RuAngajareRoute,
+  RuIndexRoute: RuIndexRoute,
+  RuCCategoryRoute: RuCCategoryRoute,
+  RuLucruTemaRoute: RuLucruTemaRoute,
+  RuRRaionRoute: RuRRaionRoute,
+}
+
+const RuRouteWithChildren = RuRoute._addFileChildren(RuRouteChildren)
 
 interface JobsIdRouteChildren {
   JobsIdAplicatRoute: typeof JobsIdAplicatRoute
@@ -700,6 +831,7 @@ const rootRouteChildren: RootRouteChildren = {
   PostRoute: PostRoute,
   ProRoute: ProRoute,
   ResetRoute: ResetRoute,
+  RuRoute: RuRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermeniRoute: TermeniRoute,
   VerifyRoute: VerifyRoute,

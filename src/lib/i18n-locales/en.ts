@@ -1035,6 +1035,8 @@ const messages: Record<string, string> = {
   "footer.seoCats": "Categories",
   "footer.seoPlaces": "Districts",
   "home.seoTitle": "Quick jobs and day work in Moldova — paid the same day",
+  "seo.angTitle": "Official jobs in Moldova — positions with a contract",
+  "seo.angDesc": "Jobs with an employment contract in Moldova: monthly salary, schedule and city. Send your CV in one tap on Rabotaem.md.",
   "home.seoDesc": "Quick jobs and temporary work in Chișinău, Bălți and all of Moldova: moving, construction, cleaning, gardening. Paid on the spot, no commission, free.",
   "home.seoSub": "Quick jobs and day work across Moldova. Paid the same day, no commission.",
   "home.seoAboutT": "What is a kalîm?",

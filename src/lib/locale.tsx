@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter, useRouterState } from "@tanstack/react-router";
+import { isRuPath, roPathFor, ruPathFor } from "@/lib/lang-paths";
 import { LOCALES, loadLocale, translate, type Locale } from "@/lib/i18n";
 
 const STORAGE_KEY = "rabotaem-lang";
@@ -14,6 +16,14 @@ function readLocale(): Locale {
   return "ro";
 }
 
+function storeLocale(locale: Locale) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, locale);
+  } catch {
+    /* private mode */
+  }
+}
+
 const LocaleContext = createContext<{
   locale: Locale;
   setLocale: (l: Locale) => void;
@@ -25,36 +35,58 @@ const LocaleContext = createContext<{
 });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("ro");
+  const router = useRouter();
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
+  // /ru pages are always Russian (that is what Google indexed); elsewhere the
+  // visitor's saved choice applies once its strings have loaded.
+  const urlLocale: Locale | null = isRuPath(pathname) ? "ru" : null;
+  const [chosen, setChosen] = useState<Locale>("ro");
+  const [ready, setReady] = useState(false);
+  const locale = urlLocale ?? chosen;
 
   useEffect(() => {
-    const next = readLocale();
+    const next = isRuPath(window.location.pathname) ? "ru" : readLocale();
+    if (next === "ru") storeLocale("ru");
     // RU/EN strings are a separate download; switch once they have arrived.
     void loadLocale(next)
-      .then(() => {
-        setLocaleState(next);
-        document.documentElement.lang = next;
-      })
+      .then(() => setChosen(next))
       .catch(() => {
         /* network error: stay on Romanian */
-      });
+      })
+      .finally(() => setReady(true));
   }, []);
 
-  function setLocale(next: Locale) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      /* ignore */
+  // Someone who picked Russian lands on the Russian twin of a public page.
+  useEffect(() => {
+    if (!ready || urlLocale || chosen !== "ru") return;
+    const target = ruPathFor(pathname);
+    if (target && target !== pathname) {
+      router.history.replace(target + window.location.search + window.location.hash);
     }
-    void loadLocale(next)
-      .then(() => {
-        setLocaleState(next);
-        document.documentElement.lang = next;
-      })
-      .catch(() => {
-        /* network error: keep the current language */
-      });
-  }
+  }, [ready, urlLocale, chosen, pathname, router]);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  const setLocale = useCallback(
+    (next: Locale) => {
+      storeLocale(next);
+      void loadLocale(next)
+        .then(() => {
+          setChosen(next);
+          const path = window.location.pathname;
+          const target = next === "ru" ? ruPathFor(path) : isRuPath(path) ? roPathFor(path) : null;
+          if (target && target !== path) {
+            router.history.push(target + window.location.search + window.location.hash);
+          }
+        })
+        .catch(() => {
+          /* network error: keep the current language */
+        });
+    },
+    [router],
+  );
 
   const value = useMemo(
     () => ({
@@ -62,7 +94,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       setLocale,
       t: (key: string, vars?: Record<string, string | number>) => translate(locale, key, vars),
     }),
-    [locale],
+    [locale, setLocale],
   );
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;

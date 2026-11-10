@@ -60,6 +60,11 @@ export const Route = createFileRoute("/sitemap.xml")({
         } catch (err) {
           console.error("[sitemap] companies failed", err);
         }
+        // Russian twins of the public pages (see /ru routes).
+        const ruUrls = urls
+          .filter((u) => /<loc>https:\/\/rabotaem\.md(\/|\/angajare|\/lucru\/[^<]+|\/c\/[^<]+|\/r\/[^<]+)<\/loc>/.test(u))
+          .map((u) => u.replace("<loc>https://rabotaem.md/", "<loc>https://rabotaem.md/ru/").replace("<loc>https://rabotaem.md/ru/</loc>", "<loc>https://rabotaem.md/ru</loc>"));
+        urls.push(...ruUrls);
         const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
         return new Response(body, {
           headers: {

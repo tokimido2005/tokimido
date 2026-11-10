@@ -1,4 +1,5 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { isRuPath } from "@/lib/lang-paths";
 import { AuthProvider } from "@/lib/auth/provider";
 import { LocaleProvider } from "@/lib/locale";
 import { ThemeProvider, ThemedToaster } from "@/lib/theme";
@@ -74,8 +75,9 @@ export const Route = createRootRoute({
 });
 
 function RootDocument() {
+  const pathname = useRouterState({ select: (st) => st.location.pathname });
   return (
-    <html lang="ro" suppressHydrationWarning>
+    <html lang={isRuPath(pathname) ? "ru" : "ro"} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
         <script dangerouslySetInnerHTML={{ __html: ANALYTICS_BOOT }} />
