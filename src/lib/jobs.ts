@@ -75,6 +75,8 @@ export type Job = {
   poster_rating_avg: number;
   poster_rating_count: number;
   poster_phone_verified: boolean;
+  /** "De încredere": verified, 3+ finished jobs, 4.5+ average from 3+ reviews. */
+  poster_trusted?: boolean;
   views_count: number;
   has_geo: boolean;
   kind: JobKind;
@@ -139,6 +141,7 @@ const seedJobs: Array<
     | "poster_rating_avg"
     | "poster_rating_count"
     | "poster_phone_verified"
+    | "poster_trusted"
     | "views_count"
     | "has_geo"
     | "kind"
@@ -1011,6 +1014,11 @@ async function seedDemoApplications() {
   }
 }
 
+/** Thresholds for the "De încredere" badge (also used by computeTrust). */
+const TRUST_MIN_JOBS = 3;
+const TRUST_MIN_RATINGS = 3;
+const TRUST_MIN_AVG = 4.5;
+
 const JOB_SELECT = `j.id, j.user_id, j.title, j.description, j.category, j.raion, j.locality,
   j.payment_mdl, j.duration_minutes, j.people_needed,
   -- Never expose the poster's phone in listings: it is shared only through
@@ -1031,7 +1039,16 @@ const JOB_SELECT = `j.id, j.user_id, j.title, j.description, j.category, j.raion
   (select count(*)::int from applications a where a.job_id = j.id and a.status = 'selected') as selected_count,
   coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}), 0) as poster_rating_avg,
   (select count(*)::int from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}) as poster_rating_count,
-  coalesce((select p.phone_verified_at is not null from profiles p where p.user_id = j.user_id), false) as poster_phone_verified`;
+  coalesce((select p.phone_verified_at is not null from profiles p where p.user_id = j.user_id), false) as poster_phone_verified,
+  -- "De încredere": verified phone, not suspended, 3+ finished jobs, 4.5+ from 3+ reviews.
+  (
+    coalesce((select p.phone_verified_at is not null
+                 and (p.banned_at is null or (p.banned_until is not null and p.banned_until <= now()))
+              from profiles p where p.user_id = j.user_id), false)
+    and (select count(*) from jobs jc where jc.user_id = j.user_id and jc.status = 'completed') >= ${TRUST_MIN_JOBS}
+    and (select count(*) from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}) >= ${TRUST_MIN_RATINGS}
+    and coalesce((select avg(r.stars)::float from ratings r where r.to_user_id = j.user_id and ${VISIBLE_RATING_SQL("r")}), 0) >= ${TRUST_MIN_AVG}
+  ) as poster_trusted`;
 
 const filtersSchema = z.object({
   q: z.string().optional(),

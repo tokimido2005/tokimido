@@ -11,6 +11,7 @@ import { RatingBadge } from "@/components/stars";
 import { ShareButtons, ShareJob } from "@/components/share-job";
 import { ReportButton } from "@/components/report-dialog";
 import { canRepost } from "@/lib/job-templates";
+import { TrustedBadge } from "@/components/trusted-badge";
 import { askNotifications } from "@/components/notify-prompt";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
@@ -478,6 +479,7 @@ function JobPage() {
                 {job.poster_name || "—"}
               </Link>
             </span>
+            {job.poster_trusted ? <TrustedBadge size="md" /> : null}
             {job.poster_phone_verified ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-semibold text-navy">
                 <ShieldCheck className="size-3" />

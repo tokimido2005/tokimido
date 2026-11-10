@@ -7,6 +7,7 @@ import { formatDuration, formatMdl } from "@/lib/utils";
 import { FavoriteButton } from "@/components/favorite-button";
 import { formatAverage } from "@/components/stars";
 import { useT } from "@/lib/locale";
+import { TrustedBadge } from "@/components/trusted-badge";
 
 export function JobCard({
   job,
@@ -85,7 +86,9 @@ export function JobCard({
               <span className="tabular-nums">{formatAverage(job.poster_rating_avg)}</span>
             </span>
           ) : null}
-          {verified ? (
+          {job.poster_trusted ? (
+            <TrustedBadge />
+          ) : verified ? (
             <span className="inline-flex items-center gap-0.5 font-semibold text-navy">
               <ShieldCheck className="size-3 text-brand" />
               {t("trust.phone")}
