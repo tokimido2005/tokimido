@@ -4,6 +4,7 @@ import { useT } from "@/lib/locale";
 import { useMoneyMode } from "@/lib/money-mode";
 import { CATEGORIES } from "@/lib/categories";
 import { RAION_NAMES } from "@/lib/moldova";
+import { LANDINGS } from "@/lib/landings";
 
 export function Footer() {
   const { t } = useT();
@@ -68,7 +69,22 @@ export function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          <div>
+            <p className="text-sm font-semibold text-navy">{t("land.popular")}</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+              {LANDINGS.map((l) => (
+                <Link
+                  key={l.slug}
+                  to="/lucru/$tema"
+                  params={{ tema: l.slug }}
+                  className="text-muted hover:text-navy"
+                >
+                  {t(`land.${l.slug}.title`)}
+                </Link>
+              ))}
+            </div>
+          </div>
           <div>
             <p className="text-sm font-semibold text-navy">{t("footer.seoCats")}</p>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">

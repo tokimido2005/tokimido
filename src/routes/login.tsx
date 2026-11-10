@@ -25,7 +25,7 @@ export const Route = createFileRoute("/login")({
     mode: s.mode === "up" ? "up" : undefined,
     invite: typeof s.invite === "string" && s.invite.length >= 4 && s.invite.length <= 16 ? s.invite : undefined,
   }),
-  head: () => seoHead("Autentificare", "Intră sau creează un cont Rabotaem.md."),
+  head: () => seoHead("Autentificare", "Intră sau creează un cont Rabotaem.md.", { noindex: true }),
   component: Login,
 });
 

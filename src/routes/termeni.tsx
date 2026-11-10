@@ -3,7 +3,7 @@ import { LegalBlock, LegalPage } from "@/components/legal-page";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/termeni")({
-  head: () => seoHead("Termeni și condiții", "Regulile de folosire a platformei Rabotaem.md."),
+  head: () => seoHead("Termeni și condiții", "Regulile de folosire a platformei Rabotaem.md.", { path: "/termeni" }),
   component: TermsPage,
 });
 

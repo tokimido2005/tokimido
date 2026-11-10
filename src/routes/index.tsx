@@ -1,4 +1,4 @@
-import { errorText } from "@/lib/i18n";
+import { errorText, translate } from "@/lib/i18n";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
@@ -11,15 +11,14 @@ import { listJobs, type Job } from "@/lib/jobs";
 import { track } from "@/lib/analytics";
 import { useT } from "@/lib/locale";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { seoHead } from "@/lib/seo";
+import { jsonLdHtml, seoHead, SITE_ORIGIN } from "@/lib/seo";
 import { WorkKindTabs } from "@/components/work-kind-tabs";
 
 export const Route = createFileRoute("/")({
-  head: () =>
-    seoHead(
-      "Lucru pe loc. Bani pe loc.",
-      "Platformă gratuită pentru joburi de scurtă durată în toată Moldova. Fără comision.",
-    ),
+  head: () => ({
+    ...seoHead(translate("ro", "home.seoTitle"), translate("ro", "home.seoDesc"), { path: "/" }),
+    scripts: [{ type: "application/ld+json", children: jsonLdHtml(SITE_JSON_LD) }],
+  }),
   loader: async () => {
     try {
       const jobs = await listJobs({ data: { kind: "rapid" } });
@@ -34,6 +33,33 @@ export const Route = createFileRoute("/")({
   },
   component: Home,
 });
+
+/**
+ * Site name + logo for Google: lets a search for "rabotaem md" show the
+ * brand name and logo instead of the bare domain.
+ */
+const SITE_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_ORIGIN}/#website`,
+      name: "Rabotaem.md",
+      alternateName: ["Rabotaem", "Работаем", "rabotaem md"],
+      url: `${SITE_ORIGIN}/`,
+      inLanguage: ["ro", "ru"],
+      publisher: { "@id": `${SITE_ORIGIN}/#organization` },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${SITE_ORIGIN}/#organization`,
+      name: "Rabotaem.md",
+      url: `${SITE_ORIGIN}/`,
+      logo: { "@type": "ImageObject", url: `${SITE_ORIGIN}/icon-512.png`, width: 512, height: 512 },
+      areaServed: { "@type": "Country", name: "Moldova" },
+    },
+  ],
+};
 
 const EMPTY: JobFilters = { q: "", raion: "", locality: "", category: "", when: "" };
 
@@ -101,6 +127,9 @@ function Home() {
             <h1 className="rise-in max-w-3xl text-3xl font-semibold tracking-[-0.04em] text-navy sm:text-5xl sm:leading-[1.08]">
               {t("home.title")}
             </h1>
+            <p className="rise-in mt-3 max-w-2xl text-base leading-relaxed text-muted sm:text-lg" style={{ animationDelay: "40ms" }}>
+              {t("home.seoSub")}
+            </p>
             <div className="rise-in mt-6 grid gap-3 sm:grid-cols-2" style={{ animationDelay: "80ms" }}>
               <a
                 href="#joburi"
@@ -188,6 +217,14 @@ function Home() {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+          <div className="space-y-3 rounded-[24px] p-6 text-sm leading-relaxed text-muted glass sm:text-base">
+            <h2 className="text-xl font-semibold tracking-tight text-navy">{t("home.seoAboutT")}</h2>
+            <p>{t("home.seoAbout1")}</p>
+            <p>{t("home.seoAbout2")}</p>
           </div>
         </section>
 

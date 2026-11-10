@@ -27,7 +27,7 @@ import { cn, compressPhotoFile } from "@/lib/utils";
 const DRAFT_KEY = "rabotaem-cv-draft";
 
 export const Route = createFileRoute("/cv/edit")({
-  head: () => seoHead("Fă-ți CV-ul", "Creează un CV în câțiva pași simpli pe Rabotaem.md."),
+  head: () => seoHead("Fă-ți CV-ul", "Creează un CV în câțiva pași simpli pe Rabotaem.md.", { noindex: true }),
   validateSearch: (s: Record<string, unknown>): { next?: string } => ({
     next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
   }),

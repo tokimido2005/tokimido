@@ -4,7 +4,7 @@ import { seoHead } from "@/lib/seo";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/confidentialitate")({
-  head: () => seoHead("Politica de confidențialitate", "Cum Rabotaem.md prelucrează datele personale."),
+  head: () => seoHead("Politica de confidențialitate", "Cum Rabotaem.md prelucrează datele personale.", { path: "/confidentialitate" }),
   component: PrivacyPage,
 });
 

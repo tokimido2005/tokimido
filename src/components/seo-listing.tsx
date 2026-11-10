@@ -12,11 +12,14 @@ export function SeoListing({
   title,
   lead,
   jobs,
+  paragraphs = [],
   emptyRaion = false,
 }: {
   title: string;
   lead: string;
   jobs: Job[];
+  /** Extra intro text shown under the job list (keyword landing pages). */
+  paragraphs?: string[];
   emptyRaion?: boolean;
 }) {
   const { t } = useT();
@@ -77,6 +80,13 @@ export function SeoListing({
             </div>
           )}
         </div>
+        {paragraphs.length > 0 ? (
+          <section className="mt-10 max-w-3xl space-y-3 rounded-[24px] p-6 text-sm leading-relaxed text-muted glass sm:text-base">
+            {paragraphs.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+          </section>
+        ) : null}
       </main>
     </Shell>
   );

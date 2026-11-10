@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CATEGORIES } from "@/lib/categories";
 import { RAION_NAMES } from "@/lib/moldova";
+import { LANDINGS } from "@/lib/landings";
 
 const SITE = "https://rabotaem.md";
 
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/sitemap.xml")({
     handlers: {
       GET: async () => {
         const urls = STATIC_PAGES.map(([p, f, pr]) => entry(p, f, pr));
+        for (const l of LANDINGS) urls.push(entry(`/lucru/${l.slug}`, "hourly", "0.8"));
         for (const c of CATEGORIES) urls.push(entry(`/c/${encodeURIComponent(c.id)}`, "daily", "0.7"));
         for (const r of RAION_NAMES) urls.push(entry(`/r/${encodeURIComponent(r)}`, "daily", "0.6"));
         try {

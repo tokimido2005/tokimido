@@ -35,7 +35,7 @@ import { signOut } from "@/lib/auth/client";
 type Tab = "jobs" | "apps" | "saved" | "ratings" | "reports" | "inbox";
 
 export const Route = createFileRoute("/cont")({
-  head: () => seoHead("Contul meu", "Anunțurile, aplicațiile, salvările și evaluările tale pe Rabotaem.md."),
+  head: () => seoHead("Contul meu", "Anunțurile, aplicațiile, salvările și evaluările tale pe Rabotaem.md.", { noindex: true }),
   validateSearch: (s: Record<string, unknown>): { tab?: Tab; msg?: number } => {
     const n = typeof s.msg === "number" ? s.msg : typeof s.msg === "string" ? Number(s.msg) : NaN;
     return {

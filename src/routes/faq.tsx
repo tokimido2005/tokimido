@@ -4,7 +4,7 @@ import { seoHead } from "@/lib/seo";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/faq")({
-  head: () => seoHead("Întrebări frecvente", "Răspunsuri despre Rabotaem.md, plăți, anunțuri și cont."),
+  head: () => seoHead("Întrebări frecvente", "Răspunsuri despre Rabotaem.md, plăți, anunțuri și cont.", { path: "/faq" }),
   component: FaqPage,
 });
 

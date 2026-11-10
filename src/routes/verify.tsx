@@ -16,7 +16,7 @@ export const Route = createFileRoute("/verify")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     next: safeNextPath(typeof s.next === "string" ? s.next : undefined),
   }),
-  head: () => seoHead("Verificare telefon", "Verifică numărul din cont prin SMS ca să postezi și să aplici."),
+  head: () => seoHead("Verificare telefon", "Verifică numărul din cont prin SMS ca să postezi și să aplici.", { noindex: true }),
   component: VerifyPhone,
 });
 

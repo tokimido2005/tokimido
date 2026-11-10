@@ -33,6 +33,7 @@ import { Route as CvEditRouteImport } from './routes/cv/edit'
 import { Route as FirmaIndexRouteImport } from './routes/firma/index'
 import { Route as FirmaSlugRouteImport } from './routes/firma/$slug'
 import { Route as JobsIdRouteImport } from './routes/jobs/$id'
+import { Route as LucruTemaRouteImport } from './routes/lucru/$tema'
 import { Route as RRaionRouteImport } from './routes/r/$raion'
 import { Route as UUserIdRouteImport } from './routes/u/$userId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -161,6 +162,11 @@ const JobsIdRoute = JobsIdRouteImport.update({
   path: '/jobs/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LucruTemaRoute = LucruTemaRouteImport.update({
+  id: '/lucru/$tema',
+  path: '/lucru/$tema',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RRaionRoute = RRaionRouteImport.update({
   id: '/r/$raion',
   path: '/r/$raion',
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/cv/edit': typeof CvEditRoute
   '/firma/$slug': typeof FirmaSlugRoute
   '/jobs/$id': typeof JobsIdRouteWithChildren
+  '/lucru/$tema': typeof LucruTemaRoute
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv/': typeof CvIndexRoute
@@ -252,6 +259,7 @@ export interface FileRoutesByTo {
   '/c/$category': typeof CCategoryRoute
   '/cv/edit': typeof CvEditRoute
   '/firma/$slug': typeof FirmaSlugRoute
+  '/lucru/$tema': typeof LucruTemaRoute
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv': typeof CvIndexRoute
@@ -286,6 +294,7 @@ export interface FileRoutesById {
   '/cv/edit': typeof CvEditRoute
   '/firma/$slug': typeof FirmaSlugRoute
   '/jobs/$id': typeof JobsIdRouteWithChildren
+  '/lucru/$tema': typeof LucruTemaRoute
   '/r/$raion': typeof RRaionRoute
   '/u/$userId': typeof UUserIdRoute
   '/cv/': typeof CvIndexRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/cv/edit'
     | '/firma/$slug'
     | '/jobs/$id'
+    | '/lucru/$tema'
     | '/r/$raion'
     | '/u/$userId'
     | '/cv/'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/c/$category'
     | '/cv/edit'
     | '/firma/$slug'
+    | '/lucru/$tema'
     | '/r/$raion'
     | '/u/$userId'
     | '/cv'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/cv/edit'
     | '/firma/$slug'
     | '/jobs/$id'
+    | '/lucru/$tema'
     | '/r/$raion'
     | '/u/$userId'
     | '/cv/'
@@ -420,6 +432,7 @@ export interface RootRouteChildren {
   CvEditRoute: typeof CvEditRoute
   FirmaSlugRoute: typeof FirmaSlugRoute
   JobsIdRoute: typeof JobsIdRouteWithChildren
+  LucruTemaRoute: typeof LucruTemaRoute
   RRaionRoute: typeof RRaionRoute
   UUserIdRoute: typeof UUserIdRoute
   CvIndexRoute: typeof CvIndexRoute
@@ -599,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lucru/$tema': {
+      id: '/lucru/$tema'
+      path: '/lucru/$tema'
+      fullPath: '/lucru/$tema'
+      preLoaderRoute: typeof LucruTemaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/r/$raion': {
       id: '/r/$raion'
       path: '/r/$raion'
@@ -687,6 +707,7 @@ const rootRouteChildren: RootRouteChildren = {
   CvEditRoute: CvEditRoute,
   FirmaSlugRoute: FirmaSlugRoute,
   JobsIdRoute: JobsIdRouteWithChildren,
+  LucruTemaRoute: LucruTemaRoute,
   RRaionRoute: RRaionRoute,
   UUserIdRoute: UUserIdRoute,
   CvIndexRoute: CvIndexRoute,

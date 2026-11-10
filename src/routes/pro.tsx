@@ -12,7 +12,7 @@ import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/pro")({
-  head: () => seoHead("Rabotaem Pro", "Abonament lunar pentru anunțuri și aplicații nelimitate."),
+  head: () => seoHead("Rabotaem Pro", "Abonament lunar pentru anunțuri și aplicații nelimitate.", { path: "/pro" }),
   component: ProPage,
 });
 

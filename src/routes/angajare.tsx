@@ -16,8 +16,9 @@ import { track } from "@/lib/analytics";
 export const Route = createFileRoute("/angajare")({
   head: () =>
     seoHead(
-      "Angajare oficială",
-      "Joburi cu contract, salariu lunar, program și oraș. Separat de lucrul rapid pe loc.",
+      "Angajare oficială în Moldova — locuri de muncă cu contract",
+      "Locuri de muncă cu contract în Moldova: salariu lunar, program și oraș. Trimite CV-ul dintr-un clic pe Rabotaem.md.",
+      { path: "/angajare" },
     ),
   loader: async () => {
     try {

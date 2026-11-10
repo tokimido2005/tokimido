@@ -19,7 +19,11 @@ export const Route = createFileRoute("/r/$raion")({
   },
   head: ({ params }) => {
     const raion = decodeURIComponent(params.raion);
-    return seoHead(translate("ro", "seo.raionTitle", { r: raion }), translate("ro", "seo.raionDesc", { r: raion }));
+    return seoHead(
+      translate("ro", "seo.raionTitle", { r: raion }),
+      translate("ro", "seo.raionDesc", { r: raion }),
+      RAION_NAMES.includes(raion) ? { path: `/r/${encodeURIComponent(raion)}` } : { noindex: true },
+    );
   },
   component: RaionPage,
 });

@@ -12,7 +12,7 @@ import { seoHead } from "@/lib/seo";
 import { formatJobDate } from "@/lib/utils";
 
 export const Route = createFileRoute("/cv/")({
-  head: () => seoHead("CV-ul meu", "CV-ul tău pe Rabotaem.md: îl trimiți la angajări cu un singur clic."),
+  head: () => seoHead("CV-ul meu", "CV-ul tău pe Rabotaem.md: îl trimiți la angajări cu un singur clic.", { noindex: true }),
   component: MyCvPage,
 });
 
