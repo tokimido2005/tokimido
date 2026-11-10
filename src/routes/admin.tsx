@@ -24,9 +24,9 @@ import {
   Users,
 } from "lucide-react";
 import { Ambient } from "@/components/ambient";
-import { GrowthPanel } from "@/components/admin-growth";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Logo } from "@/components/logo";
+import { GrowthPanel } from "@/components/admin-growth";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { LangSwitcher, useT } from "@/lib/locale";
