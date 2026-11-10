@@ -3,7 +3,11 @@ import { Ambient } from "@/components/ambient";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Onboarding } from "@/components/onboarding";
-import { Chatbot } from "@/components/chatbot";
+import { lazy } from "react";
+import { AfterIdle } from "@/components/after-idle";
+
+// The assistant bubble (with all its answers) loads after the page is usable.
+const Chatbot = lazy(() => import("@/components/chatbot").then((m) => ({ default: m.Chatbot })));
 import { TabBar } from "@/components/tab-bar";
 import { SelectedBanner } from "@/components/selected-banner";
 
@@ -33,7 +37,11 @@ export function Shell({ children }: { children: ReactNode }) {
       {children}
       <Footer />
       <Onboarding />
-      {chat ? <Chatbot /> : null}
+      {chat ? (
+        <AfterIdle>
+          <Chatbot />
+        </AfterIdle>
+      ) : null}
       <TabBar />
     </div>
   );

@@ -12,7 +12,7 @@ import { ShareButtons, ShareJob } from "@/components/share-job";
 import { ReportButton } from "@/components/report-dialog";
 import { canRepost } from "@/lib/job-templates";
 import { TrustedBadge } from "@/components/trusted-badge";
-import { askNotifications } from "@/components/notify-prompt";
+import { askNotifications } from "@/components/notify-ask";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
 import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";

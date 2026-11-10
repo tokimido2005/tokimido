@@ -1,4 +1,4 @@
-import { errorText } from "@/lib/i18n";
+import { loadRareRomanian, errorText } from "@/lib/i18n";
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -89,6 +89,7 @@ export const Route = createFileRoute("/admin")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({
     tab: TABS.includes(s.tab as Tab) ? (s.tab as Tab) : undefined,
   }),
+  beforeLoad: () => loadRareRomanian(),
   head: () => seoHead("Admin", "Panou de administrare Rabotaem.md.", { noindex: true }),
   component: AdminPage,
 });

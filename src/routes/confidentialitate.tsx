@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalBlock, LegalPage } from "@/components/legal-page";
 import { seoHead } from "@/lib/seo";
+import { loadRareRomanian } from "@/lib/i18n";
 import { useT } from "@/lib/locale";
 
 export const Route = createFileRoute("/confidentialitate")({
+  beforeLoad: () => loadRareRomanian(),
   head: () => seoHead("Politica de confidențialitate", "Cum Rabotaem.md prelucrează datele personale.", { path: "/confidentialitate" }),
   component: PrivacyPage,
 });

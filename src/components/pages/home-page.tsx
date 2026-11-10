@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/confirm-dialog";
 import { useSavedIds } from "@/components/favorite-button";
 import { listJobs, type Job } from "@/lib/jobs";
 import { logSearch, track } from "@/lib/analytics";
-import { askNotifications } from "@/components/notify-prompt";
+import { askNotifications } from "@/components/notify-ask";
 import { useT } from "@/lib/locale";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { jsonLdHtml, seoHead, SITE_ORIGIN } from "@/lib/seo";

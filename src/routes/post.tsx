@@ -29,7 +29,7 @@ import { combineDateTime, formatJobTime, tomorrowDateInput } from "@/lib/utils";
 import { useT } from "@/lib/locale";
 import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE, normalizeJobDetails } from "@/lib/cv-shared";
 import { JOB_TEMPLATES, type JobTemplate } from "@/lib/job-templates";
-import { askNotifications } from "@/components/notify-prompt";
+import { askNotifications } from "@/components/notify-ask";
 import { HEAVY_CATEGORIES } from "@/lib/age";
 import { getMyCompany } from "@/lib/companies";
 
