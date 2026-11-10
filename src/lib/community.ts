@@ -129,39 +129,6 @@ export const listMyReports = createServerFn({ method: "POST" })
     );
   });
 
-export const listAllReports = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .handler(async ({ context }) => {
-    const { requireAdmin } = await import("./admin.server");
-    await requireAdmin(context.userId);
-    await ensureCommunityTables();
-    const sql = await getSql();
-    return sql.query<Report & { reporter_name: string; target_report_count: number }>(
-      `select r.id, r.reporter_id, r.target_type, r.target_id, r.reason, r.details, r.status, r.created_at,
-              coalesce(nullif(trim(both from concat_ws(' ', p.first_name, p.last_name)), ''), r.reporter_id) as reporter_name,
-              (select count(*)::int from reports r2
-                where r2.target_type = r.target_type and r2.target_id = r.target_id) as target_report_count
-       from reports r
-       left join profiles p on p.user_id = r.reporter_id
-       order by r.created_at desc
-       limit 100`,
-    );
-  });
-
-export const updateReportStatus = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator((d: unknown) =>
-    z.object({ id: z.number().int(), status: z.enum(["pending", "reviewed", "dismissed"]) }).parse(d),
-  )
-  .handler(async ({ context, data }) => {
-    const { requireAdmin } = await import("./admin.server");
-    await requireAdmin(context.userId);
-    await ensureCommunityTables();
-    const sql = await getSql();
-    await sql.query("update reports set status = $1 where id = $2", [data.status, data.id]);
-    return { ok: true as const };
-  });
-
 export const toggleFavorite = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((jobId: number) => jobId)

@@ -3,7 +3,6 @@ import { isRuPath } from "@/lib/lang-paths";
 import { AuthProvider } from "@/lib/auth/provider";
 import { LocaleProvider } from "@/lib/locale";
 import { ThemeProvider, ThemedToaster } from "@/lib/theme";
-import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { WelcomeSplash } from "@/components/welcome-splash";
 import { PwaRegister, PushNavigateListener } from "@/components/pwa-register";
 import { RatingPrompt } from "@/components/rating-prompt";
@@ -86,7 +85,6 @@ function RootDocument() {
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <WelcomeSplash />
-        <PreviewHostBridge />
         <PageTracker />
         <AuthProvider>
           <LocaleProvider>
