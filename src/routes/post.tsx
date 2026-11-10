@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Combobox } from "@/components/combobox";
 import { CaptchaField, type CaptchaValue } from "@/components/captcha-field";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, isCategoryId } from "@/lib/categories";
 import {
   CONTRACT_TYPES,
   OFFICIAL_CATEGORIES,
@@ -15,7 +15,7 @@ import {
   type JobKind,
 } from "@/lib/job-kinds";
 import { RAION_NAMES, localitiesFor } from "@/lib/moldova";
-import { createJob } from "@/lib/jobs";
+import { createJob, getJob, getJobExactLocation } from "@/lib/jobs";
 import { getProfileGate } from "@/lib/profile";
 import { getMyAccess, getMonetizationPublic, type MonetizationAccess } from "@/lib/monetization";
 import { useMoneyMode } from "@/lib/money-mode";
@@ -25,17 +25,19 @@ import { MapPicker } from "@/components/job-map";
 import { track } from "@/lib/analytics";
 import { seoHead } from "@/lib/seo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { combineDateTime, tomorrowDateInput } from "@/lib/utils";
+import { combineDateTime, formatJobTime, tomorrowDateInput } from "@/lib/utils";
 import { useT } from "@/lib/locale";
-import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE } from "@/lib/cv-shared";
+import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE, normalizeJobDetails } from "@/lib/cv-shared";
+import { JOB_TEMPLATES, type JobTemplate } from "@/lib/job-templates";
 import { HEAVY_CATEGORIES } from "@/lib/age";
 import { getMyCompany } from "@/lib/companies";
 
-type Search = { kind?: JobKind };
+type Search = { kind?: JobKind; from?: number };
 
 export const Route = createFileRoute("/post")({
   validateSearch: (s: Record<string, unknown>): Search => ({
     kind: isJobKind(typeof s.kind === "string" ? s.kind : "") ? (s.kind as JobKind) : undefined,
+    from: Number.isInteger(Number(s.from)) && Number(s.from) > 0 ? Number(s.from) : undefined,
   }),
   head: () => seoHead("Postez un anunț", "Publică lucru rapid sau angajare oficială pe Rabotaem.md.", { path: "/post" }),
   component: PostJob,
@@ -61,7 +63,8 @@ function PostJob() {
   const { t } = useT();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
-  const { kind: kindFromUrl } = Route.useSearch();
+  const { kind: kindFromUrl, from: repostFrom } = Route.useSearch();
+  const [repostTitle, setRepostTitle] = useState<string | null>(null);
   const { showPro, mode } = useMoneyMode();
 
   const [kind, setKind] = useState<JobKind | null>(null);
@@ -116,6 +119,82 @@ function PostJob() {
       })
       .catch(() => setMyCompany(null));
   }, [user, kind, myCompany]);
+  // "Repostează": fill the form from one of the user's old listings.
+  useEffect(() => {
+    if (!user || !repostFrom) return;
+    let cancelled = false;
+    getJob({ data: repostFrom })
+      .then((job) => {
+        if (cancelled || !job) return;
+        if (job.user_id !== user.id) {
+          toast.error(t("repost.notYours"));
+          return;
+        }
+        const k: JobKind = job.kind === "oficial" ? "oficial" : "rapid";
+        setKind(k);
+        setTitle(job.title);
+        setDescription(job.description);
+        setRaion(job.raion);
+        setLocality(job.locality);
+        setRepostTitle(job.title);
+        if (k === "oficial") {
+          const d = normalizeJobDetails(job.details);
+          if (OFFICIAL_CATEGORIES.some((c) => c.id === job.category)) setOficialCat(job.category as typeof oficialCat);
+          setCompany(job.company ?? "");
+          if ((CONTRACT_TYPES as readonly string[]).includes(job.contract_type ?? "")) setContract(job.contract_type as typeof contract);
+          if ((SCHEDULES as readonly string[]).includes(job.schedule ?? "")) setSchedule(job.schedule as typeof schedule);
+          setNegotiable(job.payment_mdl <= 0);
+          setSalary(job.payment_mdl > 0 ? String(job.payment_mdl) : "8000");
+          setSalaryMax(d.salary_max > 0 ? String(d.salary_max) : "");
+          setOpenings(String(Math.max(1, job.people_needed)));
+          setDuties(d.responsibilities);
+          setRequirements(d.requirements);
+          setOffer(d.offer);
+          setExpNeeded(d.experience as typeof expNeeded);
+          setEduNeeded(d.education as typeof eduNeeded);
+          setLangsNeeded(d.languages as typeof langsNeeded);
+          setAddress(d.address);
+          setHrName(d.hr_name);
+        } else {
+          if (isCategoryId(job.category)) setCategory(job.category);
+          setPayment(String(job.payment_mdl));
+          const mins = job.duration_minutes || 60;
+          if (mins % 60 === 0) {
+            setDuration(String(mins / 60));
+            setUnit("hours");
+          } else {
+            setDuration(String(mins));
+            setUnit("minutes");
+          }
+          const n = Math.max(1, job.people_needed);
+          setPeople(n >= 6 ? "6+" : String(n));
+          if (n >= 6) setPeopleCustom(String(n));
+          setAdultsChoice(job.adults_only ?? null);
+          if (job.starts_at) setWorkTime(formatJobTime(job.starts_at));
+        }
+        getJobExactLocation({ data: { jobId: job.id } })
+          .then((loc) => {
+            if (!cancelled && loc.visible && loc.lat != null && loc.lng != null) setPin({ lat: loc.lat, lng: loc.lng });
+          })
+          .catch(() => {});
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user, repostFrom, t]);
+
+  function applyTemplate(tpl: JobTemplate) {
+    setTitle(t(`tpl.${tpl.id}.t`));
+    setDescription(t(`tpl.${tpl.id}.d`));
+    setCategory(tpl.category);
+    setDuration(String(tpl.hours));
+    setUnit("hours");
+    setPeople(String(tpl.people));
+    setAdultsChoice(null);
+    toast.success(t("tpl.applied"));
+  }
+
   const adultsOnly = adultsChoice ?? (HEAVY_CATEGORIES as readonly string[]).includes(category);
 
   useEffect(() => {
@@ -355,6 +434,30 @@ function PostJob() {
                 {t("kind.change")}
               </button>
             </div>
+            {repostTitle ? (
+              <p className="mt-4 rounded-2xl bg-brand/10 px-4 py-3 text-sm leading-relaxed text-navy ring-1 ring-brand/20" data-testid="repost-banner">
+                {t("repost.banner", { t: repostTitle })}
+              </p>
+            ) : null}
+            {kind === "rapid" && !repostTitle ? (
+              <section className="mt-4 rounded-[28px] p-4 glass sm:p-5" data-testid="templates">
+                <p className="text-sm font-semibold text-navy">{t("tpl.pick")}</p>
+                <p className="mt-0.5 text-xs text-muted">{t("tpl.hint")}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {JOB_TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      data-tpl={tpl.id}
+                      onClick={() => applyTemplate(tpl)}
+                      className="h-10 rounded-full bg-white/60 px-3.5 text-sm font-medium text-navy ring-1 ring-navy/10 hover:bg-white dark:bg-white/10"
+                    >
+                      {t(`tpl.${tpl.id}.l`)}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ) : null}
             <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-4 rounded-[32px] p-5 glass sm:p-7">
               <div className="rounded-2xl bg-orange/10 px-4 py-3 text-sm leading-relaxed text-navy ring-1 ring-orange/20">
                 {t("post.ageWarning")}
