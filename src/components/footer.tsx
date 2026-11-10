@@ -5,9 +5,11 @@ import { useMoneyMode } from "@/lib/money-mode";
 import { CATEGORIES } from "@/lib/categories";
 import { RAION_NAMES } from "@/lib/moldova";
 import { LANDINGS } from "@/lib/landings";
+import { raionLabel } from "@/lib/lang-paths";
 
 export function Footer() {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const ru = locale === "ru";
   const { showPro } = useMoneyMode();
   return (
     <footer className="mt-20 px-4 pb-[max(2.5rem,calc(2.5rem+env(safe-area-inset-bottom)))] sm:px-6">
@@ -22,10 +24,10 @@ export function Footer() {
           <div className="flex flex-wrap gap-10 text-sm">
             <div className="flex flex-col gap-2">
               <span className="font-semibold text-navy">{t("footer.platform")}</span>
-              <Link to="/" hash="joburi" className="text-muted hover:text-navy">
+              <Link to={ru ? "/ru" : "/"} hash="joburi" className="text-muted hover:text-navy">
                 {t("nav.jobs")}
               </Link>
-              <Link to="/angajare" className="text-muted hover:text-navy">
+              <Link to={ru ? "/ru/angajare" : "/angajare"} className="text-muted hover:text-navy">
                 {t("nav.angajare")}
               </Link>
               <Link to="/post" className="text-muted hover:text-navy">
@@ -76,7 +78,7 @@ export function Footer() {
               {LANDINGS.map((l) => (
                 <Link
                   key={l.slug}
-                  to="/lucru/$tema"
+                  to={ru ? "/ru/lucru/$tema" : "/lucru/$tema"}
                   params={{ tema: l.slug }}
                   className="text-muted hover:text-navy"
                 >
@@ -91,7 +93,7 @@ export function Footer() {
               {CATEGORIES.map((c) => (
                 <Link
                   key={c.id}
-                  to="/c/$category"
+                  to={ru ? "/ru/c/$category" : "/c/$category"}
                   params={{ category: c.id }}
                   className="text-muted hover:text-navy"
                 >
@@ -104,8 +106,13 @@ export function Footer() {
             <p className="text-sm font-semibold text-navy">{t("footer.seoPlaces")}</p>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
               {RAION_NAMES.slice(0, 16).map((r) => (
-                <Link key={r} to="/r/$raion" params={{ raion: r }} className="text-muted hover:text-navy">
-                  {r}
+                <Link
+                  key={r}
+                  to={ru ? "/ru/r/$raion" : "/r/$raion"}
+                  params={{ raion: r }}
+                  className="text-muted hover:text-navy"
+                >
+                  {raionLabel(r, locale)}
                 </Link>
               ))}
             </div>

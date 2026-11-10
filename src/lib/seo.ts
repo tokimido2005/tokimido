@@ -6,6 +6,11 @@ type SeoOptions = {
   path?: string;
   /** Keep the page out of Google (private or thin pages). */
   noindex?: boolean;
+  /**
+   * Romanian path of a page that also exists under /ru: adds hreflang links
+   * so Google shows the Romanian or Russian version to the right people.
+   */
+  twin?: string;
 };
 
 /** Absolute URL on the public site; each path segment stays as given. */
@@ -25,7 +30,16 @@ export function seoHead(title: string, description: string, opts: SeoOptions = {
       ...(url ? [{ property: "og:url", content: url }] : []),
       ...(opts.noindex ? [{ name: "robots", content: "noindex" }] : []),
     ],
-    links: url && !opts.noindex ? [{ rel: "canonical", href: url }] : [],
+    links: [
+      ...(url && !opts.noindex ? [{ rel: "canonical", href: url }] : []),
+      ...(opts.twin && !opts.noindex
+        ? [
+            { rel: "alternate", hrefLang: "ro", href: siteUrl(opts.twin) },
+            { rel: "alternate", hrefLang: "ru", href: siteUrl(opts.twin === "/" ? "/ru" : `/ru${opts.twin}`) },
+            { rel: "alternate", hrefLang: "x-default", href: siteUrl(opts.twin) },
+          ]
+        : []),
+    ],
   };
 }
 

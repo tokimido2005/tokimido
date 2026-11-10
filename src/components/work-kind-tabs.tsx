@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import type { JobKind } from "@/lib/job-kinds";
 
 export function WorkKindTabs({ active }: { active: JobKind }) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const ru = locale === "ru";
   return (
     <div
       className="grid grid-cols-2 gap-1 rounded-[24px] p-1.5 glass"
@@ -14,7 +15,7 @@ export function WorkKindTabs({ active }: { active: JobKind }) {
       data-testid="work-kind-tabs"
     >
       <Link
-        to="/"
+        to={ru ? "/ru" : "/"}
         hash="joburi"
         role="tab"
         aria-selected={active === "rapid"}
@@ -28,7 +29,7 @@ export function WorkKindTabs({ active }: { active: JobKind }) {
         {t("kind.tabRapid")}
       </Link>
       <Link
-        to="/angajare"
+        to={ru ? "/ru/angajare" : "/angajare"}
         role="tab"
         aria-selected={active === "oficial"}
         data-testid="work-tab-oficial"
