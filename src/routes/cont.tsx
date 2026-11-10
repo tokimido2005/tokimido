@@ -1,7 +1,7 @@
 import { errorText } from "@/lib/i18n";
 import { useCallback, useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { Bell, Camera, ChevronRight } from "lucide-react";
+import { Bell, Camera, ChevronRight, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { JobCard } from "@/components/job-card";
@@ -29,6 +29,7 @@ import { useMoneyMode } from "@/lib/money-mode";
 import { ProBadge } from "@/components/paywall";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
+import { canRepost } from "@/lib/job-templates";
 import { deleteMyAccount, isDeleteConfirmWord } from "@/lib/account-delete";
 import { signOut } from "@/lib/auth/client";
 
@@ -344,13 +345,20 @@ function Account() {
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
                 {jobs.map((job, i) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={i}
-                    saved={savedIds.has(job.id)}
-                    onSavedChange={setSaved}
-                  />
+                  <div key={job.id} className="flex flex-col gap-2">
+                    <JobCard job={job} index={i} saved={savedIds.has(job.id)} onSavedChange={setSaved} />
+                    {canRepost(job) ? (
+                      <Link
+                        to="/post"
+                        search={{ from: job.id }}
+                        data-testid="repost-link"
+                        className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-white"
+                      >
+                        <RotateCcw className="size-4" />
+                        {t("repost.btn")}
+                      </Link>
+                    ) : null}
+                  </div>
                 ))}
               </div>
             )}

@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Phone,
   RefreshCw,
+  RotateCcw,
   Settings2,
   Trash2,
   UserRound,
@@ -36,6 +37,7 @@ import {
   type InboxJob,
 } from "@/lib/jobs";
 import { canComplete, canReactivate, remainingSlots } from "@/lib/job-status";
+import { canRepost } from "@/lib/job-templates";
 import { cn, combineDateTime, formatMdl, toDateInputValue, toTimeInputValue, tomorrowDateInput } from "@/lib/utils";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listMyRatingsGiven, listPendingRatings } from "@/lib/ratings";
@@ -479,6 +481,16 @@ function JobInboxCard({
                 <Ban className="size-4" />
                 {t("confirm.cancelJob")}
               </button>
+            ) : null}
+            {canRepost(job) ? (
+              <Link
+                to="/post"
+                search={{ from: job.id }}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white/70 px-4 text-base font-medium text-navy ring-1 ring-navy/15 dark:bg-white/10"
+              >
+                <RotateCcw className="size-4" />
+                {t("repost.btn")}
+              </Link>
             ) : null}
             <button
               type="button"

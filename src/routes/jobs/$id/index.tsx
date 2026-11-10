@@ -1,7 +1,7 @@
 import { errorText } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Building2, Clock, Eye, MapPin, ShieldCheck, TriangleAlert, Users, Wallet } from "lucide-react";
+import { ArrowLeft, Building2, Clock, Eye, MapPin, RotateCcw, ShieldCheck, TriangleAlert, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { JobCard } from "@/components/job-card";
@@ -10,6 +10,7 @@ import { JobWhen } from "@/components/job-when";
 import { RatingBadge } from "@/components/stars";
 import { ShareButtons, ShareJob } from "@/components/share-job";
 import { ReportButton } from "@/components/report-dialog";
+import { canRepost } from "@/lib/job-templates";
 import { FavoriteButton, useSavedIds } from "@/components/favorite-button";
 import { applyToJob, getJob, getMyApplicationForJob, listJobs, recordJobView, type Job } from "@/lib/jobs";
 import { AppliedStatus, SelectedPanel, type MyAppInfo } from "@/components/my-application-status";
@@ -351,6 +352,17 @@ function JobPage() {
             />
             <ShareJob job={job} />
             {!isOwner ? <ReportButton targetType="job" targetId={String(job.id)} /> : null}
+            {isOwner && canRepost(job) ? (
+              <Link
+                to="/post"
+                search={{ from: job.id }}
+                data-testid="repost-job"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-3 text-sm font-semibold text-white"
+              >
+                <RotateCcw className="size-3.5" />
+                {t("repost.btn")}
+              </Link>
+            ) : null}
           </div>
         </div>
 
