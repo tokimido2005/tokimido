@@ -104,9 +104,9 @@ export function BanGate({ children }: { children: ReactNode }) {
       />
     );
   }
-  if (user && ban === "unknown") {
-    return <div className="min-h-dvh bg-canvas" data-testid="ban-checking" aria-hidden />;
-  }
+  // While the ban check is in flight the page stays visible: hiding it caused a
+  // solid-colour flash on every load for signed-in users. Known bans are shown
+  // instantly from the local cache, and the server rejects banned users' actions.
   return <>{children}</>;
 }
 
