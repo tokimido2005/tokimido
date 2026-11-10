@@ -24,6 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { Ambient } from "@/components/ambient";
+import { GrowthPanel } from "@/components/admin-growth";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Logo } from "@/components/logo";
 import { signOut } from "@/lib/auth/client";
@@ -365,6 +366,7 @@ function OverviewPane() {
           ))}
         </div>
       )}
+      <GrowthPanel />
     </div>
   );
 }

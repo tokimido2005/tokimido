@@ -11,7 +11,7 @@ import { useSavedIds } from "@/components/favorite-button";
 import { listJobs, type Job } from "@/lib/jobs";
 import { seoHead } from "@/lib/seo";
 import { useT } from "@/lib/locale";
-import { track } from "@/lib/analytics";
+import { logSearch, track } from "@/lib/analytics";
 
 
 export function angajareHead(locale: Locale) {
@@ -71,7 +71,10 @@ export function AngajarePage({ loaded }: { loaded: AngajareData }) {
           if (!cancelled) {
             setJobs(rows);
             setError(null);
-            if (query.q) track("job_search", { q: query.q });
+            if (query.q) {
+              track("job_search", { q: query.q });
+              logSearch(query.q, "oficial", rows.length);
+            }
           }
         })
         .catch((err: unknown) => {

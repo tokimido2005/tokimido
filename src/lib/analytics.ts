@@ -25,3 +25,17 @@ export function track(event: AnalyticsEvent, props: Record<string, string | numb
   window.gtag?.("event", event, props);
   window.rabotaemTrack?.(event, props);
 }
+
+let searchTimer: ReturnType<typeof setTimeout> | undefined;
+
+/**
+ * Log a finished site search (for "what people look for" in admin stats).
+ * Waits until typing stops so "m", "mu", "mut…" count once as "mutări".
+ */
+export function logSearch(q: string, kind: "rapid" | "oficial", results: number) {
+  if (typeof window === "undefined") return;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    void import("@/components/page-tracker").then((m) => m.sendHit({ t: "search", q, kind, n: results }));
+  }, 1500);
+}

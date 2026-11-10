@@ -608,6 +608,8 @@ async function cleanupOldLogs() {
   for (const q of [
     "delete from sms_log where created_at < now() - interval '180 days'",
     "delete from rate_limits where created_at < now() - interval '30 days'",
+    "delete from page_views where created_at < now() - interval '90 days'",
+    "delete from site_searches where created_at < now() - interval '90 days'",
   ]) {
     try {
       await sql.query(q);
@@ -1648,10 +1650,12 @@ export const updateApplicationStatus = createServerFn({ method: "POST" })
     if (data.status === "selected" && row.selected_count >= Math.max(1, row.people_needed || 1)) {
       throw new Error("Toate locurile sunt deja ocupate");
     }
-    await sql.query(`update applications set status = $1 where id = $2`, [
-      data.status,
-      data.applicationId,
-    ]);
+    await sql.query(
+      `update applications set status = $1,
+         selected_at = case when $1 = 'selected' then now() else selected_at end
+       where id = $2`,
+      [data.status, data.applicationId],
+    );
     const official = row.kind === "oficial";
     if (official && (data.status === "selected" || data.status === "declined")) {
       const who = row.company ? `${row.company}` : "Angajatorul";
