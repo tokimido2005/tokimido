@@ -42,60 +42,81 @@ function money(n: number, kind: string) {
 }
 
 /** Send a new job to everyone whose alerts match it (Telegram + browser, 5/day, rest in digest). */
+/** Alerts are read and sent in pages of this size. */
+const ALERT_PAGE = 500;
+
 export async function dispatchJobAlert(job: NewJob) {
   try {
     const sql = await getSql();
-    const rows = await sql.query<{
-      user_id: string;
-      via_push: boolean;
-      via_telegram: boolean;
-      birth_year: number | null;
-      sent_today: number;
-    }>(
-      `select a.user_id, a.via_push, a.via_telegram, p.birth_year,
-              (select count(*)::int from alert_log l
-                where l.user_id = a.user_id and l.channel = 'job'
-                  and l.sent_at > now() - interval '20 hours') as sent_today
-       from job_alerts a
-       left join profiles p on p.user_id = a.user_id
-       where a.paused = false
-         and a.user_id <> $1
-         and $2 = any(a.kinds)
-         and (cardinality(a.raions) = 0 or $3 = any(a.raions))
-         and ($5 or cardinality(a.categories) = 0 or $4 = any(a.categories))
-       limit 500`,
-      [job.exceptUserId, job.kind, job.raion, job.category, Boolean(job.priority)],
-    );
-    if (rows.length === 0) return;
-
-    const eligible = rows.filter((r) => {
-      if (!job.adultsOnly) return true;
-      const age = ageFromYear(r.birth_year);
-      return age === null || age >= ADULT_AGE;
-    });
-    const now = eligible.filter((r) => r.sent_today < DAILY_ALERTS);
-    const later = eligible.filter((r) => r.sent_today >= DAILY_ALERTS);
-
-    for (const r of later) {
-      await sql.query(`insert into alert_queue (user_id, job_id) values ($1, $2) on conflict do nothing`, [
-        r.user_id,
-        job.jobId,
-      ]);
-    }
-    if (now.length === 0) return;
-
     const place = [job.locality, job.raion].filter(Boolean).join(", ");
     const payload = {
-      title: job.headline || (job.kind === "oficial" ? "Angajare nouă pentru tine" : "Lucru nou pentru tine"),
+      title:
+        job.headline ||
+        (job.kind === "oficial" ? "Angajare nouă pentru tine" : "Lucru nou pentru tine"),
       body: [job.title, place, money(job.payment, job.kind)].filter(Boolean).join(" · "),
       url: `/jobs/${job.jobId}`,
     };
     const { notifyUsers } = await import("./push.server");
     const { notifyTelegram } = await import("./telegram.server");
-    await notifyUsers(now.filter((r) => r.via_push).map((r) => r.user_id), payload, job.exceptUserId);
-    await notifyTelegram(now.filter((r) => r.via_telegram).map((r) => r.user_id), payload);
-    for (const r of now) {
-      await sql.query(`insert into alert_log (user_id, job_id, channel) values ($1, $2, 'job')`, [r.user_id, job.jobId]);
+    // Everyone whose alert matches, in pages of 500 (ordered by id), so a
+    // big city with thousands of alerts still reaches the last person.
+    let after = "";
+    for (let page = 0; page < 200; page += 1) {
+      const rows = await sql.query<{
+        user_id: string;
+        via_push: boolean;
+        via_telegram: boolean;
+        birth_year: number | null;
+        sent_today: number;
+      }>(
+        `select a.user_id, a.via_push, a.via_telegram, p.birth_year,
+                (select count(*)::int from alert_log l
+                  where l.user_id = a.user_id and l.channel = 'job'
+                    and l.sent_at > now() - interval '20 hours') as sent_today
+         from job_alerts a
+         left join profiles p on p.user_id = a.user_id
+         where a.paused = false
+           and a.user_id <> $1
+           and $2 = any(a.kinds)
+           and (cardinality(a.raions) = 0 or $3 = any(a.raions))
+           and ($5 or cardinality(a.categories) = 0 or $4 = any(a.categories))
+           and a.user_id > $6
+         order by a.user_id
+         limit ${ALERT_PAGE}`,
+        [job.exceptUserId, job.kind, job.raion, job.category, Boolean(job.priority), after],
+      );
+      if (rows.length === 0) break;
+      after = rows[rows.length - 1].user_id;
+
+      const eligible = rows.filter((r) => {
+        if (!job.adultsOnly) return true;
+        const age = ageFromYear(r.birth_year);
+        return age === null || age >= ADULT_AGE;
+      });
+      const now = eligible.filter((r) => r.sent_today < DAILY_ALERTS);
+      const later = eligible.filter((r) => r.sent_today >= DAILY_ALERTS);
+      if (later.length > 0) {
+        await sql.query(
+          `insert into alert_queue (user_id, job_id) select unnest($1::text[]), $2 on conflict do nothing`,
+          [later.map((r) => r.user_id), job.jobId],
+        );
+      }
+      if (now.length > 0) {
+        await notifyUsers(
+          now.filter((r) => r.via_push).map((r) => r.user_id),
+          payload,
+          job.exceptUserId,
+        );
+        await notifyTelegram(
+          now.filter((r) => r.via_telegram).map((r) => r.user_id),
+          payload,
+        );
+        await sql.query(
+          `insert into alert_log (user_id, job_id, channel) select unnest($1::text[]), $2, 'job'`,
+          [now.map((r) => r.user_id), job.jobId],
+        );
+      }
+      if (rows.length < ALERT_PAGE) break;
     }
   } catch (err) {
     console.error("[alerts] dispatch", err);
@@ -112,34 +133,48 @@ export async function maybeSendDigests() {
   if (hour < DIGEST_HOUR) return;
   try {
     const sql = await getSql();
-    const users = await sql.query<{ user_id: string; via_push: boolean; via_telegram: boolean; n: number }>(
-      `select q.user_id, coalesce(a.via_push, true) as via_push, coalesce(a.via_telegram, true) as via_telegram,
+    for (let round = 0; round < 40; round += 1) {
+      const users = await sql.query<{
+        user_id: string;
+        via_push: boolean;
+        via_telegram: boolean;
+        n: number;
+      }>(
+        `select q.user_id, coalesce(a.via_push, true) as via_push, coalesce(a.via_telegram, true) as via_telegram,
               count(*)::int as n
        from alert_queue q
        left join job_alerts a on a.user_id = q.user_id
        where coalesce(a.paused, false) = false
        group by q.user_id, a.via_push, a.via_telegram
        limit 500`,
-    );
-    const { notifyUsers } = await import("./push.server");
-    const { notifyTelegram } = await import("./telegram.server");
-    for (const u of users) {
-      const jobs = await sql.query<{ id: number; title: string; raion: string }>(
-        `select j.id, j.title, j.raion from alert_queue q join jobs j on j.id = q.job_id
+      );
+      const { notifyUsers } = await import("./push.server");
+      const { notifyTelegram } = await import("./telegram.server");
+      for (const u of users) {
+        const jobs = await sql.query<{ id: number; title: string; raion: string }>(
+          `select j.id, j.title, j.raion from alert_queue q join jobs j on j.id = q.job_id
          where q.user_id = $1 and j.status = 'open'
          order by q.created_at desc limit 8`,
-        [u.user_id],
-      );
-      await sql.query(`delete from alert_queue where user_id = $1`, [u.user_id]);
-      if (jobs.length === 0) continue;
-      const payload = {
-        title: `Încă ${u.n} ${u.n === 1 ? "anunț nou" : "anunțuri noi"} pentru tine azi`,
-        body: jobs.map((j) => `• ${j.title} (${j.raion})`).join("\n"),
-        url: jobs.length === 1 ? `/jobs/${jobs[0].id}` : "/alerte",
-      };
-      if (u.via_push) await notifyUsers([u.user_id], { ...payload, body: jobs.map((j) => j.title).join(" · ") });
-      if (u.via_telegram) await notifyTelegram([u.user_id], payload);
-      await sql.query(`insert into alert_log (user_id, channel) values ($1, 'digest')`, [u.user_id]);
+          [u.user_id],
+        );
+        await sql.query(`delete from alert_queue where user_id = $1`, [u.user_id]);
+        if (jobs.length === 0) continue;
+        const payload = {
+          title: `Încă ${u.n} ${u.n === 1 ? "anunț nou" : "anunțuri noi"} pentru tine azi`,
+          body: jobs.map((j) => `• ${j.title} (${j.raion})`).join("\n"),
+          url: jobs.length === 1 ? `/jobs/${jobs[0].id}` : "/alerte",
+        };
+        if (u.via_push)
+          await notifyUsers([u.user_id], {
+            ...payload,
+            body: jobs.map((j) => j.title).join(" · "),
+          });
+        if (u.via_telegram) await notifyTelegram([u.user_id], payload);
+        await sql.query(`insert into alert_log (user_id, channel) values ($1, 'digest')`, [
+          u.user_id,
+        ]);
+      }
+      if (users.length < 500) break;
     }
     // Old log rows are not needed after a month.
     await sql.query(`delete from alert_log where sent_at < now() - interval '30 days'`);
