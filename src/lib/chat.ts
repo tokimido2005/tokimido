@@ -30,7 +30,7 @@ export const CHAT_COPY: Record<
     title: "Asistent",
     subtitle: "Rabotaem.md",
     greeting:
-      "Bună! Te ajut să înțelegi cum funcționează Rabotaem.md — postare, aplicare, programări, evaluări, anulare sau reactivare. Cu ce vrei să începem?",
+      "Bună! Te ajut cu orice despre Rabotaem.md: cum găsești un kalîm sau o angajare, cum aplici, cum postezi, cum alegi oamenii, CV-ul, verificarea telefonului sau siguranța. Cu ce începem?",
     placeholder: "Scrie o întrebare…",
     send: "Trimite",
     typing: "Se scrie…",
@@ -39,9 +39,10 @@ export const CHAT_COPY: Record<
     error: "Nu am putut răspunde acum. Încearcă din nou peste o clipă.",
     limit: "Ai atins limita de mesaje pentru această sesiune. Poți începe o conversație nouă.",
     suggestions: [
-      "Ce diferență e între lucru rapid și angajare?",
-      "Cum postez un job?",
-      "Cum aplic la un job?",
+      "Cum postez un kalîm?",
+      "Cum aplic și când mă sună?",
+      "Cum aleg oamenii care au aplicat?",
+      "Cum fac un CV?",
       "Este gratuit?",
     ],
   },
@@ -49,7 +50,7 @@ export const CHAT_COPY: Record<
     title: "Помощник",
     subtitle: "Rabotaem.md",
     greeting:
-      "Здравствуйте! Помогу разобраться, как работает Rabotaem.md — размещение, отклики, расписание, оценки, отмена и реактивация. С чего начнём?",
+      "Здравствуйте! Помогу во всём, что касается Rabotaem.md: как найти калым или официальную работу, откликнуться, разместить объявление, выбрать людей, сделать резюме, подтвердить телефон и не попасться мошенникам. С чего начнём?",
     placeholder: "Напишите вопрос…",
     send: "Отправить",
     typing: "Печатает…",
@@ -58,9 +59,10 @@ export const CHAT_COPY: Record<
     error: "Сейчас не удалось ответить. Попробуйте ещё раз через мгновение.",
     limit: "Достигнут лимит сообщений за эту сессию. Можно начать новый разговор.",
     suggestions: [
-      "Чем разовая работа отличается от найма?",
-      "Как разместить работу?",
-      "Как откликнуться?",
+      "Как разместить калым?",
+      "Как откликнуться и когда мне позвонят?",
+      "Как выбрать людей из откликов?",
+      "Как сделать резюме?",
       "Это бесплатно?",
     ],
   },
@@ -68,32 +70,40 @@ export const CHAT_COPY: Record<
 
 const ANSWERS: Record<string, Record<ChatLang, string>> = {
   kinds: {
-    ro: "Sunt două secțiuni, niciodată amestecate. Lucru rapid (kalîm): joburi scurte, plată pe loc, cu dată, oră, câți oameni, durată și sumă. Angajare oficială: firmă, salariu lunar, program, oraș și tip de contract. Când postezi, primul pas e «Ce fel de anunț pui?». Când cauți: «Caut lucru rapid» pe pagina principală sau «Caut angajare» pe pagina de angajare.",
-    ru: "Есть два раздела, они никогда не смешиваются. Разовая работа (калым): короткие задания с оплатой на месте — дата, время, сколько людей, длительность и сумма. Официальный найм: компания, зарплата, график, город и тип договора. При публикации первый шаг — «Какое объявление вы размещаете?». Поиск: разовая работа на главной, официальные вакансии — на отдельной странице.",
+    ro: "Pe Rabotaem.md sunt două feluri de anunțuri, în liste separate:\n• Lucru rapid (kalîm): o lucrare scurtă, de câteva ore sau o zi, cu dată, oră, câți oameni, durată și suma plătită pe loc. E pe pagina principală.\n• Angajare oficială: un loc de muncă la o firmă, cu salariu lunar, program, oraș și tip de contract. E pe pagina Angajare, unde trimiți CV-ul.",
+    ru: "На Rabotaem.md два вида объявлений, в отдельных лентах:\n• Быстрая работа (калым): короткая работа на несколько часов или день, с датой, временем, количеством людей, длительностью и оплатой на месте. Она на главной странице.\n• Официальная работа: место в компании с месячной зарплатой, графиком, городом и типом договора. Она на странице «Найм», туда отправляют резюме.",
   },
   post: {
-    ro: "Apasă Postează. Primul pas e obligatoriu: «Ce fel de anunț pui?» — Lucru rapid sau Angajare oficială. Pentru lucru rapid completezi dată, oră, câți oameni, durata și suma (plată pe loc). Pentru angajare: firmă, salariu, program, oraș și tip de contract. Anunțul apare imediat în lista corespunzătoare, nu în ambele. Poți publica cel mult 3 anunțuri în 2 ore. Rabotaem.md nu ia comision.",
-    ru: "Нажмите «Разместить». Первый шаг обязателен: какой тип объявления — разовая работа или официальный найм. Для разовой работы укажите дату, время, сколько людей, длительность и сумму (оплата на месте). Для найма: компания, зарплата, график, город и тип договора. Объявление появляется сразу в своей ленте, не в обеих. Не больше 3 объявлений за 2 часа. Комиссии нет.",
+    ro: "Apasă Postează și alege întâi tipul: Lucru rapid sau Angajare oficială.\n• La kalîm poți porni de la un șablon (Mutare, Curățenie, Cosit etc.), apoi completezi suma, locul, data, ora, durata și câți oameni îți trebuie. Poți pune și punctul exact pe hartă: îl văd doar oamenii pe care îi selectezi.\n• La angajare completezi firma, salariul (de la – până la), programul, contractul, responsabilitățile, cerințele și ce oferi.\nAnunțul apare imediat. Ai nevoie de cont cu telefonul verificat. Limita este de 3 anunțuri în 2 ore. După publicare îl poți trimite din pagină pe Viber, Telegram, WhatsApp sau Facebook.",
+    ru: "Нажмите «Разместить» и сначала выберите тип: быстрая работа или официальная.\n• Для калыма можно начать с шаблона (переезд, уборка, покос и т.д.), затем указать сумму, место, дату, время, длительность и сколько людей нужно. Можно отметить точку на карте — её видят только выбранные вами люди.\n• Для официальной работы укажите компанию, зарплату (от – до), график, договор, обязанности, требования и что вы предлагаете.\nОбъявление появляется сразу. Нужен аккаунт с подтверждённым телефоном. Лимит — 3 объявления за 2 часа. После публикации его можно отправить со страницы в Viber, Telegram, WhatsApp или Facebook.",
   },
   apply: {
-    ro: "Ca să aplici, deschizi un anunț activ și apeși Aplică. Ai nevoie de cont. Completezi prenumele, numele, telefonul și un mesaj scurt (când poți ajunge, experiență). Cel care a postat te contactează direct — telefonul rămâne ascuns până aplici sau lucrați împreună. Nu poți aplica la propriul anunț, nici la unul anulat, expirat, finalizat sau fără locuri. Aplicațiile tale sunt în Contul meu; le poți retrage cu «Nu mai pot veni».",
-    ru: "Чтобы откликнуться, откройте активное объявление и нажмите «Откликнуться». Нужен аккаунт. Укажите имя, фамилию, телефон и короткое сообщение (когда можете прийти, опыт). Автор свяжется с вами напрямую — телефон скрыт, пока вы не откликнетесь или не поработаете вместе. Нельзя откликаться на своё объявление, а также на отменённое, истёкшее, завершённое или без свободных мест. Ваши отклики — в «Мой аккаунт»; их можно снять кнопкой «Больше не могу прийти».",
+    ro: "Deschizi anunțul și apeși Aplică. Ai nevoie de cont cu telefonul verificat.\n• La kalîm scrii un mesaj scurt: când poți veni și ce experiență ai.\n• La angajare trimiți CV-ul: cel făcut pe site sau un fișier (PDF, Word, poză).\nCel care a postat vede aplicația și te sună. Când te selectează sau te invită la interviu, primești notificare, iar în pagina anunțului apare telefonul lui. Răspunsurile le vezi în Aplicații → „La care am aplicat”. Te poți retrage cu „Nu mai pot veni”.",
+    ru: "Откройте объявление и нажмите «Откликнуться». Нужен аккаунт с подтверждённым телефоном.\n• Для калыма напишите короткое сообщение: когда можете прийти и какой у вас опыт.\n• Для официальной работы отправьте резюме — сделанное на сайте или файл (PDF, Word, фото).\nАвтор видит отклик и звонит вам. Когда вас выбирают или приглашают на собеседование, приходит уведомление, а на странице объявления появляется его телефон. Ответы — в «Заявки» → «Мои отклики». Отказаться можно кнопкой «Не смогу прийти».",
+  },
+  manage: {
+    ro: "Oamenii care au aplicat la anunțurile tale sunt în Aplicații → „Primite”. Apeși pe un nume și ai butoanele mari:\n• Sună: îl suni direct.\n• Selectează (verde): l-ai ales; primește notificare și vede telefonul tău.\n• Refuză (roșu): cu confirmare; primește notificare că nu a fost ales.\nVezi mereu câte locuri sunt ocupate. La angajări poți invita la interviu, marca „Angajat” și ține notițe private. Din „Gestionează anunțul” îl marchezi ca finalizat, îl anulezi, îl ștergi, îl reactivezi cu o dată nouă sau îl repostezi.",
+    ru: "Люди, откликнувшиеся на ваши объявления, — в «Заявки» → «Полученные». Нажмите на имя — появятся крупные кнопки:\n• «Позвонить»: звоните напрямую.\n• «Выбрать» (зелёная): человек получает уведомление и видит ваш телефон.\n• «Отказать» (красная): с подтверждением; человек получает уведомление.\nВсегда видно, сколько мест занято. Для официальной работы можно пригласить на собеседование, отметить «Принят» и вести личные заметки. В «Управлять объявлением» можно завершить, отменить, удалить, возобновить с новой датой или разместить снова.",
+  },
+  repost: {
+    ro: "Ca să pui din nou un anunț vechi (finalizat, expirat sau anulat), apeși „Repostează”: în Contul meu → Anunțurile mele, în Aplicații → Gestionează sau pe pagina anunțului. Formularul se completează cu tot ce aveai, alegi doar data nouă și publici. Un anunț expirat îl poți și reactiva din Aplicații, cu o dată nouă.",
+    ru: "Чтобы снова разместить старое объявление (завершённое, истёкшее или отменённое), нажмите «Разместить снова»: в «Мой аккаунт» → «Мои объявления», в «Заявки» → «Управлять объявлением» или на странице объявления. Форма заполнится как раньше — выберите новую дату и опубликуйте. Истёкшее объявление можно также возобновить в «Заявках» с новой датой.",
   },
   rating: {
-    ro: "După ce autorul marchează jobul ca finalizat (din Aplicații), ambele părți pot da 1–5 stele și un comentariu scurt, din inbox sau din Contul meu. Evaluările apar pe profilul public. Recenziile se lasă doar după o colaborare reală, finalizată.",
-    ru: "Когда автор отмечает работу как завершённую (в разделе «Заявки»), обе стороны ставят 1–5 звёзд и короткий комментарий — из входящих или из «Мой аккаунт». Оценки видны в публичном профиле. Отзыв можно оставить только после реальной завершённой работы.",
+    ro: "După ce lucrul e marcat ca finalizat, ambele părți pot lăsa 1–5 stele și un comentariu scurt. Recenziile apar pe profilul public și îi ajută pe ceilalți să aleagă. Poți evalua doar după o colaborare reală.",
+    ru: "Когда работа отмечена как завершённая, обе стороны могут поставить 1–5 звёзд и оставить короткий комментарий. Отзывы видны в публичном профиле и помогают другим выбирать. Оценивать можно только после реальной совместной работы.",
   },
   schedule: {
-    ro: "La lucrul rapid, fiecare anunț are dată și oră de începere — obligatoriu în viitor — și expiră automat după începere. Poți filtra Astăzi sau Urgent. Angajarea oficială nu are dată de expirare: rămâne deschisă până e ocupată sau anulată, cu program (full-time, part-time, ture) în loc de oră.",
-    ru: "У разовой работы есть дата и время начала — обязательно в будущем — и объявление истекает после старта. Можно фильтровать «Сегодня» или «Срочно». Официальный найм не истекает по дате: остаётся открытым, пока вакансия не занята или не отменена, с графиком вместо часа начала.",
+    ro: "Un kalîm are dată și oră de început (în viitor) și dispare din listă când începe. Pe pagina principală poți filtra: Azi, Urgent (în 24 de ore) sau 3 ore. Angajările oficiale nu au dată de început și rămân active până le închide firma.",
+    ru: "У калыма есть дата и время начала (в будущем), и он пропадает из ленты, когда начинается. На главной можно фильтровать: «Сегодня», «Срочно» (в течение 24 часов) или «В течение 3 часов». У официальных вакансий нет даты начала — они активны, пока компания их не закроет.",
   },
   cancel: {
-    ro: "Din Aplicații, autorul poate: anula anunțul (dispare din listă, nimeni nu mai aplică), șterge definitiv (se pierd și aplicațiile), marca ca finalizat, sau reactiva un anunț expirat ori finalizat — cu o dată și oră nouă, în viitor. Ștergerea nu se poate anula. Dacă ești muncitor, din Contul meu poți retrage aplicația («Nu mai pot veni»). Anunțurile anulate nu se reactivează; trebuie un anunț nou.",
-    ru: "В разделе «Заявки» автор может: отменить объявление (оно скрывается, отклики больше не принимаются), удалить навсегда (вместе с заявками), отметить как завершённое или реактивировать истёкшее/завершённое — с новой датой и временем в будущем. Удаление необратимо. Если вы исполнитель, в «Мой аккаунт» можно снять отклик («Больше не могу прийти»). Отменённые объявления не реактивируются — нужно новое.",
+    ro: "Din Aplicații → „Gestionează anunțul” poți:\n• marca lucrul ca finalizat;\n• anula anunțul (dispare din listă);\n• șterge definitiv (se șterg și aplicațiile);\n• reactiva un anunț expirat cu o dată nouă;\n• reposta anunțul ca unul nou.",
+    ru: "В «Заявки» → «Управлять объявлением» можно:\n• отметить работу завершённой;\n• отменить объявление (оно скрывается);\n• удалить навсегда (удаляются и отклики);\n• возобновить истёкшее с новой датой;\n• разместить его снова как новое.",
   },
   free: {
-    ro: "Da — Rabotaem.md este complet gratuit. Contul, postarea, aplicarea, salvarea joburilor și evaluările nu costă nimic. Nu luăm comision (0%). Plata pentru muncă se face direct între voi, pe loc.",
-    ru: "Да — Rabotaem.md полностью бесплатен. Аккаунт, размещение, отклик, сохранение объявлений и оценки ничего не стоят. Нет комиссии (0%). Оплата за работу — напрямую между вами, на месте.",
+    ro: "Da, Rabotaem.md este complet gratuit: contul, postarea, aplicarea, CV-ul și alertele. Nu luăm comision. Banii pentru lucru îi primești direct de la cel care angajează.",
+    ru: "Да, Rabotaem.md полностью бесплатен: аккаунт, размещение, отклики, резюме и уведомления. Комиссии нет. Деньги за работу вы получаете напрямую от заказчика.",
   },
   freeFreemium: {
     ro: "Poți posta și aplica gratuit în limitele lunare. Pro scoate limitele. Nu luăm comision pe plățile dintre voi.",
@@ -104,205 +114,77 @@ const ANSWERS: Record<string, Record<ChatLang, string>> = {
     ru: "Просмотр бесплатный. Чтобы размещать или откликаться, нужен Pro. Комиссии с выплат нет.",
   },
   disclaimer: {
-    ro: "Rabotaem.md este doar un intermediar de anunțuri: conectăm persoanele care oferă joburi de scurtă durată cu cele care caută de lucru. Nu suntem angajator și nu facem contracte. Nu purtăm nicio răspundere pentru plăți, calitatea muncii, întârzieri, siguranță sau orice conflict dintre utilizatori. Toate înțelegerile (sumă, oră, loc, condiții) se fac direct între voi.",
-    ru: "Rabotaem.md — только посредник объявлений: мы соединяем тех, кто предлагает краткосрочную работу, с теми, кто её ищет. Мы не работодатель и не сторона договора. Мы не отвечаем за оплату, качество работы, задержки, безопасность или любые споры между пользователями. Все договорённости (сумма, время, место, условия) вы заключаете напрямую.",
+    ro: "Rabotaem.md este doar o platformă de anunțuri: nu suntem angajator și nu facem contracte. Suma, ora și condițiile le stabiliți direct între voi, iar plata se face direct între voi. Nu răspundem pentru plată, calitatea muncii sau neînțelegeri. Dacă ceva nu e în regulă, raportează anunțul sau persoana.",
+    ru: "Rabotaem.md — только площадка объявлений: мы не работодатель и не заключаем договоров. Сумму, время и условия вы согласуете напрямую, и оплата идёт напрямую между вами. Мы не отвечаем за оплату, качество работы или споры. Если что-то не так — пожалуйтесь на объявление или человека.",
   },
   account: {
-    ro: "Contul e gratuit și e necesar ca să postezi sau să aplici. Te poți înregistra cu Google, X sau email. Telefonul e obligatoriu, unic pe platformă, și nu trimitem SMS de verificare. În Contul meu găsești joburile postate, aplicațiile, salvate, evaluările și rapoartele. Telefonul tău e vizibil celorlalți doar după o aplicație relevantă sau după ce ați lucrat împreună.",
-    ru: "Аккаунт бесплатный и нужен, чтобы размещать работу или откликаться. Регистрация через Google, X или email. Телефон обязателен, один номер — один аккаунт, SMS-код мы не отправляем. В «Мой аккаунт» — ваши объявления, отклики, сохранённые, оценки и жалобы. Телефон виден другим только после релевантного отклика или совместной работы.",
+    ro: "Contul e gratuit. Te înregistrezi cu Google sau cu email. Ca să postezi sau să aplici trebuie să-ți verifici telefonul o singură dată: prin Telegram (botul @RabotaemMdBot, gratuit, fără cod) sau prin SMS cu cod. Un număr poate fi folosit la un singur cont. Telefonul nu e public: îl vede doar omul cu care lucrezi.",
+    ru: "Аккаунт бесплатный. Регистрация через Google или email. Чтобы размещать или откликаться, один раз подтвердите телефон: через Telegram (бот @RabotaemMdBot, бесплатно, без кода) или по SMS с кодом. Один номер — один аккаунт. Телефон не публичный: его видит только тот, с кем вы работаете.",
+  },
+  password: {
+    ro: "Ai uitat parola? Pe pagina de intrare apasă „Ai uitat parola?” și alege: prin Telegram (primești un link de la botul nostru) sau prin SMS cu cod pe telefonul din cont. După ce pui parola nouă, ești deconectat de pe celelalte dispozitive.",
+    ru: "Забыли пароль? На странице входа нажмите «Забыли пароль?» и выберите: через Telegram (бот пришлёт ссылку) или по SMS с кодом на телефон из аккаунта. После смены пароля вы выходите со всех других устройств.",
+  },
+  cv: {
+    ro: "Pentru angajări ai nevoie de CV. În Contul meu → „CV-ul meu” îl faci în 6 pași simpli: postul dorit, experiența, studiile, limbile, abilitățile și o poză opțională. Poți și să încarci un fișier (PDF, Word sau poză). La „Aplică” alegi ce CV trimiți. CV-ul îl vede doar firma la care aplici.",
+    ru: "Для официальной работы нужно резюме. В «Мой аккаунт» → «Моё резюме» его можно сделать за 6 простых шагов: желаемая должность, опыт, образование, языки, навыки и фото по желанию. Можно и загрузить файл (PDF, Word или фото). При отклике вы выбираете, какое резюме отправить. Резюме видит только компания, куда вы откликаетесь.",
+  },
+  alerts: {
+    ro: "Poți primi anunțurile noi potrivite pentru tine: în Contul meu → „Alertele mele” alegi raionul, categoriile și tipul de lucru. Primești notificări în browser sau pe Telegram (cel mult câteva pe zi), iar seara un rezumat.",
+    ru: "Можно получать новые подходящие объявления: в «Мой аккаунт» → «Мои оповещения» выберите район, категории и тип работы. Уведомления приходят в браузер или в Telegram (не больше нескольких в день), а вечером — сводка.",
+  },
+  age: {
+    ro: "Contul se poate face de la 16 ani. La kalîmuri se poate lucra de la 16 ani, dar munca fizică grea (mutări, construcții) și anunțurile marcate „Doar 18+” sunt doar de la 18 ani. Angajarea oficială e doar de la 18 ani. Anul nașterii nu se arată nimănui.",
+    ru: "Аккаунт можно создать с 16 лет. На калымах можно работать с 16 лет, но тяжёлая физическая работа (переезды, стройка) и объявления с отметкой «Только 18+» — только с 18 лет. Официальная работа — только с 18 лет. Год рождения никому не показывается.",
+  },
+  safety: {
+    ro: "Nu plăti niciodată bani în avans pentru un loc de muncă: la un kalîm tu primești banii, după lucru. Firmele corecte nu cer bani pentru angajare, instruire sau acte. Dacă cineva îți cere bani sau ceva pare suspect, apasă „Raportează” pe anunț sau pe profil și alege motivul. Echipa verifică și îți răspunde.",
+    ru: "Никогда не платите деньги вперёд за работу: на калыме деньги получаете вы, после работы. Честные компании не берут деньги за трудоустройство, обучение или документы. Если у вас просят деньги или что-то кажется подозрительным, нажмите «Пожаловаться» на объявлении или в профиле и выберите причину. Команда проверит и ответит вам.",
+  },
+  company: {
+    ro: "Dacă angajezi ca firmă, fă-ți pagina firmei din Contul meu → „Pagina firmei”: nume, oraș, descriere, site. Pagina e publică, arată toate angajările voastre și apare la fiecare anunț. Firmele verificate primesc o bifă.",
+    ru: "Если вы нанимаете как компания, создайте страницу компании в «Мой аккаунт» → «Страница компании»: название, город, описание, сайт. Страница публичная, показывает все ваши вакансии и видна в каждом объявлении. Проверенные компании получают отметку.",
+  },
+  share: {
+    ro: "Pe pagina fiecărui anunț apasă „Distribuie” și alege Viber, Telegram, WhatsApp sau Facebook. Mesajul vine gata scris, iar linkul arată o imagine cu titlul, suma și locul. Imediat după publicare îți propunem să-l trimiți în grupurile din zona ta: așa găsești oameni mai repede.",
+    ru: "На странице объявления нажмите «Поделиться» и выберите Viber, Telegram, WhatsApp или Facebook. Сообщение уже готово, а ссылка показывает картинку с названием, суммой и местом. Сразу после публикации мы предложим отправить его в группы вашего района — так людей найти быстрее.",
+  },
+  account_delete: {
+    ro: "Contul îl ștergi din Contul meu → „Șterge contul”. Se șterg profilul, CV-urile, anunțurile și aplicațiile. Datele tale le poți cere oricând pe tokimidoofficial@gmail.com.",
+    ru: "Удалить аккаунт можно в «Мой аккаунт» → «Удалить аккаунт». Удаляются профиль, резюме, объявления и отклики. Свои данные можно запросить по адресу tokimidoofficial@gmail.com.",
   },
   search: {
-    ro: "Căutarea e pe două pagini separate. «Caut lucru rapid» — pagina principală, cu dată, urgență și categorii de joburi scurte. «Caut angajare» — pagina Angajare, cu firmă, salariu, program și contract. Listele nu se amestecă. Pe fiecare filtruzi după cuvinte, raion și localitate.",
-    ru: "Поиск идёт на двух отдельных страницах. Разовая работа — на главной, с датой, срочностью и короткими заданиями. Официальный найм — на странице «Найм», с компанией, зарплатой, графиком и договором. Ленты не смешиваются. На каждой можно фильтровать по словам, району и населённому пункту.",
+    ro: "Kalîmurile sunt pe pagina principală, iar angajările pe pagina Angajare. Poți căuta după cuvinte, raion, localitate și categorie, iar la kalîmuri și după Azi / Urgent. Apasă inima ca să salvezi un anunț (îl găsești la Salvate). Sunt și pagini gata făcute: Lucru azi, În weekend, Cu plata zilnică, Fără experiență, Pentru studenți.",
+    ru: "Калымы — на главной странице, официальная работа — на странице «Найм». Можно искать по словам, району, населённому пункту и категории, а для калымов — ещё «Сегодня» / «Срочно». Нажмите сердечко, чтобы сохранить объявление (оно будет в «Сохранённых»). Есть и готовые подборки: работа сегодня, на выходных, с ежедневной оплатой, без опыта, для студентов.",
   },
   hello: {
-    ro: "Bună! Pot explica cum postezi un job, cum aplici, cum funcționează evaluările, programarea (dată și oră), anularea / ștergerea / reactivarea, și că platforma e gratuită. Rabotaem.md e doar intermediar — nu răspundem pentru plăți sau calitatea muncii. Ce te interesează?",
-    ru: "Здравствуйте! Могу объяснить, как разместить работу, как откликнуться, как работают оценки, расписание (дата и время), отмена / удаление / реактивация, и что платформа бесплатная. Rabotaem.md — только посредник: мы не отвечаем за оплату и качество работы. Что вас интересует?",
+    ro: "Bună! Te pot ajuta cu: cum găsești un kalîm sau o angajare, cum aplici, cum postezi (și șabloanele), cum alegi oamenii care au aplicat, CV-ul, verificarea telefonului și parola, alertele, vârsta minimă și siguranța. Întreabă-mă orice despre Rabotaem.md.",
+    ru: "Здравствуйте! Я помогу: как найти калым или официальную работу, откликнуться, разместить объявление (и шаблоны), выбрать людей из откликов, сделать резюме, подтвердить телефон и сменить пароль, настроить уведомления, а также про возраст и безопасность. Спрашивайте что угодно о Rabotaem.md.",
   },
 };
 
 const TOPICS: Array<{ id: string; keys: string[] }> = [
-  {
-    id: "kinds",
-    keys: [
-      "lucru rapid",
-      "angajare",
-      "kalim",
-      "kalîm",
-      "oficial",
-      "diferenț",
-      "diferent",
-      "tip de anunt",
-      "tip de anunț",
-      "калым",
-      "разовая",
-      "официальн",
-      "найм",
-      "чем отлича",
-    ],
-  },
-  {
-    id: "post",
-    keys: [
-      "postez",
-      "posteaz",
-      "public",
-      "anunt",
-      "adaug job",
-      "pun un job",
-      "cum post",
-      "размест",
-      "опублик",
-      "добавить работ",
-      "как подать объяв",
-      "как размест",
-    ],
-  },
-  {
-    id: "apply",
-    keys: [
-      "aplic",
-      "aplicare",
-      "candidat",
-      "cum ma inscriu",
-      "cum ma înscriu",
-      "отклик",
-      "откликн",
-      "как отклик",
-      "как подать заявк",
-      "как записаться",
-    ],
-  },
-  {
-    id: "rating",
-    keys: [
-      "evalu",
-      "stele",
-      "recenz",
-      "rating",
-      "nota",
-      "отзыв",
-      "оценк",
-      "звезд",
-      "рейтинг",
-    ],
-  },
-  {
-    id: "schedule",
-    keys: [
-      "program",
-      "data",
-      "dată",
-      "ora",
-      "oră",
-      "cand incepe",
-      "când începe",
-      "astazi",
-      "astăzi",
-      "urgent",
-      "расписан",
-      "дата",
-      "время",
-      "сегодня",
-      "срочно",
-      "когда начина",
-    ],
-  },
-  {
-    id: "cancel",
-    keys: [
-      "anul",
-      "sterg",
-      "șterg",
-      "sterge",
-      "șterge",
-      "reactiv",
-      "inchid",
-      "închid",
-      "отмен",
-      "удал",
-      "реактив",
-      "закрыть объяв",
-    ],
-  },
-  {
-    id: "free",
-    keys: [
-      "gratuit",
-      "costa",
-      "costă",
-      "comision",
-      "abonament",
-      "pret",
-      "preț",
-      "banca",
-      "платн",
-      "бесплат",
-      "комисс",
-      "подписк",
-      "сколько стоит",
-      "это платн",
-    ],
-  },
-  {
-    id: "disclaimer",
-    keys: [
-      "responsab",
-      "intermediar",
-      "angajator",
-      "conflict",
-      "disput",
-      "neplata",
-      "calitatea",
-      "siguranta",
-      "siguranța",
-      "plata muncii",
-      "отвечает",
-      "ответствен",
-      "посредник",
-      "работодател",
-      "конфликт",
-      "спор",
-      "качество",
-      "неоплат",
-      "безопасн",
-    ],
-  },
-  {
-    id: "account",
-    keys: [
-      "cont",
-      "inregistr",
-      "înregistr",
-      "autentific",
-      "parola",
-      "аккаунт",
-      "регистр",
-      "войти",
-      "логин",
-      "парол",
-    ],
-  },
-  {
-    id: "search",
-    keys: [
-      "caut",
-      "filtru",
-      "raion",
-      "localitat",
-      "categorie",
-      "moldova",
-      "поиск",
-      "фильтр",
-      "район",
-      "село",
-      "категор",
-    ],
-  },
-  {
-    id: "hello",
-    keys: ["salut", "buna", "bună", "hello", "hi ", "hey", "привет", "здравств", "добрый"],
-  },
+  { id: "kinds", keys: ["lucru rapid", "angajare", "diferen", "kalim", "calim", "oficial", "калым", "официальн", "разница", "чем отлича"] },
+  { id: "post", keys: ["postez", "postare", "public", "anunt", "sablon", "разместить", "размещ", "объявлен", "опубликов", "шаблон"] },
+  { id: "apply", keys: ["aplic", "aplicare", "ma suna", "candidat", "откликн", "отклик", "позвонят"] },
+  { id: "manage", keys: ["care au aplicat", "oamenii care", "au aplicat la", "aleg", "selectez", "selectat", "refuz", "primite", "cine a aplicat", "interviu", "angajat", "выбрать", "выбор", "отказать", "собеседован", "полученн"] },
+  { id: "repost", keys: ["repostez", "reposta", "anunt vechi", "anunțul vechi", "repost", "din nou", "iar anuntul", "reactiv", "снова", "повторно", "возобнов"] },
+  { id: "rating", keys: ["evalu", "stele", "recenz", "rating", "оценк", "звезд", "отзыв"] },
+  { id: "schedule", keys: ["data", "ora", "urgent", "azi", "expira", "дата", "время", "срочно", "сегодня", "истек"] },
+  { id: "cancel", keys: ["anulez", "anula", "sterg anunt", "finaliz", "отмен", "удалить объявл", "заверш"] },
+  { id: "free", keys: ["gratuit", "cost", "pret", "plat", "comision", "бесплатн", "стоим", "цена", "комисси"] },
+  { id: "disclaimer", keys: ["raspund", "garant", "contract", "conflict", "nu m-a platit", "ответствен", "гарант", "договор", "спор", "не заплатил"] },
+  { id: "account", keys: ["cont", "inregistr", "telefon", "verific", "telegram", "sms", "аккаунт", "регистрац", "телефон", "подтверд", "смс"] },
+  { id: "password", keys: ["parol", "am uitat", "reset", "пароль", "забыл"] },
+  { id: "cv", keys: ["cv", "resume", "rezume", "резюме"] },
+  { id: "alerts", keys: ["alert", "notific", "anunturi noi", "уведомлен", "новые объявлен", "оповещ"] },
+  { id: "age", keys: ["varst", "de ani", "16 ani", "18 ani", "minor", "18+", "возраст", "лет", "несовершеннолет"] },
+  { id: "safety", keys: ["bani in avans", "cerut bani", "cere bani", "avans", "frauda", "inselat", "teapa", "suspect", "raport", "мошен", "вперед", "вперёд", "развод", "пожалов"] },
+  { id: "company", keys: ["firma", "companie", "pagina firmei", "компани", "фирм"] },
+  { id: "share", keys: ["distribui", "trimit anuntul", "viber", "whatsapp", "facebook", "grup", "поделит", "отправить объявл", "групп"] },
+  { id: "account_delete", keys: ["sterg contul", "stergere cont", "datele mele", "удалить аккаунт", "мои данные"] },
+  { id: "search", keys: ["caut", "filtr", "salvat", "salvez", "найти", "поиск", "фильтр", "сохран"] },
+  { id: "hello", keys: ["salut", "buna", "bună", "hello", "hi ", "hey", "привет", "здравств", "добрый"] },
 ];
 
 function fold(text: string) {
@@ -337,28 +219,34 @@ export function localAnswer(lang: ChatLang, question: string, mode?: string): st
   return text;
 }
 
-const SYSTEM_FACTS = `You are the official support assistant for Rabotaem.md — a free short-term jobs board covering all raions and villages of Moldova. Slogan: «lucru pe loc. bani pe loc.»
+const SYSTEM_FACTS = `You are the official support assistant for Rabotaem.md, a free job board for all of Moldova (every raion and village, not just Chișinău). Slogan: «lucru pe loc. bani pe loc.» Many users are older people on phones: be very clear and practical.
 
-TONE: polite, clear, concise, helpful. Short paragraphs (2–5 sentences). No emojis. No markdown headings. No tables. You may use short numbered steps. Never invent features.
+TONE: polite, clear, concise. Short paragraphs (2–5 sentences) or short bullet steps. No markdown headings, no tables. Name the exact buttons and menu items. Never invent features.
 
-ALWAYS reply only in the language specified below. Never switch. Brand names stay as-is: Rabotaem.md, Google, X.
+ALWAYS reply only in the language specified below. Brand names stay as-is: Rabotaem.md, Google, Telegram, Viber.
 
 FACTS — never contradict:
 - MONEY_MODE_FACT
-- Rabotaem.md is ONLY an ads intermediary. Not an employer, not a staffing agency, not a party to contracts. NOT responsible for payments, work quality, delays, safety, or any disputes between users. All agreements (pay, time, place, conditions) are made directly between users. Repeat this clearly whenever the user asks about money, quality, conflicts, or liability.
-- Account needed to post or apply. Sign in with Google, X, or email. Phone is required, unique per account; no SMS verification code. Phone stays hidden until someone applies or they have worked together.
-- Post a job: menu «Postează» / «Разместить». Fields: title, description, category, raion, locality, payment in MDL, duration (hours or minutes), people needed, start date AND time (must be in the future), contact phone, anti-spam captcha. Listing goes live immediately. Limit: 3 listings per 2 hours.
-- Categories: Mutări & Transport; Curățenie; Construcții & muncă fizică; Grădinărit & exterior; Ajutor casnic; Altele.
-- Apply: open an active listing → Aplică / Откликнуться. First name, last name, phone, short message (when you can arrive, brief experience). Poster contacts the applicant directly. Cannot apply to own listing, or to cancelled / expired / completed / full listings. Withdraw an application from Contul meu / Мой аккаунт («Nu mai pot veni» / «Больше не могу прийти»).
-- Scheduling: every listing has a start date and time. Filters: Astăzi / Сегодня = starts today; Urgent / Срочно = next 24 hours.
-- Manage listings from Aplicații / Заявки (inbox of the poster): cancel (hidden, no more applications), delete permanently (also deletes applications — irreversible), mark completed, reactivate an expired or completed listing by choosing a new future date and time. Cancelled listings cannot be reactivated — post a new one.
-- Ratings: after the poster marks the job completed, BOTH sides may leave 1–5 stars and a short comment (inbox or My account). Reviews show on the public profile. Only after a completed collaboration.
-- Search/filter on the home page by keywords, raion, locality, category, Today, Urgent. Save with the heart → Salvate.
-- Report and block are available on listings and profiles. Contact page for human support.
-- Coverage: all of Moldova (raioane and sate), not just Chișinău.
+- Rabotaem.md is ONLY an ads platform. Not an employer, not an agency, not a party to any agreement. Pay, time, place and conditions are agreed directly between users and paid directly between them. Not responsible for payments, work quality, safety or disputes. Say this clearly when asked about money, quality, conflicts or liability.
+- Two kinds of listings, in separate lists: Lucru rapid / kalîm (short job of hours or a day, with start date and time, duration, number of people, pay in MDL on the spot; home page) and Angajare oficială (company job with monthly salary range, schedule, city, contract type, responsibilities, requirements, offer; page «Angajare»).
+- Account: sign up with Google or email (no other providers). Phone must be verified once before posting or applying: via Telegram bot @RabotaemMdBot (free, no code, share contact) or SMS code. One phone number per account. Phone is never public; it is shown only to the person you work with.
+- Forgot password: «Ai uitat parola?» → reset via Telegram link or SMS code to the account's phone. Resetting signs out other devices.
+- Age: account from 16. Kalîm from 16, but heavy physical work (moving, construction) and listings marked «Doar 18+» are 18+ only. Official jobs are 18+ only. Birth year is never shown publicly.
+- Post: menu «Postează» → choose type first. Kalîm: optional template (Mutare/hamali, Descărcat marfă, Curățenie după renovare, Curățenie apartament, Cosit iarbă, Tăiat lemne, Ajutor la construcție, Săpat grădina), title, description, category, raion, locality, optional exact map pin (visible only to selected workers), pay, duration, people, start date and time in the future. Official: company, title, description, salary from–to or negotiable, schedule, contract, openings, responsibilities, requirements, offer, experience, education, languages, address, HR name. Live immediately. Limit: 3 listings per 2 hours. Captcha.
+- After publishing: a box suggests sharing to Viber, Telegram, WhatsApp, Facebook; every listing has «Distribuie» with those buttons; shared links show a preview image (title, pay, place).
+- Kalîm categories: Mutări & Transport; Curățenie; Construcții & muncă fizică; Grădinărit & exterior; Ajutor casnic; Altele.
+- Apply: open a listing → «Aplică». Kalîm: short message. Official: send a CV (built on the site in «CV-ul meu», 6 steps, or an uploaded PDF/Word/photo file). Only the company applied to sees the CV. Withdraw with «Nu mai pot veni». Applicants see answers in «Aplicații» → «La care am aplicat».
+- Choosing people: «Aplicații» → «Primite». Tap a name: big buttons «Sună» (call), «Selectează» (green; person gets a notification and sees the poster's phone), «Refuză» (red, with confirmation; person is notified). Slots counter shows how many places are filled; you cannot select more than needed. Official jobs: invite to interview (date + message), mark «Angajat», private notes.
+- Manage a listing: «Aplicații» → «Gestionează anunțul»: mark done, cancel, delete permanently (also deletes applications), reactivate an expired one with a new date, «Repostează» (copy into a new listing; also in «Contul meu» → anunțurile mele and on the listing page).
+- Kalîm listings expire automatically when their start time passes. Filters: Azi, Urgent (24h), 3 ore. Ready pages: Lucru azi, În weekend, Cu plata zilnică, Fără experiență, Pentru studenți.
+- Alerts: «Contul meu» → «Alertele mele»: raion, categories, kind; browser push or Telegram, a few per day plus an evening digest.
+- Company page: «Pagina firmei» (name, city, description, site), public, shown on official listings; verified companies get a check mark.
+- Ratings: after the job is marked done, both sides can leave 1–5 stars and a comment; shown on public profiles.
+- Safety: never pay money upfront; honest employers never charge for hiring, training or documents. «Raportează» on listings and profiles (reasons include «Cere bani în avans»); the team reviews and replies. Users can also block others.
+- Contact page for human support. Delete account: «Contul meu» → «Șterge contul». Privacy questions: tokimidoofficial@gmail.com.
+- The site works in Romanian and Russian (also English).
 
-If the question is unrelated to Rabotaem.md, politely say you only help with this platform and list the topics you can explain.
-Do not offer to process payments, mediate disputes, or contact other users. Do not claim there is in-app chat or contracts. Phone numbers are verified with an SMS code, and a forgotten password is reset by SMS.`;
+There is NO in-app chat between users: people talk by phone. Do not offer to process payments, mediate disputes or contact other users. If the question is unrelated to Rabotaem.md, politely say you only help with this platform and list a few topics you can explain.`;
 
 const inputSchema = z.object({
   lang: z.enum(["ro", "ru"]),
