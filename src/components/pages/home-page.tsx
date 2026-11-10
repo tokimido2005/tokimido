@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/confirm-dialog";
 import { useSavedIds } from "@/components/favorite-button";
 import { listJobs, type Job } from "@/lib/jobs";
 import { logSearch, track } from "@/lib/analytics";
+import { askNotifications } from "@/components/notify-prompt";
 import { useT } from "@/lib/locale";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { jsonLdHtml, seoHead, SITE_ORIGIN } from "@/lib/seo";
@@ -108,6 +109,7 @@ export function HomePage({ loaded }: { loaded: HomeData }) {
             if (query.q) {
               track("job_search", { q: query.q });
               logSearch(query.q, "rapid", rows.length);
+              if (rows.length === 0) askNotifications("search");
             }
           }
         })

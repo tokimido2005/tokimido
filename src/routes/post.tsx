@@ -29,6 +29,7 @@ import { combineDateTime, formatJobTime, tomorrowDateInput } from "@/lib/utils";
 import { useT } from "@/lib/locale";
 import { CV_LANGS, JOB_EDUCATION, JOB_EXPERIENCE, normalizeJobDetails } from "@/lib/cv-shared";
 import { JOB_TEMPLATES, type JobTemplate } from "@/lib/job-templates";
+import { askNotifications } from "@/components/notify-prompt";
 import { HEAVY_CATEGORIES } from "@/lib/age";
 import { getMyCompany } from "@/lib/companies";
 
@@ -307,6 +308,7 @@ function PostJob() {
         });
         toast.success(t("toast.posted"));
         track("job_post", { id: res.id });
+        window.setTimeout(() => askNotifications("post"), 2500);
         await navigate({ to: "/jobs/$id", params: { id: String(res.id) }, search: { nou: 1 } });
         return;
       }
@@ -346,7 +348,8 @@ function PostJob() {
       });
       toast.success(t("toast.posted"));
       track("job_post", { id: res.id });
-      await navigate({ to: "/jobs/$id", params: { id: String(res.id) }, search: { nou: 1 } });
+      window.setTimeout(() => askNotifications("post"), 2500);
+        await navigate({ to: "/jobs/$id", params: { id: String(res.id) }, search: { nou: 1 } });
     } catch (err) {
       const message = errorText(err, t, t("post.publishFail"));
       setError(message);

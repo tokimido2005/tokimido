@@ -12,6 +12,7 @@ import { listJobs, type Job } from "@/lib/jobs";
 import { seoHead } from "@/lib/seo";
 import { useT } from "@/lib/locale";
 import { logSearch, track } from "@/lib/analytics";
+import { askNotifications } from "@/components/notify-prompt";
 
 
 export function angajareHead(locale: Locale) {
@@ -74,6 +75,7 @@ export function AngajarePage({ loaded }: { loaded: AngajareData }) {
             if (query.q) {
               track("job_search", { q: query.q });
               logSearch(query.q, "oficial", rows.length);
+              if (rows.length === 0) askNotifications("search");
             }
           }
         })

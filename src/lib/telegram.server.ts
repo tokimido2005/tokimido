@@ -249,6 +249,11 @@ const T: Record<string, Record<TgLang, string>> = {
     ru: "Мы принимаем только номера Молдовы (+373). Подтвердите телефон по SMS на сайте.",
     en: "We only accept Moldovan numbers (+373). Please verify by SMS on the website.",
   },
+  notifyOn: {
+    ro: "Gata ✅ De acum primești aici notificările de pe Rabotaem.md: anunțuri noi, aplicații și răspunsuri. Te poți întoarce pe site.",
+    ru: "Готово ✅ Теперь уведомления Rabotaem.md будут приходить сюда: новые объявления, отклики и ответы. Можно вернуться на сайт.",
+    en: "Done ✅ Rabotaem.md notifications will now arrive here: new listings, applications and replies. You can go back to the website.",
+  },
   adminOn: {
     ro: "Gata ✅ Vei primi aici alertele de admin (rapoarte noi).",
     ru: "Готово ✅ Здесь будут приходить уведомления администратора (новые жалобы).",
@@ -318,6 +323,17 @@ export async function handleUpdate(update: { message?: TgMessage }) {
       await reply(chatId, tr("expired", lang));
       return;
     }
+    if (rows[0].purpose === "notify") {
+      // Notifications only: the one-time link (made for a signed-in user) is the proof.
+      const owner = await sql.query<{ user_id: string }>(`select user_id from telegram_verify_tokens where token = $1`, [token]);
+      const userId = owner[0]?.user_id;
+      if (userId) {
+        await linkChatForNotify(userId, chatId, msg.from?.id ?? chatId, msg.from?.username ?? "");
+        await setTokenStatus(token, "done");
+        await reply(chatId, tr("notifyOn", lang));
+      }
+      return;
+    }
     if (rows[0].purpose === "admin") {
       // Admin alerts: no phone needed, the one-time link itself is the proof.
       await sql.query(
@@ -348,7 +364,7 @@ export async function handleUpdate(update: { message?: TgMessage }) {
     }
     const rows = await sql.query<{ token: string; user_id: string; purpose: string; target_phone: string }>(
       `select token, user_id, purpose, target_phone from telegram_verify_tokens
-       where chat_id = $1 and status = 'pending' and expires_at > now() and purpose <> 'admin'
+       where chat_id = $1 and status = 'pending' and expires_at > now() and purpose not in ('admin', 'notify')
        order by created_at desc limit 1`,
       [chatId],
     );
@@ -517,6 +533,33 @@ export async function consumeTelegramReset(token: string, password: string) {
   await applyNewPassword(row.user_id, password);
   // Other links for this account stop working too.
   await sql.query(`update telegram_reset_tokens set used_at = now() where user_id = $1 and used_at is null`, [row.user_id]);
+}
+
+/** Link a chat for notifications only; keeps a phone already stored from verification. */
+async function linkChatForNotify(userId: string, chatId: number, tgUserId: number, username: string) {
+  const sql = await getSql();
+  await sql.query(`delete from telegram_links where chat_id = $1 and user_id <> $2`, [chatId, userId]);
+  await sql.query(
+    `insert into telegram_links (user_id, chat_id, tg_user_id, username, phone)
+     values ($1, $2, $3, $4, '')
+     on conflict (user_id) do update set chat_id = excluded.chat_id, tg_user_id = excluded.tg_user_id,
+       username = excluded.username, linked_at = now()`,
+    [userId, chatId, tgUserId, username],
+  );
+  await sql.query(`update job_alerts set via_telegram = true where user_id = $1`, [userId]).catch(() => {});
+}
+
+/** One-time link to the bot that turns on Telegram notifications for this account. */
+export async function createNotifyLink(userId: string) {
+  await ensureTelegramTables();
+  const sql = await getSql();
+  const token = randomBytes(18).toString("base64url");
+  await sql.query(
+    `insert into telegram_verify_tokens (token, user_id, purpose, target_phone, expires_at)
+     values ($1, $2, 'notify', '', now() + make_interval(mins => $3))`,
+    [token, userId, TOKEN_TTL_MINUTES],
+  );
+  return { token, url: `https://t.me/${await botUsername()}?start=${token}` };
 }
 
 /** One-time link that turns on admin alerts in the chat that opens it. */

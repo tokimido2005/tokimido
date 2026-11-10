@@ -30,6 +30,7 @@ import { ProBadge } from "@/components/paywall";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
 import { TextSizeToggle } from "@/components/text-size";
+import { NotifyCard } from "@/components/notify-prompt";
 import { canRepost } from "@/lib/job-templates";
 import { deleteMyAccount, isDeleteConfirmWord } from "@/lib/account-delete";
 import { signOut } from "@/lib/auth/client";
@@ -264,6 +265,7 @@ function Account() {
           <BioBox initial={me?.bio ?? ""} onSaved={reload} />
         </section>
 
+        <NotifyCard />
         <Link
           to="/alerte"
           data-testid="account-alerts"
