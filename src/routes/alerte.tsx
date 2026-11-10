@@ -14,7 +14,7 @@ import { updatePushPrefs } from "@/lib/push";
 import { errorText } from "@/lib/i18n";
 import { useT } from "@/lib/locale";
 import { seoHead } from "@/lib/seo";
-import { askNotifications } from "@/components/notify-prompt";
+import { askNotifications } from "@/components/notify-ask";
 import { cn, formatMdl } from "@/lib/utils";
 
 export const Route = createFileRoute("/alerte")({

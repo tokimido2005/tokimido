@@ -13,6 +13,7 @@ import { RAION_NAMES } from "@/lib/moldova";
 import { Combobox } from "@/components/combobox";
 import { isIos, isStandalone, pushSupported, subscribePush } from "@/components/push-prompt";
 import { cn } from "@/lib/utils";
+import { NOTIFY_EVENT as EVENT, NOTIFY_PENDING_KEY as PENDING_KEY, askNotifications, type NotifyReason } from "@/components/notify-ask";
 
 /**
  * "Vrei să afli primul?" — one place that asks people to turn on
@@ -22,27 +23,11 @@ import { cn } from "@/lib/utils";
  * channel on. "Later" snoozes 3 days; after 3 refusals only the important
  * moments (sign-up, apply, post) and the account button still ask.
  */
-export type NotifyReason = "signup" | "auto" | "apply" | "post" | "search" | "manual" | "telegram";
+export { askNotifications, type NotifyReason } from "@/components/notify-ask";
 
-const EVENT = "rbt-notify-ask";
-const PENDING_KEY = "rbt-notify-pending";
 const RULES_KEY = "rabotaem-notify-v2";
 const SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
 const MAX_REFUSALS = 3;
-
-/** Ask (if appropriate) to turn on notifications. Safe to call anywhere. */
-export function askNotifications(reason: NotifyReason) {
-  if (typeof window === "undefined") return;
-  if (reason === "signup") {
-    // Sign-up ends with a redirect: keep the request across the navigation.
-    try {
-      sessionStorage.setItem(PENDING_KEY, "signup");
-    } catch {
-      /* ignore */
-    }
-  }
-  window.dispatchEvent(new CustomEvent(EVENT, { detail: reason }));
-}
 
 type Rules = { snoozeUntil: number; refusals: number };
 
@@ -137,6 +122,11 @@ export function NotifyPrompt() {
     const onAsk = (e: Event) => {
       const why = (e as CustomEvent<NotifyReason>).detail;
       if (why === "signup") return; // handled by the pending flag below, after the redirect
+      try {
+        sessionStorage.removeItem(PENDING_KEY);
+      } catch {
+        /* ignore */
+      }
       void open(why);
     };
     window.addEventListener(EVENT, onAsk);
@@ -152,13 +142,13 @@ export function NotifyPrompt() {
     } catch {
       /* ignore */
     }
-    if (pending !== "signup" || /^\/(complete|verify|login)/.test(pathname)) return;
+    if (!pending || /^\/(complete|verify|login)/.test(pathname)) return;
     try {
       sessionStorage.removeItem(PENDING_KEY);
     } catch {
       /* ignore */
     }
-    const timer = window.setTimeout(() => void open("signup"), 700);
+    const timer = window.setTimeout(() => void open(pending as NotifyReason), 700);
     return () => window.clearTimeout(timer);
   }, [user, isPending, pathname, open]);
 

@@ -4,14 +4,19 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { LocaleProvider } from "@/lib/locale";
 import { ThemeProvider, ThemedToaster } from "@/lib/theme";
 import { WelcomeSplash } from "@/components/welcome-splash";
-import { PwaRegister, PushNavigateListener } from "@/components/pwa-register";
-import { RatingPrompt } from "@/components/rating-prompt";
+import { PushNavigateListener } from "@/components/pwa-register";
 import { PageTracker } from "@/components/page-tracker";
-import { PushForeground } from "@/components/push-prompt";
-import { NotifyPrompt } from "@/components/notify-prompt";
 import { BanGate } from "@/components/ban-screen";
 import { ProfileGate } from "@/components/profile-gate";
 import { MoneyModeProvider } from "@/lib/money-mode";
+import { lazy } from "react";
+import { AfterIdle } from "@/components/after-idle";
+
+// Not needed for the first paint: loaded after the page is usable.
+const PwaRegister = lazy(() => import("@/components/pwa-register").then((m) => ({ default: m.PwaRegister })));
+const PushForeground = lazy(() => import("@/components/push-prompt").then((m) => ({ default: m.PushForeground })));
+const NotifyPrompt = lazy(() => import("@/components/notify-prompt").then((m) => ({ default: m.NotifyPrompt })));
+const RatingPrompt = lazy(() => import("@/components/rating-prompt").then((m) => ({ default: m.RatingPrompt })));
 import "@/lib/sentry";
 import appCss from "../styles.css?url";
 import outfit400 from "@fontsource/outfit/files/outfit-latin-400-normal.woff2?url";
@@ -97,10 +102,12 @@ function RootDocument() {
                     <Outlet />
                   </div>
                 </ProfileGate>
-                <PwaRegister />
-                <PushForeground />
-                <NotifyPrompt />
-                <RatingPrompt />
+                <AfterIdle>
+                  <PwaRegister />
+                  <PushForeground />
+                  <NotifyPrompt />
+                  <RatingPrompt />
+                </AfterIdle>
               </BanGate>
               <ThemedToaster />
               </MoneyModeProvider>

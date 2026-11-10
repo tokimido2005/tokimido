@@ -12,7 +12,7 @@ import { listJobs, type Job } from "@/lib/jobs";
 import { seoHead } from "@/lib/seo";
 import { useT } from "@/lib/locale";
 import { logSearch, track } from "@/lib/analytics";
-import { askNotifications } from "@/components/notify-prompt";
+import { askNotifications } from "@/components/notify-ask";
 
 
 export function angajareHead(locale: Locale) {

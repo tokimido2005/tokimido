@@ -5,7 +5,7 @@ import { seoHead } from "@/lib/seo";
 import { Shell } from "@/components/shell";
 import { Logo } from "@/components/logo";
 import { PhoneVerifyChoice } from "@/components/phone-verify-choice";
-import { askNotifications } from "@/components/notify-prompt";
+import { askNotifications } from "@/components/notify-ask";
 import { safeNextPath } from "@/components/social-auth";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { RedirectToSignIn } from "@/lib/auth/gates";
