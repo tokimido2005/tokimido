@@ -24,6 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { Ambient } from "@/components/ambient";
+import { AdminReportGroups } from "@/components/admin-reports";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Logo } from "@/components/logo";
 import { signOut } from "@/lib/auth/client";
@@ -1423,6 +1424,10 @@ function UserDetail({
 }
 
 function ReportsPane() {
+  return <AdminReportGroups history={<ReportsHistory />} />;
+}
+
+function ReportsHistory() {
   const { t } = useT();
   const [rows, setRows] = useState<AdminReport[] | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
@@ -1471,8 +1476,7 @@ function ReportsPane() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-navy">{t("admin.reports")}</h1>
-      <div className="mt-4 space-y-2">
+      <div className="space-y-2">
         {rows === null ? (
           <div className="h-40 animate-pulse rounded-[24px] bg-white/40 dark:bg-white/8" />
         ) : rows.length === 0 ? (

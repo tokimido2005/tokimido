@@ -495,6 +495,206 @@ export const adminResolveReport = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export type ReportGroup = {
+  target_type: "job" | "user";
+  target_id: string;
+  n: number;
+  reporters: number;
+  last_at: string;
+  items: Array<{ reason: string; details: string; reporter: string; at: string }>;
+  job_title: string | null;
+  job_status: string | null;
+  job_hidden: boolean;
+  owner_id: string | null;
+  owner_name: string;
+};
+
+/** Pending reports grouped per reported job/user, most reported first. */
+export const listAdminReportGroups = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const sql = await getSql();
+    const rows = await sql.query<Omit<ReportGroup, "items"> & { items: unknown }>(
+      `with r2 as (
+         select r.*, coalesce(nullif(trim(both from concat_ws(' ', p.first_name, p.last_name)), ''), u.name, r.reporter_id) as reporter_name
+         from reports r
+         left join profiles p on p.user_id = r.reporter_id
+         left join "user" u on u.id = r.reporter_id
+         where r.status = 'pending'
+       ), g as (
+         select target_type, target_id, count(*)::int as n, count(distinct reporter_id)::int as reporters,
+                max(created_at) as last_at,
+                json_agg(json_build_object('reason', reason, 'details', details, 'reporter', reporter_name, 'at', created_at)
+                         order by created_at desc) as items
+         from r2 group by target_type, target_id
+       )
+       select g.target_type, g.target_id, g.n, g.reporters, g.last_at, g.items,
+              j.title as job_title, j.status as job_status, coalesce(j.hidden, false) as job_hidden,
+              case when g.target_type = 'user' then g.target_id else j.user_id end as owner_id,
+              coalesce(nullif(trim(both from concat_ws(' ', op.first_name, op.last_name)), ''), ou.name, '') as owner_name
+       from g
+       left join jobs j on g.target_type = 'job' and j.id::text = g.target_id
+       left join profiles op on op.user_id = (case when g.target_type = 'user' then g.target_id else j.user_id end)
+       left join "user" ou on ou.id = (case when g.target_type = 'user' then g.target_id else j.user_id end)
+       order by g.n desc, g.last_at desc
+       limit 60`,
+    );
+    return rows.map((r) => ({
+      ...r,
+      items: (typeof r.items === "string" ? JSON.parse(r.items) : r.items) as ReportGroup["items"],
+    })) satisfies ReportGroup[];
+  });
+
+async function warnUserAsAdmin(adminId: string, userId: string, reason: string) {
+  const { ADMIN_USER_ID, logAdminAction } = await import("./admin.server");
+  if (userId === ADMIN_USER_ID) return;
+  const sql = await getSql();
+  await sql.query(`
+    create table if not exists user_warnings (
+      id serial primary key,
+      user_id text not null,
+      admin_id text not null,
+      reason text not null,
+      created_at timestamptz not null default now()
+    )
+  `);
+  await sql.query("insert into user_warnings (user_id, admin_id, reason) values ($1, $2, $3)", [userId, adminId, reason]);
+  await logAdminAction(adminId, "user.warn", "user", userId, reason);
+  await messageUser(adminId, userId, "Avertisment", reason);
+}
+
+async function banUserWeek(adminId: string, userId: string, reason: string) {
+  const { ADMIN_USER_ID, logAdminAction } = await import("./admin.server");
+  if (userId === ADMIN_USER_ID) return;
+  const sql = await getSql();
+  await sql.query(
+    `insert into profiles (user_id, banned_at, banned_until, ban_reason, accepted_rules_at)
+     values ($1, now(), now() + interval '7 days', $2, now())
+     on conflict (user_id) do update set
+       banned_at = now(), banned_until = now() + interval '7 days', ban_reason = excluded.ban_reason`,
+    [userId, reason],
+  );
+  await logAdminAction(adminId, "user.ban.7d", "user", userId, `7d | ${reason}`);
+  await messageUser(adminId, userId, "Cont temporar suspendat", reason);
+}
+
+/** Inbox message + push (and Telegram) to one user. Never throws. */
+async function messageUser(adminId: string, userId: string, title: string, body: string) {
+  try {
+    const sql = await getSql();
+    const inserted = await sql.query<{ id: number }>(
+      `insert into admin_messages (admin_id, user_id, title, body) values ($1, $2, $3, $4) returning id`,
+      [adminId, userId, title, body],
+    );
+    const { notifyUser } = await import("./push.server");
+    await notifyUser(userId, { title, body, url: inboxPath(inserted[0]?.id), telegram: true });
+  } catch (err) {
+    console.error("[admin] message user", err);
+  }
+}
+
+/**
+ * One decision for every pending report on a job/user: keep it ("ok"), hide
+ * the job, delete it and warn the author, warn or suspend the user. Everyone
+ * who reported it gets a short answer in their inbox.
+ */
+export const adminResolveTarget = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((d: unknown) =>
+    z
+      .object({
+        targetType: z.enum(["job", "user"]),
+        targetId: z.string().min(1).max(80),
+        action: z.enum(["ok", "hide", "delete", "warn", "ban"]),
+        reason: z.string().trim().max(300).optional().default(""),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { requireAdmin, logAdminAction } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const needsReason = data.action === "delete" || data.action === "warn" || data.action === "ban";
+    if (needsReason && data.reason.length < 8) throw new Error("Alege sau scrie un motiv (minim 8 caractere).");
+    const sql = await getSql();
+    let title = "";
+    let ownerId: string | null = data.targetType === "user" ? data.targetId : null;
+    if (data.targetType === "job") {
+      const jobs = await sql.query<{ title: string; user_id: string }>(`select title, user_id from jobs where id = $1`, [
+        Number(data.targetId),
+      ]);
+      title = jobs[0]?.title ?? "";
+      ownerId = jobs[0]?.user_id ?? null;
+      if (!jobs[0] && data.action !== "ok") throw new Error("Anunțul nu există");
+    }
+    if (data.targetType === "user" && (data.action === "hide" || data.action === "delete")) {
+      throw new Error("Acțiune doar pentru anunțuri");
+    }
+
+    if (data.targetType === "job") {
+      const id = Number(data.targetId);
+      if (data.action === "ok") await sql.query(`update jobs set hidden = false where id = $1`, [id]);
+      if (data.action === "hide") await sql.query(`update jobs set hidden = true where id = $1`, [id]);
+      if (data.action === "delete") await sql.query(`delete from jobs where id = $1`, [id]);
+    }
+    if (ownerId && data.action === "delete") {
+      await warnUserAsAdmin(context.userId, ownerId, `Anunțul „${title}” a fost șters: ${data.reason}`);
+    }
+    if (ownerId && data.action === "warn") await warnUserAsAdmin(context.userId, ownerId, data.reason);
+    if (ownerId && data.action === "ban") await banUserWeek(context.userId, ownerId, data.reason);
+
+    const status = data.action === "ok" ? "dismissed" : "reviewed";
+    const reporters = await sql.query<{ reporter_id: string }>(
+      `update reports set status = $1
+       where target_type = $2 and target_id = $3 and status = 'pending'
+       returning reporter_id`,
+      [status, data.targetType, data.targetId],
+    );
+    await logAdminAction(context.userId, `report.target.${data.action}`, data.targetType, data.targetId, data.reason || title);
+
+    const what = data.targetType === "job" ? `anunțul „${title}”` : "utilizatorul";
+    const body =
+      data.action === "ok"
+        ? `Am verificat ${what} pe care l-ai raportat. Nu am găsit încălcări ale regulilor, așa că rămâne pe site.`
+        : data.action === "hide" || data.action === "delete"
+          ? `Am verificat ${what} pe care l-ai raportat și a fost eliminat. Mulțumim că ne ajuți să păstrăm site-ul sigur.`
+          : `Am verificat ${what} pe care l-ai raportat și am luat măsuri. Mulțumim că ne ajuți să păstrăm site-ul sigur.`;
+    for (const rid of new Set(reporters.map((r) => r.reporter_id))) {
+      await messageUser(context.userId, rid, "Raportul tău a fost verificat", body);
+    }
+    return { ok: true as const, reporters: reporters.length };
+  });
+
+export const adminTelegramAlerts = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const tg = await import("./telegram.server");
+    return { enabled: tg.telegramEnabled(), chats: tg.telegramEnabled() ? await tg.adminAlertChatCount() : 0 };
+  });
+
+export const adminTelegramAlertLink = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const tg = await import("./telegram.server");
+    if (!tg.telegramEnabled()) throw new Error("Telegram nu este configurat");
+    return { url: await tg.createAdminAlertLink(context.userId) };
+  });
+
+export const adminTelegramAlertsOff = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const { requireAdmin } = await import("./admin.server");
+    await requireAdmin(context.userId);
+    const tg = await import("./telegram.server");
+    await tg.clearAdminAlertChats();
+    return { ok: true as const };
+  });
+
 export type SupportRow = {
   id: number;
   user_id: string | null;

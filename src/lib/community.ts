@@ -73,8 +73,49 @@ export const submitReport = createServerFn({ method: "POST" })
        values ($1, $2, $3, $4, $5)`,
       [context.userId, data.targetType, data.targetId, data.reason, data.details ?? ""],
     );
+    void alertAdminAboutReport(data.targetType, data.targetId, data.reason, data.details ?? "");
     return { ok: true as const };
   });
+
+/**
+ * Telegram alert to the admin for a new report. At most one message per
+ * reported job/user every 6 hours, so a wave of reports is a single ping.
+ */
+async function alertAdminAboutReport(targetType: "job" | "user", targetId: string, reason: string, details: string) {
+  try {
+    const sql = await getSql();
+    const rows = await sql.query<{ total: number; recent: number }>(
+      `select count(*) filter (where status = 'pending')::int as total,
+              count(*) filter (where created_at > now() - interval '6 hours')::int as recent
+       from reports where target_type = $1 and target_id = $2`,
+      [targetType, targetId],
+    );
+    if ((rows[0]?.recent ?? 0) > 1) return;
+    let label = targetId;
+    if (targetType === "job") {
+      const jobs = await sql.query<{ title: string }>(`select title from jobs where id = $1`, [Number(targetId)]);
+      label = jobs[0]?.title ?? `#${targetId}`;
+    } else {
+      const users = await sql.query<{ name: string }>(
+        `select coalesce(nullif(trim(both from concat_ws(' ', p.first_name, p.last_name)), ''), u.name, u.id) as name
+         from "user" u left join profiles p on p.user_id = u.id where u.id = $1`,
+        [targetId],
+      );
+      label = users[0]?.name ?? targetId;
+    }
+    const { translate } = await import("@/lib/i18n");
+    const lines = [
+      `🚩 ${translate("ro", "report.alertTitle")}: ${translate("ro", `report.${reason}`)}`,
+      `${targetType === "job" ? translate("ro", "admin.job") : translate("ro", "admin.user")}: ${label}`,
+      details ? `„${details.slice(0, 200)}”` : "",
+      translate("ro", "report.alertPending", { n: rows[0]?.total ?? 1 }),
+    ].filter(Boolean);
+    const { sendAdminAlert } = await import("./telegram.server");
+    await sendAdminAlert(lines.join("\n"), "/admin?tab=reports");
+  } catch (err) {
+    console.error("[report] admin alert", err);
+  }
+}
 
 export const listMyReports = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

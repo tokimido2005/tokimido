@@ -664,6 +664,31 @@ export const messages: Record<Locale, Record<string, string>> = {
     "report.noshow": "Nu s-a prezentat",
     "report.spam": "Spam",
     "report.other": "Alt motiv",
+    "report.advance": "Cere bani în avans / taxă",
+    "report.alertTitle": "Raport nou",
+    "report.alertPending": "Rapoarte în așteptare pe acesta: {n}",
+    "job.safetyRapid": "Nu plăti niciodată bani în avans pentru un kalîm. Banii îi primești tu, după lucru. Dacă cineva îți cere bani, apasă „Raportează”.",
+    "job.safetyOficial": "Angajatorii corecți nu cer bani pentru angajare, instruire sau acte. Dacă cineva îți cere bani, apasă „Raportează”.",
+    "admin.repCount": "{n} rapoarte · {p} persoane",
+    "admin.repOk": "E în regulă",
+    "admin.repHide": "Ascunde",
+    "admin.repDelete": "Șterge și avertizează autorul",
+    "admin.repWarn": "Avertizează",
+    "admin.repBan": "Suspendă 7 zile",
+    "admin.repConfirm": "Confirmă",
+    "admin.repReasonHint": "Scrie motivul. Autorul îl va primi în mesaje.",
+    "admin.repHidden": "Ascuns",
+    "admin.repJobGone": "Anunțul a fost deja șters",
+    "admin.repNone": "Niciun raport în așteptare. 🎉",
+    "admin.repHistory": "Istoric rapoarte",
+    "admin.repDone": "Gata. Persoane anunțate: {n}.",
+    "admin.tgAlertsT": "Alerte pe Telegram",
+    "admin.tgAlertsOn": "pornite",
+    "admin.tgAlertsOff": "oprite",
+    "admin.tgAlertsHint": "Primești un mesaj pe Telegram când cineva raportează un anunț sau un utilizator.",
+    "admin.tgNotConfigured": "Botul Telegram nu este configurat pe server.",
+    "admin.tgAlertsConnect": "Pornește alertele",
+    "admin.tgAlertsStop": "Oprește",
     "report.mine": "Rapoartele mele",
     "report.empty": "Niciun raport trimis.",
     "report.pending": "În așteptare",
@@ -1537,5 +1562,5 @@ export function errorText(
   return message;
 }
 
-export const REPORT_REASONS = ["false", "scam", "inappropriate", "noshow", "spam", "other"] as const;
+export const REPORT_REASONS = ["advance", "scam", "false", "inappropriate", "noshow", "spam", "other"] as const;
 export type ReportReason = (typeof REPORT_REASONS)[number];
